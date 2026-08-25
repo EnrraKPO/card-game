@@ -423,6 +423,20 @@ func status_views() -> Array[StatusPipView]:
 	return _status_views
 
 
+# The pips the last injection composed, in row order — what the fight screen reads to
+# register each pip as its status's surface (R14). The card itself never knows what a
+# pip stands for; the view's subject seat carries that fact past it.
+func status_pips() -> Array[StatusPip]:
+	var out: Array[StatusPip] = []
+	if _status_row == null:
+		return out
+	for child in _status_row.get_children():
+		var pip := child as StatusPip
+		if pip != null:
+			out.append(pip)
+	return out
+
+
 # Fills the StatusRow node (authored in card_ui.tscn — move/anchor it in the editor) with one
 # pip per view: its icon (or coloured glyph), count, and the status's own hover tooltip.
 func _refresh_statuses() -> void:

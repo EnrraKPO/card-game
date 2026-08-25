@@ -66,12 +66,28 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 	if visual != &"":
 		for recipient: GameEntity in recipients:
 			_screen.play_beat_mark(recipient)
-	var source_ui: CardUI = _screen.card_of(source)
-	if source_ui == null:
-		# The old yank guard: a choreography whose actor has no card on screen SKIPS its
-		# show outright — the delivery still resolves; rules never depend on the show. A
-		# side-held effect (a relic, the hourglass) lands its cues without an approach.
+	# The source resolves through the one surface lookup (R14) — the stand-in override
+	# outranks — so a holder that stands on screen as something other than a card (a
+	# status's pip, a relic's chip) gets its announce too.
+	var surface: Control = _screen.surface_of(source)
+	if surface == null:
+		# The old yank guard: a choreography whose actor has no surface on screen SKIPS
+		# its show outright — the delivery still resolves; rules never depend on the
+		# show. A side-held effect (the hourglass) lands its cues without an approach.
 		return
+	if not (surface is CardUI):
+		# A non-card holder announces with its kind's own show, whole from the old tree —
+		# the pip's proc discharge, the relic chip's glint — under ANY authored windup
+		# name (a pip cannot lunge; what it says is "I fired"). The unnamed windup stays
+		# machinery's, silent, exactly as below.
+		if visual == &"":
+			return
+		if surface is StatusPip:
+			(surface as StatusPip).flash_proc()
+		elif _screen.relic_tray() != null:
+			_screen.relic_tray().glint_chip(surface)
+		return
+	var source_ui: CardUI = surface as CardUI
 	match visual:
 		&"glint":
 			await _screen.vfx().play(VFXEvent.source_trigger(source_ui))

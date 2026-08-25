@@ -412,13 +412,25 @@ func flare_ground(status_id: String) -> void:
 		Vfx.play(id, _ground_frame)
 
 
+# Every ground tab standing, in row order — what the fight screen reads to register each
+# tab as its status's surface (R14); the slot never knows what a tab stands for.
+func ground_pips() -> Array[StatusPip]:
+	var out: Array[StatusPip] = []
+	if _ground_pips == null:
+		return out
+	for child in _ground_pips.get_children():
+		var pip := child as StatusPip
+		if pip != null:
+			out.append(pip)
+	return out
+
+
 # All this ground row's tabs for `status_id`, in row order. The damage moment glints the WHOLE
 # pile at once (every stack acts together), so the presenter needs the full set, not one pip.
 func ground_pips_of(status_id: String) -> Array:
 	var out: Array = []
-	for child in _ground_pips.get_children():
-		var pip := child as StatusPip
-		if pip != null and pip.view != null and pip.view.id == status_id:
+	for pip: StatusPip in ground_pips():
+		if pip.view != null and pip.view.id == status_id:
 			out.append(pip)
 	return out
 

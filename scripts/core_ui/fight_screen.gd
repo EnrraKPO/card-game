@@ -339,6 +339,7 @@ func _ready() -> void:
 	if not Genesis.setup(world, fight.get("player", {}), fight.get("enemy", {})):
 		_state_label.text = "Genesis refused the fight's configuration."
 		return
+	_register_relic_surfaces()
 	refresh()
 	_run.call_deferred()
 
@@ -496,12 +497,68 @@ func card_of(entity: GameEntity) -> CardUI:
 	return ui if ui != null and is_instance_valid(ui) else null
 
 
+# ── Entity surface resolution (R14) ───────────────────────────────────────────────────
+# One screen-side lookup answers what on screen stands for an entity. Every
+# surface-creating site registers what it made, keyed by the entity reference (status
+# pips at _paint_slot's composition, relic chips at tray build); the card map above is
+# the table's first entry, populated by the paint pass as it always was. A standing
+# stand-in override outranks the table; a freed surface leaves it (the validity guard
+# refuses the dead node on resolve); an entity that resolves to nothing shows nothing.
+var _surfaces: Dictionary = {}
+var _stand_ins: Dictionary = {}
+
+
+func register_surface(entity: GameEntity, surface: Control) -> void:
+	_surfaces[entity] = surface
+
+
+func stand_in(entity: GameEntity, surface: Control) -> void:
+	_stand_ins[entity] = surface
+
+
+func clear_stand_in(entity: GameEntity) -> void:
+	_stand_ins.erase(entity)
+
+
+func surface_of(entity: GameEntity) -> Control:
+	var stand := _stand_ins.get(entity) as Control
+	if stand != null and is_instance_valid(stand):
+		return stand
+	var card: CardUI = card_of(entity)
+	if card != null:
+		return card
+	var surface := _surfaces.get(entity) as Control
+	if surface != null and is_instance_valid(surface):
+		return surface
+	return null
+
+
 func vfx() -> VFXPlayer:
 	return _vfx
 
 
 func animator() -> CombatAnimator:
 	return _animator
+
+
+func relic_tray() -> RelicTray:
+	return _relic_tray
+
+
+# The relic chips' R14 registration, at tray build: each of the player's Relic entities
+# keyed to its chip — the tray renders the run's relics, the same ids Genesis seats on the
+# player's side. An enemy relic (or any relic the tray shows no chip for — a run-less
+# catalogue fight's) resolves to nothing and lawfully shows nothing.
+func _register_relic_surfaces() -> void:
+	if _relic_tray == null or world == null:
+		return
+	for member: GameEntity in world.player_side().get_container(&"relics").members:
+		var relic := member as Relic
+		if relic == null:
+			continue
+		var chip: Control = _relic_tray.chip_of(String(relic.id))
+		if chip != null:
+			register_surface(relic, chip)
 
 
 # ── Clicks ────────────────────────────────────────────────────────────────────────────
@@ -905,6 +962,11 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 			ui.card_data = CardViewModel.unit_card(unit)
 			ui.refresh()
 		ui.set_status_views(CardViewModel.status_views(unit))
+		# The row's pips just re-composed: register each as its status's surface (R14) —
+		# the fresh generation's registration replaces the freed one's.
+		for pip: StatusPip in ui.status_pips():
+			if pip.view.subject != null:
+				register_surface(pip.view.subject, pip)
 		if slot_ui.get_card() != ui:
 			slot_ui.set_card(ui)
 		# The card derives its own selection ring from the authority (CardUI's self-poll,
@@ -921,6 +983,11 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 		# The menace read: this unit's own targeting resolves to the previewed pivot.
 		ui.set_threat_highlight(_menacing.has(unit))
 	slot_ui.set_ground(SlotViewModel.ground_view(slot))
+	# The ground's tabs likewise (R14); a duplicates pile registers in row order, so the
+	# newest tab stands — the same choice find_ground_pip makes.
+	for pip: StatusPip in slot_ui.ground_pips():
+		if pip.view.subject != null:
+			register_surface(pip.view.subject, pip)
 	# Cues: placement hints while the command is the player's to give; a pick's candidates wear
 	# the valid-target cue; the selected unit's would-be victim wears the attack crosshair.
 	slot_ui.set_open_hints(_span_active and _awaiting_command and not _picking)

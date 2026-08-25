@@ -66,8 +66,14 @@ func refresh() -> void:
 # A quick scale pop + brightness flash on a relic's chip — the "this relic fired" cue, played by
 # combat just before the relic's effects' VFX land. No-op if the relic isn't shown or isn't laid out.
 func glint(relic_id: String) -> void:
-	var chip: BaseButton = _chips.get(relic_id)
-	if chip == null or chip.size == Vector2.ZERO:
+	glint_chip(_chips.get(relic_id) as Control)
+
+
+# The same cue on the chip NODE — the shape the fight's R14 surface resolution holds (the
+# presenter's windup resolves a firing relic to its chip and asks the tray, the chip's
+# owner, to play the announce).
+func glint_chip(chip: Control) -> void:
+	if chip == null or not is_instance_valid(chip) or chip.size == Vector2.ZERO:
 		return
 	chip.pivot_offset = chip.size * 0.5
 	var tw := create_tween()
@@ -76,6 +82,12 @@ func glint(relic_id: String) -> void:
 	tw.tween_property(chip, "modulate", Color(1.7, 1.7, 1.7), 0.12)
 	tw.chain().tween_property(chip, "scale", Vector2.ONE, 0.22).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(chip, "modulate", Color.WHITE, 0.22)
+
+
+# The chip standing for a relic id, null when the tray shows none — what the fight screen
+# keys its Relic entity's R14 surface registration to at tray build.
+func chip_of(relic_id: String) -> Control:
+	return _chips.get(relic_id) as Control
 
 
 # "Relics 2/5" — the at-a-glance read of how many slots are used and how many remain. The vertical

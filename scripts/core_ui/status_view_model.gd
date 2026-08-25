@@ -14,6 +14,7 @@ extends RefCounted
 static func pip_view(status: Status) -> StatusPipView:
 	var view := StatusPipView.new()
 	view.id = String(status.status_id)
+	view.subject = status
 	view.stacks = maxi(roundi(status.get_stat(&"stacks")), 1)
 	view.count = view.stacks
 	view.show_stacks = false
