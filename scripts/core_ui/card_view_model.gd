@@ -9,13 +9,13 @@ extends RefCounted
 
 # A unit's card face: the live core stats bridged into the CardData shape CardUI renders.
 # Rebuilt on every refresh — the face mirrors the world's current numbers, not the authored
-# ones. The empty id keeps CardData's locale lookup silent; display_name carries the name.
-# Composition stays empty for now: the core's card envelope carries no `elements` birth fact
-# yet (its roster is id/name/stats/building/king/effects/abilities) — the face grows chips
-# when the envelope grows the fact, with no change to CardUI.
+# ones. The face's presentation identity comes from the authored seat (_authored_face):
+# with the catalogue converted, a core entity's id names its catalogue card, whose art,
+# locale identity, and chess pieces dress the face; composition elements come from the
+# core's `elements` birth fact (A7). An id with no catalogue seat (the slice's working
+# labels) renders bare, display_name carrying the name.
 static func unit_card(unit: Unit) -> CardData:
-	var data := CardData.new()
-	data.display_name = unit.display_name
+	var data := _authored_face(unit)
 	data.cost = roundi(unit.get_stat(&"cost"))
 	data.attack = roundi(unit.get_stat(&"attack"))
 	data.health = roundi(unit.get_stat(&"health"))
@@ -23,6 +23,21 @@ static func unit_card(unit: Unit) -> CardData:
 	data.shield = roundi(unit.get_stat(&"shield"))
 	data.is_king = unit.is_king
 	data.card_type = CardData.CardType.UNIT
+	return data
+
+
+# A fresh CardData carrying the presentation identity — never the registry's own object
+# (the face takes live stat overrides; the registry must keep the authored numbers).
+static func _authored_face(card: Card) -> CardData:
+	var data := CardData.new()
+	data.display_name = card.display_name
+	for element: StringName in card.elements:
+		data.elements.append(String(element))
+	var authored: CardData = CardData.get_card(String(card.id))
+	if authored != null:
+		data.id = authored.id
+		data.art_path = authored.art_path
+		data.chess_pieces = authored.chess_pieces.duplicate()
 	return data
 
 
@@ -36,8 +51,7 @@ static func status_views(unit: Unit) -> Array[StatusPipView]:
 static func card_face(card: Card) -> CardData:
 	if card is Unit:
 		return unit_card(card as Unit)
-	var data := CardData.new()
-	data.display_name = card.display_name
+	var data := _authored_face(card)
 	data.cost = roundi(card.get_stat(&"cost"))
 	data.card_type = CardData.CardType.SPELL
 	return data

@@ -4,7 +4,7 @@ extends RefCounted
 # The registry of authored content in the A7 envelope: one object per card — identity
 # (id, display name); kind (`unit` or `spell`, deciding the constructed type); stats as
 # a name→value map seeding construction, validated against the type's declared lists;
-# birth facts where the type bears them (`building`, `king`); `effects` — a list of the
+# birth facts where the type bears them (`building`, `king`, `elements` — A7, T1); `effects` — a list of the
 # bible's effect markup; `abilities` — a list of the Core §7 ability form. Relics and
 # statuses use the same envelope minus kind. Strangers refused loudly.
 #
@@ -40,7 +40,7 @@ static func register_status(envelope: Dictionary) -> bool:
 
 
 static func _register(envelope: Dictionary, into: Dictionary, carded: bool) -> bool:
-	var allowed: Array = ["id", "name", "stats", "building", "king", "effects", "abilities"]
+	var allowed: Array = ["id", "name", "stats", "building", "king", "elements", "effects", "abilities"]
 	if carded:
 		allowed.append("kind")
 	for key: String in envelope:
@@ -63,7 +63,13 @@ static func _register(envelope: Dictionary, into: Dictionary, carded: bool) -> b
 		"king": bool(envelope.get("king", false)),
 		"effects": [] as Array[Effect],
 		"abilities": envelope.get("abilities", []),
+		"elements": [] as Array[StringName],
 	}
+	for element: Variant in envelope.get("elements", []):
+		if not (element is String):
+			push_error("ContentLibrary: '%s': an element must be a string — refused" % id)
+			return false
+		(parsed.elements as Array[StringName]).append(StringName(element))
 	for markup: Variant in envelope.get("effects", []):
 		if not (markup is Dictionary):
 			push_error("ContentLibrary: '%s': an effect must be an object — refused" % id)
@@ -129,6 +135,8 @@ static func _dress(entity: GameEntity, parsed: Dictionary) -> void:
 	entity.display_name = parsed.name
 	for stat: String in (parsed.stats as Dictionary):
 		entity.seed_stat(StringName(stat), float(parsed.stats[stat]))
+	if entity is Card:
+		(entity as Card).elements = (parsed.elements as Array[StringName]).duplicate()
 	entity.effects.append_array(parsed.effects as Array[Effect])
 	entity.effects.append_array(parsed.ability_effects as Array[Effect])
 	for ability_name: StringName in (parsed.ability_names as Array[StringName]):

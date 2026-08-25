@@ -19,6 +19,10 @@ extends GameEntity
 
 var play_effect: Effect = null
 
+# Composition (A7's envelope birth fact; T1): the card's elements, stamped at build
+# from the envelope and never rewritten — an immutable birth fact at this scope.
+var elements: Array[StringName] = []
+
 # One play effect per TYPE, not per card: the machinery is stateless and shared across
 # card copies and simulated worlds (Mutation §4's lifecycle) — built once per concrete
 # class (the targeting default is the type fact that differs).

@@ -542,4 +542,58 @@ effects/abilities), so a fielded face composes no composition chips until the
 envelope grows the fact — an engine-side matter for its own ruling, not a UI
 edit. The widget side is proven with injected data regardless.</p>
 
+<h2>2026-08-24 — The catalogue converts (A7): real content in the fight</h2>
+
+<p>Enrra's order: adapt the actual units to the new system — testing on the
+slice's placeholders had run out of road. The signed ground was re-read
+first: A7's text names <code>elements</code> among the envelope's birth
+facts and states "the existing catalogue converts at the parity migration" —
+so the pass is conforming code to signed words, not new rulings. Also
+surfaced and acknowledged by Enrra before the work: A6 makes the main action
+fixed machinery, so every converted unit attacks with the one
+attack-preference ordering — the old per-card targeting variety
+(leap/wounded/tank/threat, 380 stamps) has no road until A6 is amended;
+Enrra: amend later, proceed ruled.</p>
+
+<ul>
+  <li><b>The elements birth fact</b>: <code>Card.elements</code>
+      (Array[StringName], stamped at build, never rewritten — A7, T1);
+      ContentLibrary admits the <code>elements</code> envelope key, parses it
+      strict, and stamps it in <code>_dress</code> on Cards only.</li>
+  <li><b>CardCatalogue</b> (scripts/card_catalogue.gd, new): maps every
+      loaded CardData into an A7 envelope — CardData stays the authority on
+      the old schema and its derivations (spell kind, derived stats, the
+      enabled kill-switch). Units seed cost/attack/health/speed,
+      max_health = authored health, shield where authored; spells seed cost
+      only. Building = the rook fact; king carries. <b>Dropped, declared:</b>
+      the old files' <code>effects</code>/<code>abilities</code> entries are
+      reference strings into definitions exterminated at the A11 swap —
+      nothing exists behind them to convert; effect-bearers return as
+      authored waves through the dictionary gate.</li>
+  <li><b>The stubbed real fight</b>: FightScreen's unconfigured boot now runs
+      <code>real_fight()</code> — the whole converted catalogue registered, a
+      deterministic 12-unit cross-section deck (cheapest to dearest) under
+      the classic King, against the first tribe fielding a captain and six
+      fodder (the aliens, as sorted). The stub decks are working stand-ins
+      with no design authority; run-originated decks arrive with the loop
+      hookup. Spells are excluded from the stub deck — effect-less, they
+      would be dead weight. The slice's fixed fight stays authored; the
+      scripted slice test still consumes it.</li>
+  <li><b>The face takes its authored seat</b>: CardViewModel's bridge now
+      dresses each face from the catalogue card its core id names — art,
+      locale identity, chess pieces — with composition chips from the core's
+      new elements fact and the live numbers on top; the registry's own
+      object is never mutated. An id with no catalogue seat (the slice's
+      working labels) renders bare as before. This closes the previous
+      entry's flagged elements gap.</li>
+  <li><b>Proof</b>: tests/test_catalogue.gd — all 769 register and build,
+      kind/birth-facts/stats carried true, spot checks, Genesis accepts the
+      stub fight. Suite 618/0; dev/_fight_slots_shot renders real cards with
+      art standing in the fight.</li>
+</ul>
+
+<p><b>Presentation-side note (H3 ground):</b> <code>chess_pieces</code> are
+not in the signed envelope — the face reads them from the authored CardData
+seat as presentation dressing only; no core code touches them.</p>
+
 </div>

@@ -11,10 +11,11 @@ extends Control
 #
 # The launcher states the fight: FightScreen.next_fight = {"seed": int, "content":
 # {"cards": [envelopes], "statuses": [...], "relics": [...]}, "player": <Genesis side
-# config>, "enemy": <...>}. Unconfigured, the screen runs THE SLICE'S FIXED FIGHT
-# (data/slice_fight.json — IMPLEMENTATION_PLAN §1: the slice runs as a fixed fight
-# launched from the existing shell; wiring into real runs is parity work). A missing
-# slice file refuses loudly and stands empty.
+# config>, "enemy": <...>}. Unconfigured, the screen runs A STUBBED REAL-CONTENT FIGHT
+# (real_fight below — parity order step 2: the catalogue converted through
+# CardCatalogue, stub decks in place of the run-originated ones that arrive with the
+# loop hookup). The slice's fixed fight (data/slice_fight.json) remains authored and
+# loadable — the scripted slice test consumes it.
 
 const SLICE_FIGHT_PATH := "res://data/slice_fight.json"
 
@@ -62,6 +63,65 @@ static func slice_fight() -> Dictionary:
 		push_error("FightScreen: %s does not parse" % SLICE_FIGHT_PATH)
 		return {}
 	return parsed
+
+
+# The stubbed real-content fight: the whole converted catalogue registered as the
+# fight's content, stub decks of actual units (spells carry no effects yet — dead
+# weight in a deck — so units only), the classic King against a tribe's captain and
+# fodder. The decks are a working stand-in with no design authority; run-originated
+# decks replace them at the loop hookup.
+static func real_fight() -> Dictionary:
+	var units: Array[CardData] = []
+	var fodder: Dictionary = {}   # tribe → Array[CardData]
+	var captains: Dictionary = {}   # tribe → CardData
+	for entry: Variant in CardData.all():
+		var card: CardData = entry
+		if card.card_type != CardData.CardType.UNIT:
+			continue
+		if card.enemy_only:
+			if card.is_king:
+				if not captains.has(card.tribe):
+					captains[card.tribe] = card
+			else:
+				var pool: Array = fodder.get(card.tribe, [])
+				pool.append(card)
+				fodder[card.tribe] = pool
+		elif not card.is_king:
+			units.append(card)
+	# The player's deck: a deterministic cross-section of the catalogue's units,
+	# cheapest to dearest.
+	units.sort_custom(func(a: CardData, b: CardData) -> bool:
+		return a.cost < b.cost if a.cost != b.cost else a.id < b.id)
+	var deck: Array[String] = []
+	var stride: int = maxi(1, units.size() / 12)
+	for i: int in range(0, units.size(), stride):
+		deck.append(units[i].id)
+		if deck.size() == 12:
+			break
+	# The enemy: the first tribe (by name) fielding both a captain and enough fodder.
+	var tribes: Array = captains.keys()
+	tribes.sort()
+	var enemy_deck: Array[String] = []
+	var enemy_king := ""
+	for tribe: Variant in tribes:
+		var pool: Array = fodder.get(tribe, [])
+		if pool.size() < 6:
+			continue
+		enemy_king = (captains[tribe] as CardData).id
+		pool.sort_custom(func(a: CardData, b: CardData) -> bool:
+			return a.cost < b.cost if a.cost != b.cost else a.id < b.id)
+		for card: Variant in pool.slice(0, 8):
+			enemy_deck.append((card as CardData).id)
+		break
+	if deck.is_empty() or enemy_king.is_empty():
+		push_error("FightScreen: the catalogue yields no stub fight")
+		return {}
+	return {
+		"seed": 20260824,
+		"content": {"cards": CardCatalogue.envelopes()},
+		"player": {"deck": deck, "units": [{"id": "king", "slot": [1, 0]}]},
+		"enemy": {"deck": enemy_deck, "units": [{"id": enemy_king, "slot": [1, 0]}]},
+	}
 
 var world: World = null
 
@@ -148,7 +208,7 @@ func _ready() -> void:
 	# authority moves — the cards themselves re-derive their ring on their own poll.
 	Selection.changed.connect(_on_selection_changed)
 	if next_fight.is_empty():
-		next_fight = slice_fight()
+		next_fight = real_fight()
 	if next_fight.is_empty():
 		_state_label.text = "No fight configured."
 		return
