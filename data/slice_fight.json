@@ -91,7 +91,7 @@
       },
       {
         "id": "captain", "name": "Captain", "kind": "unit", "king": true,
-        "stats": {"cost": 0, "attack": 1, "health": 30, "max_health": 30, "shield": 3, "speed": 3}
+        "stats": {"cost": 0, "attack": 1, "health": 30, "max_health": 30, "shield": 1, "speed": 3}
       }
     ],
     "statuses": [

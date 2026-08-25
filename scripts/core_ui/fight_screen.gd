@@ -537,6 +537,97 @@ func _on_hand_clicked(card: Card) -> void:
 		commanded.emit(Event.new(&"play", card))
 
 
+# ── The idle click (the old combat's _input road, on the new surfaces) ────────────────
+
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb := event as InputEventMouseButton
+	if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+		if _picking:
+			# The core's pick prompt is the aiming session now: right-click is its cancel.
+			_on_cancel_pick()
+			get_viewport().set_input_as_handled()
+		elif _interaction.modal_active():
+			_interaction.end_action()
+			get_viewport().set_input_as_handled()
+		elif not get_viewport().gui_is_dragging() and not _click_engages(true):
+			# The universal back-out: a right-click that does NOT itself engage anything
+			# (a card's details view) clears the selection, the inspection, and whatever
+			# selection action was live.
+			_hand.dismiss_to_hand()
+			_interaction.end_action()
+			get_viewport().set_input_as_handled()
+	elif mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+		_maybe_dismiss_idle_click()
+
+
+# Whether a click at the cursor's position ENGAGES an interactive control rather than landing
+# on dead panel/background space — walked up from the GUI's actual hovered control, so it
+# needs no registry of rects. Left clicks engage cards, buttons, scrollbars and the
+# turn-order strip (its entries press the units they stand for — see press_unit; a strip
+# press this rule dismissed FIRST turned "toggle off" into clear-then-reselect); right
+# clicks only cards (the details view — the others don't respond to right-click).
+func _click_engages(right_click: bool = false) -> bool:
+	var c := get_viewport().gui_get_hovered_control()
+	while c != null:
+		if c is CardUI:
+			return true
+		if not right_click and (c is BaseButton or c is ScrollBar or c is TurnOrderStrip):
+			return true
+		c = c.get_parent() as Control   # a non-Control ancestor ends the walk
+	return false
+
+
+# THE non-interactive-click rule: a click that engages nothing clears the pick (the inspect
+# panel goes with it, by derivation) — at any nav level, pick prompt open or not. What
+# "engages", walked in order below: a click that will commit the live action; a slot with a
+# unit on it (its own press names the new pick); anything interactive under the cursor
+# (card, button, scrollbar). An EMPTY slot engages nothing — it is board-shaped dead space,
+# exactly the "click on nothing" this exists to catch.
+#
+# A geometric test in _input, NOT _unhandled_input: background panels/gauges consume clicks
+# they do nothing with (STOP mouse filters), so unhandled-input never fires over most of the
+# screen. Fires on RELEASE (where slots/cards act); skipped mid-drag (a failed drop must not
+# also close the view).
+func _maybe_dismiss_idle_click() -> void:
+	if get_viewport().gui_is_dragging():
+		return
+	var slot := _slot_ui_at_mouse()
+	# A click that will COMMIT the live action is not a click on nothing: clicking a landing
+	# spot while a hand card is selected must engage the placement, not dismiss it (this
+	# _input runs BEFORE GUI delivery — clearing here would leave the slot press nothing to
+	# commit). Only for actions that accept click commits: a drag-only destination cue
+	# (repositioning) eats no taps.
+	if _interaction.active() and slot != null and _interaction.current().click_commit:
+		var role := _interaction.role_of(slot)
+		if role == Interaction.Role.DESTINATION or role == Interaction.Role.TARGET_VALID:
+			return
+	if slot != null and slot.get_card() != null:
+		return   # an occupied slot's press names the new pick itself
+	if _picking:
+		# The pick prompt owns presses ON slots: an invalid pick stays in the prompt
+		# (_on_slot_clicked) rather than reading as a dismissal.
+		if slot != null or _click_engages():
+			return
+		# A click on NOTHING while the prompt is open cancels the ask exactly as its Cancel
+		# button does; the pick — whose consequence the prompt was — clears with it.
+		_on_cancel_pick()
+		_hand.dismiss_to_hand()
+		return
+	if _click_engages():
+		return   # the control under the cursor acts on its own behalf, whatever the level
+	_hand.dismiss_to_hand()
+
+
+func _slot_ui_at_mouse() -> SlotUI:
+	var at := get_global_mouse_position()
+	for address: Vector3i in _slot_uis:
+		if (_slot_uis[address] as SlotUI).get_global_rect().has_point(at):
+			return _slot_uis[address]
+	return null
+
+
 func _on_ability_clicked(ability_name: StringName) -> void:
 	var selected: Unit = _selected_unit()
 	if _span_active and _awaiting_command and selected != null \

@@ -131,8 +131,14 @@ static func set_grown(widget: Control, on: bool, scale_override: float = 0.0) ->
 	var grow: float = scale_override if scale_override > 0.0 \
 			else float(widget.get_meta(GROW_META, Vfx.param_of("highlight", "scale", 1.15)))
 	if on:
-		rec = {"on": true, "scale": widget.scale, "pivot": widget.pivot_offset,
-				"z": widget.z_index}
+		# A re-grow can land while the previous shrink is still easing (a clear-then-select
+		# in one frame) — the widget's CURRENT transform is then a transient, not its rest.
+		# The standing record still holds the true rest until the shrink's finish erases it;
+		# re-use it instead of resampling, or every round-trip would bake the grown scale in
+		# as the new rest and compound without bound.
+		rec = {"on": true, "scale": rec.get("scale", widget.scale),
+				"pivot": rec.get("pivot", widget.pivot_offset),
+				"z": rec.get("z", widget.z_index)}
 		widget.set_meta(GROWN_META, rec)
 		widget.pivot_offset = widget.size * 0.5   # grow evenly from the centre
 		widget.z_index = int(rec["z"]) + Z_LIFT

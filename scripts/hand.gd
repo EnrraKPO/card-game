@@ -677,7 +677,24 @@ func set_card_size(s: Vector2) -> void:
 	if s == _card_size:
 		return
 	_card_size = s
-	if _panel != null:
-		_panel.custom_minimum_size.y = s.y + PAD_TOP
+	if _panel == null:
+		return
+	# EVERY height driver inside the bar re-fixes here (the original bar's rule): the bar's
+	# height is a function of the card size and nothing else — content must never be left
+	# holding a stale, taller minimum that grows the bar and pushes the board.
+	_panel.custom_minimum_size.y = s.y + PAD_TOP
+	_no_abilities_lbl.custom_minimum_size.y = s.y
 	for ui: CardUI in _hand_cards:
 		ui.custom_minimum_size = s
+	# Tokens and Abilities-list entries ride the shrunk tray size (clears the bottom crop
+	# whole — see _tray_card_size), so keep them there on resize instead of re-inflating.
+	var tray := _tray_card_size()
+	for token: Control in _gen_cards:
+		if is_instance_valid(token):
+			token.custom_minimum_size = tray
+	for ui: CardUI in _ability_entries:
+		if is_instance_valid(ui):
+			ui.custom_minimum_size = tray
+	# The sidebar's text is fitted against the bar's height, which derives from the card
+	# size — a resize re-fits it.
+	_fit_desc_width()

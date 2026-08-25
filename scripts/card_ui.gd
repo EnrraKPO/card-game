@@ -638,7 +638,13 @@ func _apply_stat_tooltips() -> void:
 
 
 func _refresh_composition() -> void:
+	# Removed BEFORE the deferred free (as _refresh_statuses does): a queue-freed child is
+	# still a laid-out member of the row until end of frame, and refresh() can run several
+	# times within one — the stale generations stacked into a chip chain hanging below the
+	# card, which the Highlight's silhouette bake (a mid-frame duplicate) then froze into
+	# the selection ring.
 	for child in _comp_row.get_children():
+		_comp_row.remove_child(child)
 		child.queue_free()
 	for el: String in card_data.elements:
 		_comp_row.add_child(_make_comp_chip(el, true))
@@ -720,7 +726,9 @@ func _refresh_charms() -> void:
 		_charm_col.offset_bottom = 0.0
 		_canvas.add_child(_charm_col)
 
+	# Removed before the deferred free, same as the composition chips above — see there.
 	for child in _charm_col.get_children():
+		_charm_col.remove_child(child)
 		child.queue_free()
 	for charm_id: String in charm_ids:
 		_charm_col.add_child(_make_charm_pip(charm_id))
@@ -827,7 +835,9 @@ func derive_presentation() -> void:
 	# projection of the unit, not the unit being pointed at.
 	var ctx := FightScreen.current
 	var slot := get_parent() as SlotUI
-	var unit := view_subject as Unit
+	# `is`, not `as`: view_subject is an identity TOKEN and not every view's is an entity —
+	# the deck screens key their views by card id (a String), which `as Unit` errors on.
+	var unit: Unit = view_subject if view_subject is Unit else null
 	var occupant: bool = unit != null and slot != null and slot.get_card() == self
 	var spotlit: bool = ctx != null and occupant and ctx.is_spotlit(unit)
 	# The whole activation order, written on the units themselves while the player reads
@@ -860,7 +870,9 @@ const PLATE_ALPHA := 0.5
 # the old owner int died with CardInstance (allegiance is the birth fact, asked of the
 # standing fight screen).
 func _owner_id() -> int:
-	var unit := view_subject as Unit
+	# `is`, not `as` — the deck screens' views carry a String token here (see
+	# derive_presentation).
+	var unit: Unit = view_subject if view_subject is Unit else null
 	if unit == null or FightScreen.current == null:
 		return 0
 	return FightScreen.current.owner_of(unit)

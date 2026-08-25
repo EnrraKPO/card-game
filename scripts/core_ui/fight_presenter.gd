@@ -70,9 +70,6 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 		# The old yank guard: a choreography whose actor has no card on screen SKIPS its
 		# show outright — the delivery still resolves; rules never depend on the show. A
 		# side-held effect (a relic, the hourglass) lands its cues without an approach.
-		if visual == &"glint" or visual == &"bolt" or visual == &"lunge":
-			return
-		await _screen.beat(visual, recipients, 0.35)
 		return
 	match visual:
 		&"glint":
@@ -88,7 +85,10 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 			await _lunge(source_ui, _screen.card_of(recipients[0])
 					if not recipients.is_empty() else null)
 		_:
-			await _screen.beat(visual, recipients, 0.35)
+			# A windup with no authored choreography shows nothing and HOLDS nothing —
+			# only an actual show may spend the player's time (authoring the look is what
+			# buys the beat back).
+			pass
 
 
 # The old lunge whole: overshoot PAST the attack position along the approach line so the
@@ -130,8 +130,7 @@ func _lunge(source_ui: CardUI, target_ui: CardUI) -> void:
 # turn boundary); the shake belongs to the DAMAGE moment, on the struck card, where the
 # old solution kept it (see FightScreen.play_cue).
 func contact(_visual: StringName, _source: GameEntity,
-		recipients: Array[GameEntity]) -> void:
-	await _screen.beat(_visual, recipients, 0.2)
+		_recipients: Array[GameEntity]) -> void:
 	_screen.refresh()
 
 
@@ -143,7 +142,9 @@ func conclude(_visual: StringName, _source: GameEntity) -> void:
 	# windup has already taken the fact, and must not be cleared by the earlier retreat).
 	if _screen.acting != null and _screen.acting == _source:
 		_screen.acting = null
-	var hold := 0.1
+	# The only hold here is the retreat's own handoff — a conclusion without a show in
+	# flight spends no time at all.
+	var hold := 0.0
 	if _ghost != null and is_instance_valid(_ghost):
 		var ghost: CardUI = _ghost
 		var source_ui: CardUI = _ghost_source
@@ -160,5 +161,6 @@ func conclude(_visual: StringName, _source: GameEntity) -> void:
 		hold = Vfx.handoff(CombatAnimator.RETREAT_DUR)
 	_ghost = null
 	_ghost_source = null
-	await _screen.beat(&"", [], hold)
+	if hold > 0.0:
+		await _screen.beat(&"", [], hold)
 	_screen.refresh()

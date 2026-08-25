@@ -92,6 +92,15 @@ static func _register(envelope: Dictionary, into: Dictionary, carded: bool) -> b
 	return true
 
 
+# The authored stat value from a card's registered envelope — the shield recovery
+# rule's read (Combat Frame §4, A13). Zero where the id or the stat is unauthored.
+static func authored_stat(id: StringName, stat: StringName) -> float:
+	var parsed: Dictionary = _cards.get(id, {})
+	if parsed.is_empty():
+		return 0.0
+	return float((parsed.stats as Dictionary).get(String(stat), 0.0))
+
+
 # ── Build: a fresh entity from the parsed definition ───────────────────────────────────
 
 static func build_card(id: StringName, side: Side) -> Card:

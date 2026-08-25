@@ -2,7 +2,7 @@ extends TestCase
 
 # Phase 5a of IMPLEMENTATION_PLAN.html — the combat frame (Combat Frame Design, signed).
 # Pins the clock's round — opening, command spans, combat span in activation order with
-# pass-over — the five base rules in declared order, genesis as construction, the
+# pass-over — the six base rules in declared order, genesis as construction, the
 # fight's ending on a king's death, the A7 envelope through the ContentLibrary, and the
 # world's copy.
 
@@ -15,6 +15,7 @@ func run() -> void:
 	_register_content()
 	_test_envelope()
 	await _test_round_flow()
+	await _test_shield_recovery()
 	await _test_fight_ends()
 	await _test_pass_over()
 	_test_copy()
@@ -30,6 +31,9 @@ func _register_content() -> void:
 	check(ContentLibrary.register_card({"id": "tower", "name": "Tower", "kind": "unit",
 			"building": true, "stats": {"cost": 2, "attack": 0, "health": 8, "speed": 0}}),
 			"a building registers")
+	check(ContentLibrary.register_card({"id": "guard", "name": "Guard", "kind": "unit",
+			"stats": {"cost": 1, "attack": 1, "health": 4, "speed": 1, "shield": 3}}),
+			"a shielded unit registers")
 
 
 func _test_envelope() -> void:
@@ -93,6 +97,36 @@ func _test_round_flow() -> void:
 	await world.clock.run_round()
 	check_eq(world.game.get_stat(&"round"), 2.0, "the next round opens after the span's last moment")
 	check_eq(player_king.get_stat(&"health"), 18.0, "the untap rule freed the second round's acts")
+
+
+# The shield recovery rule (Combat Frame §4, A13): the opening raises a fielded unit's
+# shield to its authored value — a raise, never a drain.
+func _test_shield_recovery() -> void:
+	var world := World.new(24)
+	var player_config: Dictionary = {
+		"deck": ["squire", "squire", "squire", "squire"],
+		"units": [{"id": "king", "slot": [1, 0]}, {"id": "guard", "slot": [0, 0]}],
+	}
+	var enemy_config: Dictionary = {
+		"deck": ["squire", "squire", "squire", "squire"],
+		"units": [{"id": "king", "slot": [1, 0]}],
+	}
+	check(Genesis.setup(world, player_config, enemy_config), "genesis fields the shielded guard")
+	var guard := world.board_manager.slot_at(Vector3i(0, 0, 0)) \
+			.get_container(&"slotted_unit").members[0] as Unit
+	check_eq(guard.get_stat(&"shield"), 3.0, "the envelope seeds the authored shield")
+
+	MutationEngine.submit(DamageRequest.new(&"test", null, guard, 2))
+	check_eq(guard.get_stat(&"shield"), 1.0, "damage spends the shield first")
+
+	await world.cascade.fire(Event.new(&"round_started", world.game))
+	check_eq(guard.get_stat(&"shield"), 3.0,
+			"the shield recovery rule raises the shield to its authored value")
+
+	MutationEngine.submit(StatMutationRequest.new(&"test", null, guard, &"shield", 4))
+	await world.cascade.fire(Event.new(&"round_started", world.game))
+	check_eq(guard.get_stat(&"shield"), 7.0,
+			"shield standing above the authored value stays — a raise, never a drain")
 
 
 func _test_fight_ends() -> void:
