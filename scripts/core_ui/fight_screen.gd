@@ -168,6 +168,90 @@ var _hand: Hand = null
 var _vfx: VFXPlayer = null
 # The salvaged motion choreographer (see CombatAnimator): attacker ghosts and shakes.
 var _animator: CombatAnimator = null
+# The salvaged turn-order strip in the halves gutter (see TurnOrderStrip).
+var _turn_strip: TurnOrderStrip = null
+
+# ── The strip's board-side seams (salvaged surfaces, re-homed from the old CombatBoard) ─
+
+# The unit whose moment is being resolved RIGHT NOW — the strip's gold entry. Derived from
+# the A12 beat stream: the presenter records the acting holder at each AUTHORED windup and
+# clears it at that source's conclusion (the machinery's unnamed beats — untap and its
+# round-opening kin — name no actor and light nothing). The old CombatWorld.acting was the
+# cascade's own pointer; the beats are where that fact reaches presentation now.
+var acting: Unit = null
+
+# ── The declared SPOTLIGHT ────────────────────────────────────────────────────────────
+# "Which unit is being pointed AT from somewhere else on the screen" — the turn-order strip's
+# hover (see TurnOrderStrip). A declaration, not a push: the screen holds the one answer
+# and every card derives its own look from it, so a lit unit cannot outlive the gesture
+# that lit it and no teardown path has to remember to unlight anything.
+var _spotlight: Unit = null
+
+
+func declare_spotlight(unit: Unit) -> void:
+	if unit == _spotlight:
+		return
+	_spotlight = unit
+
+
+func is_spotlit(unit: Unit) -> bool:
+	return unit != null and unit == _spotlight
+
+
+# ── The declared TURN NUMBERS ─────────────────────────────────────────────────────────
+# "Is the player reading the activation order right now, and if so what is it" — declared by
+# the TurnOrderStrip while the cursor rests on it, so every unit can wear its own place in
+# the order where it stands and the list stops being a thing you look BACK AND FORTH at.
+#
+# The screen does NOT sort: it is handed the order the strip already got from
+# CombatCascade.turn_order (the one sort — see TurnOrderStrip), and only flattens it to a
+# lookup so a card asking for its own number costs a hash rather than a sort.
+var _turn_numbers: Dictionary = {}
+
+
+func declare_turn_numbers(order: Array) -> void:
+	var next: Dictionary = {}
+	for i in order.size():
+		next[order[i]] = i + 1
+	if next == _turn_numbers:
+		return
+	_turn_numbers = next
+
+
+# This unit's place in the declared order, or 0 for "nothing is being declared" / not listed.
+func turn_number(unit: Unit) -> int:
+	return int(_turn_numbers.get(unit, 0))
+
+
+# The UNIT under the cursor, or null — the board half of "what has the player's attention",
+# asked by the turn-order strip so pointing at a card on the field lights its entry in the
+# list (the mirror of pointing at an entry lighting the card; see TurnOrderStrip). ASKED,
+# not declared: the screen has no reason to hold this and nothing else wants it, so a query
+# costs the one caller its own rect tests rather than costing the screen a state to keep
+# correct.
+func unit_at_mouse() -> Unit:
+	var at := get_global_mouse_position()
+	for address: Vector3i in _slot_uis:
+		var slot_ui: SlotUI = _slot_uis[address]
+		if not slot_ui.get_global_rect().has_point(at):
+			continue
+		if slot_ui.get_card() == null:
+			return null
+		return SlotViewModel.occupant(world.board_manager.slot_at(address))
+	return null
+
+
+# "The player pressed this unit" — from somewhere that isn't the unit's own slot (the
+# turn-order strip, whose entries stand for units the cursor never has to reach). Routed
+# through the SAME slot-click path every real press takes, so the Interaction session still
+# gets first refusal and the inspect/select behaviour is whatever clicking the card itself
+# does, by construction rather than by a second implementation kept in step with the first.
+func press_unit(unit: Unit) -> void:
+	if unit == null or world == null:
+		return
+	var standing: Vector3i = TargetResolver.standing_address(unit)
+	if standing.x >= 0 and _slot_uis.has(standing):
+		_on_slot_clicked(standing)
 
 var _span_active: bool = false
 var _awaiting_command: bool = false
@@ -227,6 +311,8 @@ func _ready() -> void:
 	world.picker = UiPicker.new(self)
 	world.clock.player_commander = PlayerCommander.new(self)
 	world.clock.enemy_commander = EnemyCommander.new()
+	_turn_strip.world = world
+	_turn_strip.screen = self
 	if not Genesis.setup(world, fight.get("player", {}), fight.get("enemy", {})):
 		_state_label.text = "Genesis refused the fight's configuration."
 		return
@@ -711,8 +797,8 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 		ui.draggable = unit.allegiance == world.player_side() and not unit.is_building
 		if ui.draggable:
 			_wire_unit_drag(ui)
-		# A tapped (exhausted) unit dims.
-		ui.modulate = Color(0.55, 0.55, 0.6) if unit.get_stat(&"tapped") > 0.0 else Color.WHITE
+		# A tapped (exhausted) unit dims — the shared spent grey the strip's entries wear too.
+		ui.set_exhausted(unit.get_stat(&"tapped") > 0.0)
 		# The menace read: this unit's own targeting resolves to the previewed pivot.
 		ui.set_threat_highlight(_menacing.has(unit))
 	slot_ui.set_ground(SlotViewModel.ground_view(slot))
@@ -1056,9 +1142,10 @@ func _halves_gap() -> float:
 
 
 # The column standing between the player and enemy halves: the hard line the two fields
-# meet at, and the turn-order strip's home. Framed like the relic strip and the mana gauge
-# so the three read as one family of side rails. The strip itself was exterminated with
-# the demoted layer — its seat stands empty until its own recovery pass (H3).
+# meet at, and the turn-order strip's home (salvaged — see TurnOrderStrip). Framed like the
+# relic strip and the mana gauge so the three read as one family of side rails. The strip
+# fills the frame behind a small padding; its world/screen handles are injected once the
+# world exists (see _ready).
 func _build_halves_gutter() -> Control:
 	var gutter := Panel.new()
 	gutter.custom_minimum_size.x = _halves_gutter_w()
@@ -1070,6 +1157,14 @@ func _build_halves_gutter() -> Control:
 	track.set_border_width_all(2)
 	track.border_color = ScreenUI.MANA_TRACK_BORDER
 	gutter.add_theme_stylebox_override("panel", track)
+	_turn_strip = TurnOrderStrip.new()
+	_turn_strip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# The strip's own padding inside the frame — the entries out-dent past it (BLEED).
+	_turn_strip.offset_left = 5.0
+	_turn_strip.offset_right = -5.0
+	_turn_strip.offset_top = 8.0
+	_turn_strip.offset_bottom = -8.0
+	gutter.add_child(_turn_strip)
 	return gutter
 
 

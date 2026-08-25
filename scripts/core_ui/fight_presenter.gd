@@ -54,6 +54,10 @@ func unpause() -> void:
 # windup name — glint flares the source, bolt flies source→victim, lunge sends the ghost
 # in), and every recipient wears the tinted target reticle that leads its hit.
 func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity]) -> void:
+	# The acting fact for the turn-order strip's gold entry (see FightScreen.acting):
+	# an AUTHORED windup names its actor's moment; machinery's unnamed beats name none.
+	if visual != &"" and source is Unit:
+		_screen.acting = source as Unit
 	_screen.refresh()
 	# Marks lead only AUTHORED windups: every delivery beats through here — the round
 	# machinery included (untap's recipients are the whole board) — and an unnamed windup
@@ -135,6 +139,10 @@ func contact(_visual: StringName, _source: GameEntity,
 # it (the old rule: standing around waiting for the victim to finish reacting is what made
 # a strike read as a stall); the ghost frees and the original returns at the glide's end.
 func conclude(_visual: StringName, _source: GameEntity) -> void:
+	# The actor's moment closes with its conclusion — only its own (an overlapping later
+	# windup has already taken the fact, and must not be cleared by the earlier retreat).
+	if _screen.acting != null and _screen.acting == _source:
+		_screen.acting = null
 	var hold := 0.1
 	if _ghost != null and is_instance_valid(_ghost):
 		var ghost: CardUI = _ghost

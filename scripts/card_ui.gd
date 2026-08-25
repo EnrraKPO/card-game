@@ -527,6 +527,17 @@ func set_phantom(on: bool) -> void:
 
 
 
+# THE look of "spent" — shared, because the turn-order strip greys a tapped unit's entry with it
+# too (see TurnOrderStrip._dress) and two definitions of tapped would drift apart.
+const EXHAUST_TINT := Color(0.6, 0.6, 0.68)
+
+
+# Dims a unit whose tapped stat stands raised, so it reads as "spent". The screen derives
+# it on every paint from the live stat (see FightScreen._paint_slot).
+func set_exhausted(exhausted: bool) -> void:
+	modulate = EXHAUST_TINT if exhausted else Color.WHITE
+
+
 # An inspected ENEMY unit's ability tokens are shown for information only — not castable.
 # IGNORE blocks click/hover/long-press-inspect entirely; the dimmed alpha (distinct from
 # set_exhausted's opaque grey) reads as "look, don't touch".
