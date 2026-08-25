@@ -25,6 +25,7 @@ func run() -> void:
 	_rebuild_only_on_a_changed_order()
 	_entries_dress_by_side_and_state()
 	_declarations_reach_the_screen()
+	await _cards_wear_the_declared_numbers()
 	_host.queue_free()
 	_host = null
 	Selection.clear()
@@ -57,6 +58,9 @@ func _strip() -> TurnOrderStrip:
 	strip.world = _world
 	_host.add_child(strip)
 	strip.size = Vector2(58, 700)
+	# Away from the origin: the headless cursor rests at (0,0), and a strip standing there
+	# would read as hovered — its per-frame rect test is doing its job, not a bug.
+	strip.position = Vector2(1600, 100)
 	return strip
 
 
@@ -127,4 +131,40 @@ func _declarations_reach_the_screen() -> void:
 	check(not screen.is_spotlit(first), "the spotlight dies with the gesture")
 	check_eq(screen.turn_number(first), 0, "the numbers die with the reading")
 	strip.queue_free()
+	screen.free()
+
+
+# The card-side half: a fielded unit's card wears its declared number while the list is
+# read, and sheds it — plate hidden — when the reading ends (see CardUI._refresh_turn_number).
+func _cards_wear_the_declared_numbers() -> void:
+	var screen := FightScreen.new()
+	FightScreen.current = screen
+	var strip := _strip()
+	strip.screen = screen
+	strip.refresh()
+	var unit: Unit = strip.listed()[0]
+	var slot_ui := SlotUI.new()
+	_host.add_child(slot_ui)
+	var card := CardUI.create(CardViewModel.unit_card(unit))
+	card.view_subject = unit
+	slot_ui.set_card(card)
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	card.derive_presentation()
+	check(card._turn_plate == null or not card._turn_plate.visible,
+			"no declaration, no plate")
+	strip.point_at(unit)
+	card.derive_presentation()
+	check(card._turn_plate != null and card._turn_plate.visible,
+			"reading the list writes the number on the card")
+	if card._turn_lbl != null:
+		check_eq(card._turn_lbl.text, "1", "the card wears its own place")
+	check(card._spotlit_now, "the pointed-at unit's card is spotlit")
+	strip.point_at(null)
+	card.derive_presentation()
+	check(card._turn_plate != null and not card._turn_plate.visible,
+			"the plate dies with the reading")
+	check(not card._spotlit_now, "the spotlight sheds with the gesture")
+	strip.queue_free()
+	slot_ui.queue_free()
+	FightScreen.current = null
 	screen.free()

@@ -814,12 +814,180 @@ func shed_hand_state() -> void:
 		_canvas.modulate = Color.WHITE   # neutral — neither the glow'd nor the dimmed hand look
 
 
-# The one derived presentation left on this view: selection. The card ASKS Selection
-# whether it is the pick and applies the answer — signals and reparents are only
-# "re-check now" cues, and the applier is idempotent.
+# The derived presentation on this view: selection, and — on a fielded board card while a
+# fight screen stands — the turn-order declarations. The card ASKS the authorities
+# (Selection; FightScreen.current for the spotlight and the declared numbers) and applies
+# the answers — signals and reparents are only "re-check now" cues, appliers idempotent.
 func derive_presentation() -> void:
 	refresh_playable()
 	_apply_selected(_pickable() and Selection.holds(subject()))
+	# The SPOTLIGHT: something elsewhere on the screen is pointing at this unit (the
+	# turn-order strip's hover — see FightScreen.declare_spotlight). Guarded to a slot's
+	# real occupant like the other board states — a landing phantom or a lunge ghost is a
+	# projection of the unit, not the unit being pointed at.
+	var ctx := FightScreen.current
+	var slot := get_parent() as SlotUI
+	var unit := view_subject as Unit
+	var occupant: bool = unit != null and slot != null and slot.get_card() == self
+	var spotlit: bool = ctx != null and occupant and ctx.is_spotlit(unit)
+	# The whole activation order, written on the units themselves while the player reads
+	# the strip (see FightScreen.declare_turn_numbers). Same guard as the spotlight: a
+	# landing phantom or a lunge ghost stands FOR a unit, it does not hold that unit's
+	# place in the round.
+	_refresh_turn_number(ctx.turn_number(unit) if ctx != null and occupant else 0)
+	# Ordered AFTER the number: the spotlight lights the plate, so the plate has to exist first.
+	_apply_spotlight(spotlit)
+
+
+# ── The turn number, worn on the card ───────────────────────────────────────────
+# While the player reads the turn-order strip, every listed unit says its own place in the round
+# right where it stands. Big and central on purpose: it is a TRANSIENT reading aid, alive only for
+# the length of the gesture that asked for it, so it may cover art the rest of the game needs — a
+# discreet corner pip would just be a second thing to hunt for, which is the problem this solves.
+# Styled from the strip's own constants so the tab in the list and the number on the board are
+# visibly the same statement.
+var _turn_plate: Panel = null
+var _turn_lbl: Label = null
+var _turn_plate_sb: StyleBoxFlat = null   # the plate's own skin — the spotlight opens its alpha
+
+const TURN_PLATE_SIZE := Vector2(120.0, 96.0)   # native card units (see NATIVE_SIZE)
+const TURN_FONT := 72
+const TURN_LINE_W := 7          # heavy, like the strip's own panels
+const PLATE_ALPHA := 0.5
+
+
+# Which half this view's unit fights for, as the strip's palette index — the seam where
+# the old owner int died with CardInstance (allegiance is the birth fact, asked of the
+# standing fight screen).
+func _owner_id() -> int:
+	var unit := view_subject as Unit
+	if unit == null or FightScreen.current == null:
+		return 0
+	return FightScreen.current.owner_of(unit)
+
+
+func _refresh_turn_number(n: int) -> void:
+	if n <= 0:
+		if _turn_plate != null:
+			_turn_plate.visible = false
+			# The plate is the loud half of the spotlight — a lit badge on a hidden badge is a
+			# glow radiating around nothing (GlowFx mirrors visibility, but the state would linger).
+			_apply_number_spotlight(false)
+		return
+	if _turn_plate == null:
+		var fill := TurnOrderStrip.fill_color(_owner_id())
+		var line := TurnOrderStrip.line_color(_owner_id())
+		_turn_plate = Panel.new()
+		_turn_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Born hidden so its first show is an ARRIVAL like every later one (see the fade below) —
+		# a Panel is visible by default, and the plate would otherwise skip the fade exactly once,
+		# on the one showing the player is most likely to be watching for.
+		_turn_plate.visible = false
+		var ps := StyleBoxFlat.new()
+		# The plate is SEE-THROUGH — the unit it names has to stay recognisable underneath it (the
+		# player is reading the order OF units, not of numbers). The numeral itself stays fully
+		# opaque, which is what its heavy outline is for.
+		ps.bg_color = Color(fill.r, fill.g, fill.b, PLATE_ALPHA)
+		ps.set_corner_radius_all(14)
+		ps.set_border_width_all(TURN_LINE_W)
+		ps.border_color = Color(line.r, line.g, line.b, 0.92)
+		_turn_plate.add_theme_stylebox_override("panel", ps)
+		# Kept: the spotlight makes the plate OPAQUE while it lights it (see _apply_number_spotlight).
+		_turn_plate_sb = ps
+		_canvas.add_child(_turn_plate)
+
+		# The numeral is a CHILD of the plate, not its sibling. The two are one object as far as the
+		# player is concerned, and the spotlight treats them as one: HighlightFx grows the plate and
+		# the number rides that transform, and the baked silhouette the outline/glow hug is the
+		# plate's whole subtree. As siblings the plate would have grown out from under its own digit.
+		_turn_lbl = Label.new()
+		_turn_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_turn_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# TOP — the vertical placement is TurnOrderStrip.baseline_offset's job (see below).
+		_turn_lbl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		_turn_lbl.add_theme_color_override("font_color", TurnOrderStrip.NUM_COLOR)
+		_turn_lbl.add_theme_color_override("font_outline_color", line)
+		_turn_lbl.add_theme_font_size_override("font_size", TURN_FONT)
+		_turn_lbl.add_theme_constant_override("outline_size",
+				int(TURN_FONT * TurnOrderStrip.NUM_OUTLINE))
+		_turn_plate.add_child(_turn_lbl)
+
+		# Centred in the card's native box — the one place no stat badge, nameplate or status pip
+		# can be, and immune to the flip that mirrors the badge layout.
+		_turn_plate.position = (NATIVE_SIZE - TURN_PLATE_SIZE) * 0.5
+		_turn_plate.size = TURN_PLATE_SIZE
+		# The digits, not the line box, sit centred in the plate — the SAME baseline placement the
+		# strip uses on its own numerals, so the two can't disagree about what centred means.
+		# Placed in the PLATE's space now that the label hangs off it.
+		_turn_lbl.position = Vector2(0.0,
+				TurnOrderStrip.baseline_offset(_turn_lbl, TURN_PLATE_SIZE.y))
+		_turn_lbl.size = TURN_PLATE_SIZE
+	# ARRIVAL, not appearance — but only on the frame the number actually arrives. This runs on every
+	# re-derivation, and a plate that is already being read must not restart its fade because the
+	# order behind it was recomputed; the number would flicker for as long as the player looked at it.
+	var arriving := not _turn_plate.visible
+	_turn_lbl.text = str(n)
+	_turn_plate.visible = true
+	_turn_lbl.visible = true
+	if arriving:
+		Vfx.play("turn_number_arrive", _turn_plate)
+	# The plate may have been BUILT under a spotlight that was already on. The strip declares its
+	# hover and its numbers in two steps (see TurnOrderStrip.point_at), so the frame the card learns
+	# it is spotlit is the frame BEFORE it has a plate to light — and _apply_spotlight's own guard
+	# would then never come back to it. The plate half owns its own guard and is re-asserted here,
+	# every time the plate exists, which is a fact this function is the only one to know.
+	_apply_number_spotlight(_spotlit_now)
+
+
+# ── The spotlight: "the list is pointing at THIS unit" ──────────────────────────
+# Two cues, on two different things, because they answer two different questions. The CARD wears THE
+# HOVER RING — not a cue of its own: pointing at a unit from the gutter and pointing at it with the
+# cursor are the same statement about the same unit, so they share one look and the spotlight is
+# simply hover arriving from the other end of the screen (see _apply_hover_outline). It does not
+# grow and does not glow, so it can never be misread as a pick the player made. The TURN NUMBER is
+# what the gesture actually asked about, so it takes the loud cue: the plate grows and burns gold
+# (see the turn_number_spotlight entry), which has to survive a board full of cards, damage numbers
+# and threat glows.
+#
+# Idempotent through the same change-guard the other appliers use, since derive_presentation runs
+# this on every re-derivation.
+var _spotlit_now := false
+
+func _apply_spotlight(on: bool) -> void:
+	if on == _spotlit_now:
+		return
+	_spotlit_now = on
+	_apply_hover_outline()
+	_apply_number_spotlight(on)
+
+
+# The loud half, on the number plate — separately guarded because the plate outlives neither the
+# card nor the spotlight in step with it (see the call in _refresh_turn_number).
+var _num_spotlit_now := false
+
+func _apply_number_spotlight(on: bool) -> void:
+	# No plate yet (a card that has never worn a number): nothing to light. Not recorded either —
+	# the plate's arrival re-asks, and recording it would swallow that.
+	if _turn_plate == null or not is_instance_valid(_turn_plate):
+		return
+	if on == _num_spotlit_now:
+		return
+	_num_spotlit_now = on
+	# THE PLATE GOES OPAQUE while it is lit, and not only because a solid plate reads louder: the
+	# glow shader hollows itself wherever the silhouette is opaque, so a half-transparent plate lets
+	# its own halo wash across its face and drown the digit. At rest it goes back to see-through —
+	# an unlit number must not hide the unit it names (see PLATE_ALPHA).
+	if _turn_plate_sb != null:
+		_turn_plate_sb.bg_color.a = 0.97 if on else PLATE_ALPHA
+	# The grow factor comes from the entry EXPLICITLY: set_grown's own lookup reads the meta the
+	# attached effect leaves behind, which on the very first spotlight isn't there yet (this runs
+	# before the attach below) and would silently fall back to the generic `highlight` scale.
+	HighlightFx.set_grown(_turn_plate, on,
+			Vfx.param_of("turn_number_spotlight", "scale", 1.18))
+	if on:
+		Vfx.attach("turn_number_spotlight", _turn_plate)
+	else:
+		Vfx.detach("turn_number_spotlight", _turn_plate)
 
 
 # The authority's move IS the re-check cue — without it the ring waits for the slow poll's
@@ -1183,9 +1351,11 @@ func _drop_hover_claim() -> void:
 
 
 # ── The ring ────────────────────────────────────────────────────────────────────
-# The one ring for "this is the one being addressed" — the cursor resting on this card.
+# The one ring for "this is the one being addressed" — the cursor resting on this card,
+# or the turn-order strip's spotlight arriving from the other end of the screen (they are
+# the same statement about the same unit, so they share one look — see _apply_spotlight).
 func _apply_hover_outline() -> void:
-	HoverFx.apply(self, _hover_now)
+	HoverFx.apply(self, _hover_now or _spotlit_now)
 
 
 func _apply_selected(picked: bool) -> void:

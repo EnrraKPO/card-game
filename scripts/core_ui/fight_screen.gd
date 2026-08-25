@@ -173,6 +173,25 @@ var _turn_strip: TurnOrderStrip = null
 
 # ── The strip's board-side seams (salvaged surfaces, re-homed from the old CombatBoard) ─
 
+# The standing fight screen — the authority board cards ask for the turn-order
+# declarations (the old CombatContext.current shape; cards guard the null).
+static var current: FightScreen = null
+
+
+# Which half a unit fights for, as the strip's palette index: 0 = the player's,
+# 1 = the enemy's. Allegiance is the birth fact (A4); the old owner int died with
+# CardInstance, so the palette derives it here at the seam.
+func owner_of(unit: Unit) -> int:
+	return 0 if world != null and unit.allegiance == world.player_side() else 1
+
+
+# The old board's derive_cards, on the screen's card faces: every declaration change
+# re-asks the cards NOW rather than waiting out their slow self-poll.
+func _derive_cards() -> void:
+	for ui: Variant in _card_uis.values():
+		if is_instance_valid(ui as CardUI):
+			(ui as CardUI).derive_presentation()
+
 # The unit whose moment is being resolved RIGHT NOW — the strip's gold entry. Derived from
 # the A12 beat stream: the presenter records the acting holder at each AUTHORED windup and
 # clears it at that source's conclusion (the machinery's unnamed beats — untap and its
@@ -192,6 +211,7 @@ func declare_spotlight(unit: Unit) -> void:
 	if unit == _spotlight:
 		return
 	_spotlight = unit
+	_derive_cards()
 
 
 func is_spotlit(unit: Unit) -> bool:
@@ -216,6 +236,7 @@ func declare_turn_numbers(order: Array) -> void:
 	if next == _turn_numbers:
 		return
 	_turn_numbers = next
+	_derive_cards()
 
 
 # This unit's place in the declared order, or 0 for "nothing is being declared" / not listed.
@@ -287,6 +308,7 @@ signal picked(choice: GameEntity)
 
 
 func _ready() -> void:
+	FightScreen.current = self
 	_build_ui()
 	# The pick's consequences (preview, ability bar, cues) re-derive whenever the one
 	# authority moves — the cards themselves re-derive their ring on their own poll.
@@ -553,6 +575,8 @@ func _on_selection_changed(subject: Variant) -> void:
 
 
 func _exit_tree() -> void:
+	if FightScreen.current == self:
+		FightScreen.current = null
 	Engine.time_scale = 1.0   # the speed dial is per-combat — never outlives the fight
 	Selection.changed.disconnect(_on_selection_changed)
 	# A fight unit must not outlive the fight as the game-wide pick.
