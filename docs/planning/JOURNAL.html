@@ -596,4 +596,57 @@ Enrra: amend later, proceed ruled.</p>
 not in the signed envelope — the face reads them from the authored CardData
 seat as presentation dressing only; no core code touches them.</p>
 
+<h2>2026-08-25 — The turn-order UI recovered whole</h2>
+
+<p>Enrra's order: the entire feature 1:1 — the gutter list, the numbers on
+the cards, the entry hover/select circuits, the selected visuals — in
+incremental commits, a legality agent after each. Three commits + this
+closing pass; three audits ran (strip salvage / card numbers / whole-feature
+completeness), findings below all addressed.</p>
+
+<ul>
+  <li><b>The strip</b> (scripts/turn_order_strip.gd, salvaged whole): the
+      titled-panel entries, the DashRing pick treatment, ready/spent/acting
+      states, hover+acting lifts, the 0.2s signature-guarded poll, the
+      harness doors (point_at/mark/listed), press-and-release-here input.
+      Seams only: the one sort is <code>CombatCascade.turn_order</code> (the
+      clock's own), owner from allegiance (A4), spent from the tapped stat,
+      art from the authored catalogue seat.</li>
+  <li><b>The board surfaces re-homed on FightScreen</b>: declare_spotlight /
+      declare_turn_numbers (+ the old derive_cards kick), unit_at_mouse,
+      press_unit routed through the real slot-click path (Interaction first
+      refusal, occupant-guarded). <code>FightScreen.current</code> stands in
+      for the old CombatContext.current as the cards' ask-authority.</li>
+  <li><b>The numbers on the cards</b>: CardUI's turn-number block verbatim —
+      the transient centre plate, strip-styled numeral, arrival fade, and the
+      spotlight pair (hover ring on the card, the loud
+      turn_number_spotlight on the plate). CardUI also regained
+      EXHAUST_TINT/set_exhausted — the one shared spent grey.</li>
+  <li><b>Proof</b>: test_turn_order (30 checks — the one sort, node-identity
+      rebuild guard, side palettes, spent/acting precedence, declarations,
+      card plates, mark and pick circuits); suite 650/0;
+      dev/_turn_order_shot renders rest / pointed / mid-span.</li>
+</ul>
+
+<p><b>DECLARED GAP (audit finding):</b> the old cascade pointer lit EVERY
+unit's acting moment — tapped ones included, their actless pass-over still
+golded, and the gold held across the whole act. The new acting fact derives
+from the A12 beat stream (authored windups only), so a tapped unit's
+pass-over emits no beat and cannot light, and a multi-delivery act lights
+per-beat rather than holding one envelope. Getting the full moment back
+needs the core to speak it (a clock-side acting fact) — an engine ruling
+matter, not a UI edit. Declared in the strip's state comment too.</p>
+
+<p><b>Deferred, declared:</b> the old render harness's turnclick parity door
+(strip-press vs slot-press) and the arrival-fade no-restart probe were not
+recovered — the behaviors are imported, their dedicated probes are not. The
+badge-flip facing on board cards remains the separately-declared pre-swap
+gap (BRIEFS B35 area), untouched by this feature.</p>
+
+<p><b>Audit corrections folded in:</b> the gutter padding restored to the
+old tight margins (2/2/4/4 — "every pixel the padding gives back is
+thumbnail"; my first cut doubled it); press_unit regained the old occupant
+guard; the acting-gap comment written into the strip; the rebuild-guard test
+now pins entry node identity (the prior check could not fail).</p>
+
 </div>

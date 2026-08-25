@@ -271,7 +271,8 @@ func press_unit(unit: Unit) -> void:
 	if unit == null or world == null:
 		return
 	var standing: Vector3i = TargetResolver.standing_address(unit)
-	if standing.x >= 0 and _slot_uis.has(standing):
+	if standing.x >= 0 and _slot_uis.has(standing) \
+			and (_slot_uis[standing] as SlotUI).get_card() != null:
 		_on_slot_clicked(standing)
 
 var _span_active: bool = false
@@ -1183,11 +1184,12 @@ func _build_halves_gutter() -> Control:
 	gutter.add_theme_stylebox_override("panel", track)
 	_turn_strip = TurnOrderStrip.new()
 	_turn_strip.set_anchors_preset(Control.PRESET_FULL_RECT)
-	# The strip's own padding inside the frame — the entries out-dent past it (BLEED).
-	_turn_strip.offset_left = 5.0
-	_turn_strip.offset_right = -5.0
-	_turn_strip.offset_top = 8.0
-	_turn_strip.offset_bottom = -8.0
+	# Tight on purpose (the old gutter's own margins): every pixel the padding gives
+	# back is thumbnail — the entries out-dent past even this (BLEED).
+	_turn_strip.offset_left = 2.0
+	_turn_strip.offset_right = -2.0
+	_turn_strip.offset_top = 4.0
+	_turn_strip.offset_bottom = -4.0
 	gutter.add_child(_turn_strip)
 	return gutter
 

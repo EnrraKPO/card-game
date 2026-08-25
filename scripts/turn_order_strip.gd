@@ -196,8 +196,12 @@ const SEL_WHITE := Color(1.0, 1.0, 1.0)
 # still visibly the same blue or red, just stated properly.
 const SEL_SAT := 1.6
 
-# Entry states, in the order they override each other (acting beats spent — a tapped unit's
-# activate moment is still its moment).
+# Entry states, in the order they override each other (acting beats spent by precedence).
+# DECLARED GAP vs the pre-nuke strip: the old cascade pointer lit EVERY unit's moment,
+# tapped ones included (their actless moment still fired). The new acting fact rides the
+# A12 beat stream (see FightScreen.acting), and a moment that produces no authored windup
+# — a tapped unit's pass-over — emits no beat, so it cannot light. Getting that moment
+# back needs the core to speak it: an engine ruling matter, not a UI edit.
 const ST_READY := 0
 const ST_SPENT := 1
 const ST_ACTING := 2

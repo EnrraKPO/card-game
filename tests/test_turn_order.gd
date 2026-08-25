@@ -78,8 +78,12 @@ func _rebuild_only_on_a_changed_order() -> void:
 	var strip := _strip()
 	strip.refresh()
 	var before: Array = strip.listed()
+	# The signature guard: the ENTRY NODES survive a same-order refresh — a rebuild
+	# would have freed and replaced them (listed() alone could not tell the difference).
+	var first_entry: Control = strip._entry_for(before[0])
 	strip.refresh()
-	check_eq(strip.listed(), before, "an unchanged order rebuilds nothing")
+	check(strip._entry_for(before[0]) == first_entry,
+			"an unchanged order rebuilds nothing")
 	# A death reorders the list: bury the fastest unit and re-ask.
 	var fastest: Unit = before[0]
 	var slot := fastest.housing
