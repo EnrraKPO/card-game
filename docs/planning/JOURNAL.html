@@ -717,4 +717,51 @@ attack's victim/attacker for the relic trigger; (4) what purse the stubbed
 fight pays into and whether the bounty stays a screen-side act as before.
 Nothing coded.</p>
 
+<h2>2026-08-25 — The reaction cues resolved: R14 + A14, two ready, two
+follow-ups</h2>
+
+<p>The evaluation's four points, settled in discussion with Enrra. R14
+(entity surface resolution) and A14 (the cue's optional variant input)
+landed and pushed (12d998c). Points 1 and 2 are ready to implement; 3 and
+4 wait on their decisions. Implementation goes to a clean context.</p>
+
+<p><b>1 — Stat buff/debuff highlight, READY.</b> Engine half:
+<code>PresentationOutlet.cue</code> gains the optional variant parameter
+(A14); stat_mutation_procedure utters the stat name as the variant on its
+<code>heal</code>/<code>buff</code>/<code>debuff</code> cues; every other
+cue site leaves the seat empty. UI half: FightScreen.play_cue passes the
+variant through; the buff/debuff/heal entries aim the recipient's card via
+R14; CardUI reimports <code>pulse_stat</code> /
+<code>flash_stat_proc</code> (+ helpers) verbatim from the pre-swap tree
+(R11) — the surviving effect_buff/effect_debuff renderers already call
+them behind has_method guards, which re-arm; VFXEvent.buff's attribute
+seat carries the variant in place of today's "".</p>
+
+<p><b>2 — Trigger-at-holder, READY.</b> No engine change: the conductor
+already windups every engaged delivery with plate.holder (A12). Work: R14
+registration at the surface-creating sites — status pips keyed by their
+Status entity at composition, relic chips keyed by their Relic entity at
+tray build — and the presenter's windup routing resolves its source
+through the one lookup instead of the card-only map (the stand-in override
+outranks, R14). Per-kind shows import from the old tree: the pip's
+flash_proc discharge, RelicTray.glint for chips, the existing glint flare
+for cards. A windup shows only when the effect authors a windup name —
+naming them on relic/status effects is content work at the dictionary
+gate, silent stays lawful meanwhile.</p>
+
+<p><b>3 — Flying coins, FOLLOW-UP.</b> Surfaces stand: GoldBag seated in
+the action column, CoinFlightFx alive but unregistered. The old driver was
+a screen-side act on enemy death paying the run's purse (one coin per
+gold, expect_coins before the write). The concern waiting on Enrra: what
+purse a stubbed catalogue fight pays into when no run stands behind it,
+and whether the bounty stays a screen-side act.</p>
+
+<p><b>4 — The test relic, FOLLOW-UP.</b> "When an ally unit attacks, it
+applies 1 poison to the target." Holder gear stands whole (Relic entity,
+the side's relics container, Genesis "relics" seat, build_relic). The
+concern waiting on Enrra, engine-shaped: no event links attacker to victim
+— <code>ability_used</code> carries no victim, <code>damaged</code> no
+attacker — so the trigger cannot aim "the target"; amendment territory,
+and the piece fails the dictionary gate until ruled.</p>
+
 </div>

@@ -22,16 +22,19 @@ static func apply(target: GameEntity, stat: StringName, delta: int,
 	var events: Array[Event] = []
 	WriteAuthority.stat_write(target, stat, target.get_stat(stat) + float(delta), events)
 	# Its cue at commit (MSD s10): a health raise reads as a heal; other visible unit
-	# stats read as buff/debuff by sign.
+	# stats read as buff/debuff by sign. The heal/buff/debuff cues utter the stat's name
+	# as the variant (A14) so presentation can land the show on the stat that moved.
 	if target is Unit and delta != 0 and CUED_STATS.has(stat):
 		var visual: StringName
+		var variant: StringName = stat
 		if stat == &"health" and delta > 0:
 			visual = &"heal"
 		elif stat == &"shield" and delta > 0:
 			visual = &"shield_restored"   # the old routing: a shield raise is its own read
+			variant = &""
 		elif delta > 0:
 			visual = &"buff"
 		else:
 			visual = &"debuff"
-		target.world.outlet.cue(visual, target, absf(float(delta)))
+		target.world.outlet.cue(visual, target, absf(float(delta)), variant)
 	return events

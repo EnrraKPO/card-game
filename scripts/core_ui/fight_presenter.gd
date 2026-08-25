@@ -32,11 +32,12 @@ func _init(screen: FightScreen) -> void:
 	_screen = screen
 
 
-func cue(visual: StringName, recipient: GameEntity, magnitude: float) -> void:
+func cue(visual: StringName, recipient: GameEntity, magnitude: float,
+		variant: StringName = &"") -> void:
 	if _paused:
-		_held.append([visual, recipient, magnitude])
+		_held.append([visual, recipient, magnitude, variant])
 	else:
-		_screen.play_cue(visual, recipient, magnitude)
+		_screen.play_cue(visual, recipient, magnitude, variant)
 
 
 func pause() -> void:
@@ -46,7 +47,7 @@ func pause() -> void:
 func unpause() -> void:
 	_paused = false
 	for held: Array in _held:
-		_screen.play_cue(held[0], held[1], held[2])
+		_screen.play_cue(held[0], held[1], held[2], held[3])
 	_held.clear()
 
 

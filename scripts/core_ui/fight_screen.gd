@@ -444,11 +444,14 @@ func show_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 # One procedure cue, resolved to its designed look on the recipient's card (R13: the
 # presenter tells, the dispatch table answers; a recipient without a card face — a Side, a
 # Game, a hand card — keeps the log line only). Sounds ride the same names, data-gated:
-# an authored sounds.json entry named like the cue plays, silence otherwise.
-func play_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> void:
+# an authored sounds.json entry named like the cue plays, silence otherwise. The optional
+# variant (A14) rides into the looks that use it — buff/debuff land on the named stat's
+# badge; heal's variant is always the health stat, which its look already anchors on.
+func play_cue(visual: StringName, recipient: GameEntity, magnitude: float,
+		variant: StringName = &"") -> void:
 	show_cue(visual, recipient, magnitude)
-	var ui := _card_uis.get(recipient) as CardUI
-	if ui == null or not is_instance_valid(ui):
+	var ui := card_of(recipient)
+	if ui == null:
 		return
 	if SoundData.get_sound(String(visual)) != null:
 		Sfx.play(String(visual))
@@ -464,9 +467,9 @@ func play_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 		&"shield_restored":
 			_vfx.play(VFXEvent.shield_restored(ui, roundi(magnitude)))
 		&"buff":
-			_vfx.play(VFXEvent.buff(ui, "", roundi(magnitude)))
+			_vfx.play(VFXEvent.buff(ui, String(variant), roundi(magnitude)))
 		&"debuff":
-			_vfx.play(VFXEvent.debuff(ui, "", roundi(magnitude)))
+			_vfx.play(VFXEvent.debuff(ui, String(variant), roundi(magnitude)))
 		&"dodge":
 			_vfx.play(VFXEvent.dodge(ui))
 		&"crit":
