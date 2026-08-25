@@ -649,4 +649,72 @@ thumbnail"; my first cut doubled it); press_unit regained the old occupant
 guard; the acting-gap comment written into the strip; the rebuild-guard test
 now pins entry node identity (the prior check could not fail).</p>
 
+<h2>2026-08-25 — Recovery evaluation: the reaction cues</h2>
+
+<p>Enrra names three missing cue families: the stat highlight when a
+buff/debuff lands, the trigger cue at an effect's holder (relic chip,
+status pip, card), and the flying coins on gold. Test content may need a
+relic ("when an ally unit attacks, it applies 1 poison to the target" —
+poison test for free). Survey findings, no code:</p>
+
+<ul>
+  <li><b>Stat buff/debuff highlight — half-alive, dies at a guard.</b> The
+      core already cues <code>heal</code>/<code>buff</code>/<code>debuff</code>
+      at commit (stat_mutation_procedure); the screen already routes them to
+      VFXEvent.buff/debuff/heal; the renderers (effect_buff/effect_debuff)
+      survive and call <code>pulse_stat</code> behind a has_method guard —
+      but CardUI lost <code>pulse_stat</code>/<code>flash_stat_proc</code>
+      in the swap, so the cue no-ops silently today. The old look is
+      per-stat: the touched badge pops and brightens. The beat carries no
+      stat name (the screen passes "" for the attribute) — verbatim recovery
+      needs the stat on the beat: the already-flagged cue-identity payload
+      matter, an engine ruling.</li>
+  <li><b>Trigger-at-holder — no seam exists.</b> Old road: the effect
+      machinery produced interception records (owner_kind / owner_id /
+      holder) and VFXPlayer.play_interceptions walked them — relic →
+      RelicTray.glint on the tray chip, status → the pip's flash_proc
+      (white discharge + z-lift), card → source_trigger glint. The
+      record-walks were dropped at the VFXPlayer salvage and the machinery
+      that minted records died with the old engine. <s>The new core emits
+      NOTHING when an effect engages: the conductor knows the plate's
+      holder at that moment, but the outlet cue shape is (visual,
+      recipient, magnitude) — the holder can ride as recipient, the owning
+      status/relic identity has no seat. A new engagement beat is engine
+      ruling matter (A12-shaped growth).</s> (CORRECTED same day, Enrra's
+      challenge: the gear exists. The conductor windups EVERY engaged
+      delivery — <code>outlet.windup(effect.windup_presentation,
+      plate.holder, targets)</code>, A12 — and the procedure cues at commit
+      are the contact half; a windup with no authored name shows nothing by
+      design. The gap is presentation-side only: (a) the relevant effects
+      author no windup, (b) the presenter stages only board-card sources —
+      a Status or Relic holder needs routing to its pip / tray chip. The
+      owner's identity rides the holder reference itself; no payload ruling
+      needed for this family.)</li>
+  <li><b>Flying coins — surfaces stand, nothing drives them.</b> GoldBag
+      survives and already sits in the action column (layout pass);
+      CoinFlightFx survives but "coin_flight" is not registered with Vfx;
+      nothing pays a bounty. Old road: Combat._pay_bounty on an enemy
+      death, screen-side — expect_coins, purse write on the RUN, one coin
+      flight per gold. The new screen does not dress deaths (died is the
+      authority's event; death dressing deferred), and the purse is
+      run-scoped — the stubbed-loop question decides what purse a
+      catalogue fight fills.</li>
+  <li><b>The test relic — holder ready, trigger unauthorable.</b> Core side
+      stands whole: Relic entity, the side's <code>relics</code> container,
+      Genesis takes <code>"relics": [ids]</code>, ContentLibrary.build_relic.
+      But no event says "an ally attacked X": <code>ability_used</code> (the
+      main action's engagement) does not carry the victim, and
+      <code>damaged</code> (fired at the victim) does not carry the
+      attacker. The piece's demand = an event-payload ruling; per the
+      dictionary gate it is not authorable until ruled.</li>
+</ul>
+
+<p><b>The decisions are Enrra's, surfaced in conversation:</b> (1) the cue
+payload growth — stat name on the buff/debuff beat, owner identity on a
+holder beat (the same flagged cue-identity matter); (2) whether the
+conductor grows an engagement beat at all; (3) which event grows the
+attack's victim/attacker for the relic trigger; (4) what purse the stubbed
+fight pays into and whether the bounty stays a screen-side act as before.
+Nothing coded.</p>
+
 </div>
