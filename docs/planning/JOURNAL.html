@@ -182,7 +182,7 @@ half.</p>
   <li><b>Views</b> (new): <code>scripts/status_pip_view.gd</code> +
       <code>scripts/slot_ground_view.gd</code> — plain display facts, zero
       engine references.</li>
-  <li><b>Widgets salvaged to R4 form</b>: <code>scripts/slot_ui.gd</code>
+  <li><b>Widgets salvaged to <s>R4</s> form (R4 overruled 2026-08-24)</b>: <code>scripts/slot_ui.gd</code>
       (the world pulls replaced — <code>own_side</code> injected,
       <code>set_ground(SlotGroundView)</code> replaces the ground lookup, the
       gutter constant <code>SLOT_GAP</code> now lives on the widget) and
@@ -231,7 +231,7 @@ status pips confirmed expected (the guarded CardUI seam above).</p>
       card's composition is <code>scripts/core_ui/card_view_model.gd</code>:
       <code>unit_card()</code> (moved out of the slot bridge) +
       <code>status_views()</code>.</li>
-  <li><b>CardUI's combat surface restored, R4 form</b>: the status badge row
+  <li><b>CardUI's combat surface restored, <s>R4</s> form (R4 overruled 2026-08-24)</b>: the status badge row
       returns as an injection (<code>set_status_views(Array[StatusPipView])</code>
       — one pip per view in the authored StatusRow), with the aura ring and
       <code>aura_&lt;id&gt;</code> library VFX sync riding the views

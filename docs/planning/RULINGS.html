@@ -122,21 +122,24 @@ statements live here.</p>
   outside the contract's cleanse doctrine. Ruled by Enrra, 2026-08-24.</p>
 </div>
 
-<div class="ruling">
-  <div class="head">R4 — Views take injected data, never pull from the game
-  world.</div>
-  <p>The view is not coupled to the game system. An intermediation layer — a
+<div class="ruling" style="border-color: var(--warn); background: var(--warn-soft);">
+  <div class="head"><s>R4 — Views take injected data, never pull from the game
+  world.</s></div>
+  <p><s>The view is not coupled to the game system. An intermediation layer — a
   view model, nothing fancy — stands between them: the widget carries just
   the data inserts, and information is injected into the component instead of
   the component pulling it from the game world. The view model is the only
   piece that reads the engine. Governs every salvaged piece. Ruled by Enrra,
-  2026-08-24.</p>
+  2026-08-24.</s></p>
+  <p><b>OVERRULED by Enrra, 2026-08-24:</b> hard to enforce — dismissed. The
+  law binds no longer; pieces already built in injection form stand as they
+  are.</p>
 </div>
 
 <div class="ruling">
   <div class="head">R5 — The SlotUI atom.</div>
   <p>Scope ruled: (1) refactor the salvaged SlotUI to work with a view model
-  per R4; (2) a test proving it works and renders well across different data
+  <s>per R4</s> (R4 overruled 2026-08-24); (2) a test proving it works and renders well across different data
   setups; (3) then author the actual view model that communicates with the
   engine; (4) SlotUI embeds, for now, in the current placeholder fight frame.
   Ruled by Enrra, 2026-08-24.</p>
@@ -189,7 +192,8 @@ statements live here.</p>
   <p>The pursuit of a layered UI design stops. Abstraction is used on a
   per-issue basis, and the architecture is accepted as one that won't scale.
   A UI refactor is de-scoped at this time. The standing pieces (the recipes,
-  the view objects, the Selection authority, R4/R8/R9) remain as they are —
+  the view objects, the Selection authority, <s>R4/</s>R8/R9 (R4 overruled
+  2026-08-24)) remain as they are —
   this closes the consolidation question, it deletes no mechanism. Ruled by
   Enrra, 2026-08-24.</p>
 </div>

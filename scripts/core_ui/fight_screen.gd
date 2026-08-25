@@ -18,6 +18,37 @@ extends Control
 
 const SLICE_FIGHT_PATH := "res://data/slice_fight.json"
 
+# ── The salvaged combat frame (H2: the pre-swap surface, a9af8d6^) ────────────────────
+# Geometry and styling lifted from the old combat screen; every behavioral wire below is
+# re-terminated on the new command/read surface (H3).
+
+# Selectable battle speeds the HUD toggle cycles through (applied as Engine.time_scale).
+# Per-combat, not remembered: every fight starts at x1, and the cycle climbs through the
+# speed-ups before offering the rare slow-motion pick.
+const BATTLE_SPEEDS: Array[float] = [1.0, 1.5, 2.0, 0.5]
+
+# The pacing glyphs, slowest first — one chevron per step up in overlap, indexed by
+# Vfx.PACING (likewise ordered slowest first).
+const PACE_ICONS := [
+	preload("res://assets/ui/icons/pace_1.svg"),
+	preload("res://assets/ui/icons/pace_2.svg"),
+	preload("res://assets/ui/icons/pace_3.svg"),
+	preload("res://assets/ui/icons/pace_4.svg"),
+	preload("res://assets/ui/icons/pace_5.svg"),
+]
+
+# The gulf between the halves is a COLUMN, not a rule: the turn-order strip's home,
+# dressed as a framed track like the relic strip and the mana gauge.
+const HALVES_GUTTER_W := 58.0
+const HALVES_GUTTER_W_COMPACT := 72.0
+const HALVES_FLANK := 10.0   # breathing room either side of the gutter
+const COL_SEP := 14.0    # board↔hand breathing room; also a term in _resize_board's budget
+const TOP_MARGIN := 12.0   # the body's top inset; another _resize_board height-budget term
+const HALF_PAD := 8.0    # inner inset between a zone panel's edge and its slot grid
+const SLOT_ASPECT := 216.0 / 165.0   # card height / width (SlotUI's authored proportions)
+const PLAYER_ZONE_BG := Color(0.36, 0.48, 0.78, 0.28)
+const ENEMY_ZONE_BG := Color(0.72, 0.36, 0.42, 0.24)
+
 static var next_fight: Dictionary = {}
 
 
@@ -44,8 +75,26 @@ var _enemy_grid: GridContainer = null
 # The unit whose inspect read the hand's sidebar currently shows (identity token only —
 # guards set_inspect against per-refresh recomposition churn).
 var _inspected: Unit = null
-var _end_turn: Button = null
 var _cancel_pick: Button = null
+
+# The salvaged chrome's handles (see _build_ui): the vertical mana gauge's chunk stack,
+# the left rail's run readouts, the action column's dials, and the chunky Ready button —
+# whose caption is a bottom-anchored child Label (Button has no vertical text alignment;
+# _resize_board keeps the caption's band level with the hand bar).
+var _mana_chunks_box: VBoxContainer = null
+var _gold_bag: GoldBag = null
+var _exp_gauge: ExpGauge = null
+var _relic_tray: RelicTray = null
+var _done_btn: Button = null
+var _done_label: Label = null
+var _speed_btn: Button = null
+var _pacing_btn: Button = null
+var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
+var _board_row: HBoxContainer = null   # the two board halves; drives responsive sizing
+var _arena_chrome_w: float = 0.0   # the fixed width flanking the board — _resize_board's basis
+# The fight has ended: the Ready button became Leave, and the state machine's captions
+# must not reclaim it.
+var _fight_over: bool = false
 
 var _slot_uis: Dictionary[Vector3i, SlotUI] = {}
 # The board card faces, one per fielded unit, reused across refreshes so a unit's card is a
@@ -129,10 +178,12 @@ func _run() -> void:
 	var outcome: StringName = await world.clock.run_fight()
 	refresh()
 	_state_label.text = "VICTORY" if outcome == &"victory" else "DEFEAT"
-	_end_turn.text = "Leave"
-	_end_turn.disabled = false
-	_end_turn.pressed.disconnect(_on_end_turn)
-	_end_turn.pressed.connect(_leave)
+	_fight_over = true
+	_done_label.text = "Leave"
+	_done_label.modulate.a = 1.0
+	_done_btn.disabled = false
+	_done_btn.pressed.disconnect(_on_end_turn)
+	_done_btn.pressed.connect(_leave)
 
 
 func _leave() -> void:
@@ -356,6 +407,7 @@ func _on_selection_changed(subject: Variant) -> void:
 
 
 func _exit_tree() -> void:
+	Engine.time_scale = 1.0   # the speed dial is per-combat — never outlives the fight
 	Selection.changed.disconnect(_on_selection_changed)
 	# A fight unit must not outlive the fight as the game-wide pick.
 	if _selected_unit() != null:
@@ -547,8 +599,7 @@ func refresh() -> void:
 	if world == null:
 		return
 	_round_label.text = "Round %d" % roundi(world.game.get_stat(&"round"))
-	_mana_label.text = "Mana %d/%d" % [roundi(world.player_side().get_stat(&"mana")),
-			roundi(world.player_side().get_stat(&"mana_capacity"))]
+	_refresh_mana()
 	_enemy_label.text = "Enemy %d/%d" % [roundi(world.enemy_side().get_stat(&"mana")),
 			roundi(world.enemy_side().get_stat(&"mana_capacity"))]
 	_derive_baseline_preview()
@@ -567,7 +618,7 @@ func refresh() -> void:
 			_card_uis.erase(unit)
 	_rebuild_hand()
 	_refresh_inspect()
-	_end_turn.disabled = not (_span_active and _awaiting_command and not _picking)
+	_refresh_done_btn()
 
 
 # Injects one slot widget's whole state — occupant card, ground view, cues — from the world's
@@ -778,8 +829,15 @@ func _refresh_inspect() -> void:
 
 # ── Construction ──────────────────────────────────────────────────────────────────────
 
+# The salvaged combat frame (H2). The screen owns the full rect with no Shell header;
+# margins are pared to the bone — cards read bigger for every pixel reclaimed: sides keep
+# a tight inset, the top keeps token breathing room, and the BOTTOM is pulled BELOW the
+# screen edge so the hand bar bleeds off it (only dead card frame is cropped — see
+# Hand.BOTTOM_BLEED).
 func _build_ui() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_battle_speed = 1.0   # every fight starts at 100%
+	Engine.time_scale = _battle_speed
 	_interaction = Interaction.new()
 	add_child(_interaction)
 	_vfx = VFXPlayer.new()
@@ -791,83 +849,589 @@ func _build_ui() -> void:
 	# Cue rendering derives from the one `changed` signal — a gesture ending resets
 	# everything structurally, with no per-path cleanup to forget.
 	_interaction.changed.connect(_on_interaction_changed)
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(root)
 
-	var top := HBoxContainer.new()
-	root.add_child(top)
-	_round_label = _label(top, "Round 0")
-	_enemy_label = _label(top, "")
-	_state_label = _label(top, "")
-	_state_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_cue_log = _label(top, "")
-	_cue_log.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var side := 16 if UIScale.is_compact() else 8
+	var body := MarginContainer.new()
+	body.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	body.add_theme_constant_override("margin_left", side)
+	body.add_theme_constant_override("margin_right", side)
+	body.add_theme_constant_override("margin_bottom", -int(Hand.BOTTOM_BLEED))
+	body.add_theme_constant_override("margin_top", int(TOP_MARGIN))
+	add_child(body)
 
-	var mid := HBoxContainer.new()
-	mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mid.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_child(mid)
-	_player_grid = _grid(mid)
-	var line := VSeparator.new()
-	mid.add_child(line)
-	_enemy_grid = _grid(mid)
-	for side_index: int in 2:
-		for row: int in BoardGeometry.ROWS:
-			for col: int in BoardGeometry.COLS:
-				var address := Vector3i(side_index, row, col)
-				var slot_ui := SlotUI.new()
-				slot_ui.own_side = side_index == 0
-				slot_ui.interaction = _interaction   # the drop gate's authority (drag's atom)
-				slot_ui.pressed.connect(_on_slot_clicked.bind(address))
-				slot_ui.move_pressed.connect(_on_move_button_pressed.bind(slot_ui))
-				slot_ui.move_hover.connect(_on_move_button_hover.bind(slot_ui))
-				(_player_grid if side_index == 0 else _enemy_grid).add_child(slot_ui)
-				# Shrunk from the widget's authored size to fit the placeholder frame; the
-				# widget's whole layout is size-relative, so it reads the same at any scale.
-				slot_ui.custom_minimum_size = Vector2(110, 144)
-				_slot_uis[address] = slot_ui
+	# The body splits into the MAIN column (arena over hand bar) and the full-height
+	# ACTION column on the right — so the Ready button spans BOTH bands, from under the
+	# dial row all the way down through the hand bar's height.
+	var root := HBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	body.add_child(root)
 
-	var bottom := HBoxContainer.new()
-	root.add_child(bottom)
-	# The mana reading rides INSIDE the bar as its leftmost column — mana is what the hand
-	# spends (the bar's authored left_widget seat).
-	_mana_label = Label.new()
-	_mana_label.text = "Mana 0/0"
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", int(COL_SEP))
+	root.add_child(col)
+
+	# The arena row: the relic strip hugs the LEFT of the board, the two board halves fill
+	# the middle around the gutter, and the action column hugs the RIGHT. All stretch to
+	# the same height, so the row reads as one balanced band. The mana gauge lives in the
+	# HAND bar below (its leftmost column) — mana is what the hand spends.
+	var arena := HBoxContainer.new()
+	arena.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	arena.add_theme_constant_override("separation", 12)
+	col.add_child(arena)
+
+	# Outboard of everything on the left: the experience column — the quiet half of a
+	# kill's payment. Seated only under a loaded profile (the slice launches without one).
+	var exp_w := 0.0
+	if GameData.current_profile != null:
+		_exp_gauge = ExpGauge.new()
+		arena.add_child(_exp_gauge)
+		exp_w = _exp_gauge.custom_minimum_size.x
+
+	var relic_strip := _build_relic_strip()
+	arena.add_child(relic_strip)
+
+	_board_row = HBoxContainer.new()
+	_board_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_board_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The halves' gulf is the gutter plus two flanking separations, totalling
+	# _halves_gap() (the width _resize_board budgets for).
+	_board_row.add_theme_constant_override("separation", int(HALVES_FLANK))
+	arena.add_child(_board_row)
+
+	_player_grid = _build_half(_board_row, true)
+	_board_row.add_child(_build_halves_gutter())
+	_enemy_grid = _build_half(_board_row, false)
+
+	# The action column: the main column's full-height SIBLING (not part of the arena).
+	# Its own bottom margin swallows the body's below-screen bleed — the Ready button is
+	# interactive, so it must end at the real screen edge.
+	var action_wrap := MarginContainer.new()
+	action_wrap.add_theme_constant_override("margin_bottom", int(Hand.BOTTOM_BLEED))
+	var actions := _build_action_column()
+	action_wrap.add_child(actions)
+	root.add_child(action_wrap)
+
+	# The fixed width flanking the board — _resize_board's width basis (it must come from
+	# here and not from live container sizes; see _resize_board).
+	_arena_chrome_w = side * 2.0 + relic_strip.custom_minimum_size.x \
+		+ exp_w + actions.custom_minimum_size.x + 3.0 * 12.0
+
 	_hand = Hand.new()
 	add_child(_hand)
-	_hand.build_into(bottom, _mana_label)
+	# The mana gauge rides INSIDE the bar as its leftmost column (the bar's authored
+	# left_widget seat).
+	_hand.build_into(col, _build_mana_gauge())
 	_hand.set_card_size(Vector2(110, 144))   # the slots' size — one card scale per screen
 	_hand.card_pressed.connect(_on_hand_index_pressed)
 	_hand.selection_changed.connect(_on_hand_selection_changed)
 	_hand.ability_pressed.connect(_on_ability_clicked)
 	_hand.wire_unit_card = _wire_unit_drag
-	_cancel_pick = Button.new()
-	_cancel_pick.text = "Cancel"
-	_cancel_pick.visible = false
-	_cancel_pick.pressed.connect(_on_cancel_pick)
-	bottom.add_child(_cancel_pick)
-	_end_turn = Button.new()
-	_end_turn.text = "End Turn"
-	_end_turn.disabled = true
-	_end_turn.pressed.connect(_on_end_turn)
-	bottom.add_child(_end_turn)
+
+	# The board fills its area with the biggest cards that fit (recomputed on any resize),
+	# instead of a fixed grid marooned in empty space.
+	_board_row.resized.connect(_resize_board)
+	call_deferred("_resize_board")
 
 
-func _label(parent: Control, text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	parent.add_child(label)
-	return label
+# A board half: a tinted zone panel holding the slot grid, centred in whatever area it's
+# given so leftover space sits as balanced margins rather than a lopsided gap. No
+# "Player"/"Enemy" label — the tints and the near/far halves read for themselves. The
+# enemy half reverses its ROW order: lane-sharing rows (BoardGeometry — rows mirror, two
+# cells share a lane when their rows sum to ROWS − 1) sit level across the gutter.
+func _build_half(parent: BoxContainer, is_player: bool) -> GridContainer:
+	var zone := Panel.new()
+	zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	zone.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var zone_style := StyleBoxFlat.new()
+	zone_style.bg_color = PLAYER_ZONE_BG if is_player else ENEMY_ZONE_BG
+	zone_style.set_corner_radius_all(12)
+	zone.add_theme_stylebox_override("panel", zone_style)
+	parent.add_child(zone)
 
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", int(HALF_PAD))
+	pad.add_theme_constant_override("margin_right", int(HALF_PAD))
+	pad.add_theme_constant_override("margin_top", int(HALF_PAD))
+	pad.add_theme_constant_override("margin_bottom", int(HALF_PAD))
+	zone.add_child(pad)
 
-func _grid(parent: Control) -> GridContainer:
+	var center := CenterContainer.new()
+	pad.add_child(center)
+
 	var grid := GridContainer.new()
 	grid.columns = BoardGeometry.COLS
-	# The gutter is the widget's own constant — the ground frames (half a gap each) only tile
-	# into one field when the layout honours the same number.
+	# The gutter is the widget's own constant — the ground frames (half a gap each) only
+	# tile into one field when the layout honours the same number.
 	grid.add_theme_constant_override("h_separation", SlotUI.SLOT_GAP)
 	grid.add_theme_constant_override("v_separation", SlotUI.SLOT_GAP)
-	parent.add_child(grid)
+	center.add_child(grid)
+
+	var side_index := 0 if is_player else 1
+	var row_order: Array = range(BoardGeometry.ROWS) if is_player \
+			else range(BoardGeometry.ROWS - 1, -1, -1)
+	for row: int in row_order:
+		for colm: int in BoardGeometry.COLS:
+			var address := Vector3i(side_index, row, colm)
+			var slot_ui := SlotUI.new()
+			slot_ui.own_side = is_player
+			slot_ui.interaction = _interaction   # the drop gate's authority (drag's atom)
+			slot_ui.pressed.connect(_on_slot_clicked.bind(address))
+			slot_ui.move_pressed.connect(_on_move_button_pressed.bind(slot_ui))
+			slot_ui.move_hover.connect(_on_move_button_hover.bind(slot_ui))
+			slot_ui.custom_minimum_size = Vector2(110, 144)
+			grid.add_child(slot_ui)
+			_slot_uis[address] = slot_ui
 	return grid
+
+
+func _halves_gutter_w() -> float:
+	return HALVES_GUTTER_W_COMPACT if UIScale.is_compact() else HALVES_GUTTER_W
+
+
+# The width _resize_board must keep out of the board's own budget: the gutter and its flanks.
+func _halves_gap() -> float:
+	return _halves_gutter_w() + HALVES_FLANK * 2.0
+
+
+# The column standing between the player and enemy halves: the hard line the two fields
+# meet at, and the turn-order strip's home. Framed like the relic strip and the mana gauge
+# so the three read as one family of side rails. The strip itself was exterminated with
+# the demoted layer — its seat stands empty until its own recovery pass (H3).
+func _build_halves_gutter() -> Control:
+	var gutter := Panel.new()
+	gutter.custom_minimum_size.x = _halves_gutter_w()
+	gutter.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	UIScale.tip(gutter, Loc.t("combat.turn_order_tip"))
+	var track := StyleBoxFlat.new()
+	track.bg_color = ScreenUI.MANA_TRACK_BG
+	track.set_corner_radius_all(12)
+	track.set_border_width_all(2)
+	track.border_color = ScreenUI.MANA_TRACK_BORDER
+	gutter.add_theme_stylebox_override("panel", track)
+	return gutter
+
+
+# The vertical relic strip, owning the whole left rail: with no header during combat this
+# is where the run's relics live — a full-height column of big chips, framed like the mana
+# gauge so the two read as one family. Read-only here (discarding is the map HUD's job).
+func _build_relic_strip() -> Control:
+	var strip := Panel.new()
+	strip.custom_minimum_size.x = 122.0 if UIScale.is_compact() else 92.0
+	strip.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	UIScale.tip(strip, Loc.t("combat.relics_tip"))
+	var track := StyleBoxFlat.new()
+	track.bg_color = ScreenUI.MANA_TRACK_BG
+	track.set_corner_radius_all(12)
+	track.set_border_width_all(2)
+	track.border_color = ScreenUI.MANA_TRACK_BORDER
+	strip.add_theme_stylebox_override("panel", track)
+
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 4)
+	pad.add_theme_constant_override("margin_right", 4)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	strip.add_child(pad)
+
+	# One column inside the padding: the purse, then a hairline, then the relics. The bag
+	# heads the strip because it is the same kind of thing as what follows — a run-long
+	# possession combat only reports on.
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	pad.add_child(column)
+
+	_gold_bag = GoldBag.new()
+	column.add_child(_gold_bag)
+	column.add_child(_strip_rule())
+
+	_relic_tray = RelicTray.new()
+	_relic_tray.vertical = true
+	_relic_tray.interactive = false   # info-only: a chip opens its detail overlay,
+									   # never offers Discard
+	# Consumable use has no road into the new command surface yet (H3: the seat renders,
+	# armed never) — recovered with the relics' own hookup pass.
+	_relic_tray.consumable_check = func() -> bool: return false
+	column.add_child(_relic_tray)
+	return strip
+
+
+# The hairline separating the purse from the relics below it — the strip holds two kinds
+# of thing, and one rule is cheaper than a gap wide enough to say so.
+func _strip_rule() -> Control:
+	var rule := Panel.new()
+	rule.custom_minimum_size.y = 2.0
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = ScreenUI.MANA_TRACK_BORDER
+	sb.set_corner_radius_all(1)
+	rule.add_theme_stylebox_override("panel", sb)
+	return rule
+
+
+# The vertical mana gauge, anchoring the LEFT end of the hand bar (full bar height — mana
+# is what the hand spends, so the readout sits with the cards it pays for): a "MANA"
+# header cell at the TOP, the chunk stack in the middle (one chunk per point of capacity —
+# spent chunks dim, available ones lit, filling from the bottom), and the current/max
+# count in a matching footer cell at the BOTTOM. _refresh_mana rebuilds the chunk count
+# when capacity ramps and recolours them as mana is spent.
+func _build_mana_gauge() -> Control:
+	var compact := UIScale.is_compact()
+	var gauge := Panel.new()
+	gauge.custom_minimum_size.x = 122.0 if compact else 92.0
+	gauge.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	UIScale.tip(gauge, Loc.t("combat.mana_tip"))
+	var track := StyleBoxFlat.new()
+	track.bg_color = ScreenUI.MANA_TRACK_BG
+	track.set_corner_radius_all(12)
+	track.set_border_width_all(2)
+	track.border_color = ScreenUI.MANA_TRACK_BORDER
+	gauge.add_theme_stylebox_override("panel", track)
+
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 6)
+	pad.add_theme_constant_override("margin_right", 6)
+	pad.add_theme_constant_override("margin_top", 6)
+	# The hand bar's last BOTTOM_BLEED px hang off-screen — keep the footer clear of them.
+	pad.add_theme_constant_override("margin_bottom", 6 + int(Hand.BOTTOM_BLEED))
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gauge.add_child(pad)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.add_child(col)
+
+	var tag := Label.new()
+	tag.text = Loc.t("combat.mana_tag")
+	tag.add_theme_font_size_override("font_size", 22 if compact else 16)
+	tag.add_theme_color_override("font_color", Color(0.72, 0.78, 0.92))
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(tag)
+
+	col.add_child(_gauge_divider())
+
+	_mana_chunks_box = VBoxContainer.new()
+	_mana_chunks_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_mana_chunks_box.add_theme_constant_override("separation", 2)
+	_mana_chunks_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(_mana_chunks_box)
+
+	col.add_child(_gauge_divider())
+
+	_mana_label = Label.new()
+	_mana_label.add_theme_font_size_override("font_size", 28 if compact else 22)
+	_mana_label.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0))
+	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mana_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	col.add_child(_mana_label)
+	return gauge
+
+
+# A thin horizontal rule framing the mana gauge's header/footer cells against the stack.
+func _gauge_divider() -> Panel:
+	var divider := Panel.new()
+	divider.custom_minimum_size.y = 2.0
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = ScreenUI.MANA_TRACK_BORDER
+	divider.add_theme_stylebox_override("panel", sb)
+	return divider
+
+
+func _make_mana_chunk() -> Panel:
+	var chunk := Panel.new()
+	chunk.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	chunk.custom_minimum_size.y = 2.0   # a floor so many chunks never collapse to nothing
+	chunk.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return chunk
+
+
+# The action column, hugging the RIGHT of the board: the enemy readout's seat at the TOP
+# (level with the board it reports on), then the dial row (pacing / speed / settings),
+# then the debug row, then the big "Ready" button filling everything below. Squashed as
+# narrow as its labels allow — its width comes straight out of the board's card size.
+func _build_action_column() -> Control:
+	var compact := UIScale.is_compact()
+	var col := VBoxContainer.new()
+	# Width floor: a GlossyButton nine-patch can only STRETCH cleanly; compressing the
+	# centre band squashes the baked rim/sheen into doubled-line artifacts.
+	col.custom_minimum_size.x = 200.0 if compact else 192.0
+	col.add_theme_constant_override("separation", 10)
+
+	# EnemyIntel's seat — the widget was exterminated with the demoted layer; until its
+	# own recovery pass, the frame hosts the working readouts (round, enemy mana, state,
+	# and the cue log).
+	var seat := Panel.new()
+	seat.custom_minimum_size.y = 150.0
+	var track := StyleBoxFlat.new()
+	track.bg_color = ScreenUI.MANA_TRACK_BG
+	track.set_corner_radius_all(12)
+	track.set_border_width_all(2)
+	track.border_color = ScreenUI.MANA_TRACK_BORDER
+	seat.add_theme_stylebox_override("panel", track)
+	var seat_pad := MarginContainer.new()
+	seat_pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	seat_pad.add_theme_constant_override("margin_left", 8)
+	seat_pad.add_theme_constant_override("margin_right", 8)
+	seat_pad.add_theme_constant_override("margin_top", 6)
+	seat_pad.add_theme_constant_override("margin_bottom", 6)
+	seat.add_child(seat_pad)
+	var seat_col := VBoxContainer.new()
+	seat_pad.add_child(seat_col)
+	_round_label = Label.new()
+	_round_label.text = "Round 0"
+	seat_col.add_child(_round_label)
+	_enemy_label = Label.new()
+	seat_col.add_child(_enemy_label)
+	_state_label = Label.new()
+	_state_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	seat_col.add_child(_state_label)
+	_cue_log = Label.new()
+	_cue_log.add_theme_font_size_override("font_size", 12)
+	_cue_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_cue_log.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	seat_col.add_child(_cue_log)
+	col.add_child(seat)
+
+	# The dial row — the three dials the player may want mid-fight, side by side: how much
+	# the animations overlap (pacing), how fast the clock runs (speed), and the full
+	# settings panel. Near-square at the column's width, so they take GlossyButton's
+	# square bake rather than a squashed nine-patch.
+	var side := ScreenUI.BUTTON_HEIGHT_COMPACT - 16.0
+	var top_row := HBoxContainer.new()
+	top_row.add_theme_constant_override("separation", 8)
+	top_row.custom_minimum_size.y = side
+	col.add_child(top_row)
+
+	_pacing_btn = ScreenUI.action_button("", _on_pacing_pressed, Vector2(0, side))
+	_pacing_btn.expand_icon = true
+	_pacing_btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pacing_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_child(_pacing_btn)
+	_refresh_pacing_btn()
+
+	_speed_btn = ScreenUI.action_button("", _on_speed_pressed, Vector2(0, side),
+			26 if compact else 20)
+	_speed_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_child(_speed_btn)
+	_refresh_speed_btn()
+
+	# The panel carries the SAME pacing picker as the button beside it, so re-read it on
+	# dismiss — otherwise a change made in the panel leaves a stale chevron count here.
+	var open_settings := func() -> void:
+		var overlay := SettingsOverlay.open(self)
+		if overlay != null:
+			overlay.closed.connect(_refresh_pacing_btn)
+	var gear := ScreenUI.action_button("", open_settings, Vector2(0, side))
+	gear.icon = preload("res://assets/ui/icons/settings.png")
+	gear.expand_icon = true
+	gear.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gear.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UIScale.tip(gear, Loc.t("settings.title"))
+	top_row.add_child(gear)
+
+	# Debug tools get their OWN row, present only in debug builds — so a debug affordance
+	# never takes width from a control the player actually uses. The old row's end-combat
+	# ✕ and Kill have no road into the new core yet (H3) — seated dark until the debug
+	# recovery pass.
+	if DebugConfig.enabled():
+		var debug_row := HBoxContainer.new()
+		debug_row.add_theme_constant_override("separation", 8)
+		debug_row.custom_minimum_size.y = side
+		col.add_child(debug_row)
+
+		var debug_close := ScreenUI.close_button(Callable(), true)
+		debug_close.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		debug_close.size_flags_vertical = Control.SIZE_FILL
+		debug_close.custom_minimum_size = Vector2(0, side)
+		debug_close.disabled = true
+		UIScale.tip(debug_close, "Debug: end combat (pending its road into the core)")
+		debug_row.add_child(debug_close)
+
+		var debug_kill := ScreenUI.action_button("Kill", Callable(),
+				Vector2(0, side), 20, ScreenUI.CHROME_DEBUG)
+		debug_kill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		debug_kill.size_flags_vertical = Control.SIZE_FILL
+		debug_kill.disabled = true
+		UIScale.tip(debug_kill, "Debug: kill the enemy captain (pending its road into the core)")
+		debug_row.add_child(debug_kill)
+
+	# The pick's escape hatch — visible only while a pick prompt is open (see pick_one).
+	_cancel_pick = ScreenUI.action_button("Cancel", _on_cancel_pick,
+			Vector2(0, side), 20, ScreenUI.CHROME_DANGER)
+	_cancel_pick.visible = false
+	col.add_child(_cancel_pick)
+
+	# The key touch target — "Ready" — a chunky vertical button filling the rest of the
+	# column, all the way down through the hand bar's band. The caption is NOT the
+	# button's own text (which Godot can only centre vertically — mid-screen on a button
+	# this tall): it's a bottom-anchored child Label whose band _resize_board keeps equal
+	# to the hand bar's. Styled to match GlossyButton's own text treatment.
+	_done_btn = ScreenUI.action_button("", _on_end_turn, Vector2.ZERO,
+			44 if compact else 30, ScreenUI.CHROME_READY)
+	_done_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_done_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(_done_btn)
+
+	_done_label = Label.new()
+	_done_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_done_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_done_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_done_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_done_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_done_label.add_theme_font_override("font", GlossyButton.CHUNKY_FONT)
+	_done_label.add_theme_font_size_override("font_size", 44 if compact else 30)
+	_done_label.add_theme_color_override("font_color", Color.WHITE)
+	_done_label.add_theme_color_override("font_outline_color", ScreenUI.CHROME_READY.darkened(0.55))
+	_done_label.add_theme_constant_override("outline_size", 8)
+	_done_btn.add_child(_done_label)
+
+	_refresh_done_btn()
+	return col
+
+
+# Sizes every board slot AND the hand bar's cards to the largest shared card size that
+# fits — one card size for the whole screen, keeping the card aspect, so the halves fill
+# their space with big, tappable cards and even gaps. Runs on any resize.
+#
+# CRITICAL: the solve reads NOTHING the cards themselves influence — only the screen size
+# and the fixed chrome around the board (_arena_chrome_w, margins, pads). Live container
+# sizes are poisoned in both directions: the height feeds back through Hand.set_card_size,
+# and _board_row's width equals its CONTENT minimum whenever the slots overflow a narrow
+# window. From stable inputs, re-entry recomputes the identical target and stops.
+func _resize_board() -> void:
+	if size.x < 1.0 or size.y < 1.0 or _arena_chrome_w <= 0.0:
+		return
+
+	var cols := BoardGeometry.COLS
+	var rows := BoardGeometry.ROWS
+	var gap := float(SlotUI.SLOT_GAP)
+	# Width splits across the two halves (minus the gulf between them); each half holds
+	# `cols` inside its zone panel's inner pad.
+	var half_w := (size.x - _arena_chrome_w - _halves_gap()) / 2.0
+	var slot_w_by_width := (half_w - 2.0 * HALF_PAD - (cols - 1) * gap) / float(cols)
+	# Height: the body's column carries the board's `rows` cards + the hand's one card
+	# (same size), the row gaps, the zone panels' vertical pad, the column separation, and
+	# the hand bar's top pad. The bar's bottom edge sits BOTTOM_BLEED below the screen.
+	var avail_h := size.y - TOP_MARGIN + Hand.BOTTOM_BLEED
+	var budget := avail_h - COL_SEP - Hand.PAD_TOP - 2.0 * HALF_PAD \
+		- (rows - 1) * gap
+	var slot_h := budget / float(rows + 1)
+	var slot_w := floorf(minf(slot_w_by_width, slot_h / SLOT_ASPECT))
+	if slot_w < 1.0:
+		return
+	var slot_size := Vector2(slot_w, floorf(slot_w * SLOT_ASPECT))
+
+	# Before the slot bail — the hand can be stale even when the slots are already correct
+	# (it no-ops when unchanged).
+	_hand.set_card_size(slot_size)
+	# Keep the Ready caption's band equal to the hand bar's visible height, so the word
+	# sits level with the bar beside it. Capped by the button itself: on a short window
+	# the band could otherwise exceed the button and draw the caption up over the column.
+	if _done_label != null:
+		var band := slot_size.y + Hand.PAD_TOP - Hand.BOTTOM_BLEED
+		if _done_btn != null and _done_btn.size.y > 1.0:
+			band = minf(band, _done_btn.size.y)
+		_done_label.offset_top = -band
+	var sample := _slot_uis.get(Vector3i(0, 0, 0)) as SlotUI
+	if sample == null or sample.custom_minimum_size == slot_size:
+		return   # already correct → stop before we trigger another resize
+	for slot_ui: SlotUI in _slot_uis.values():
+		slot_ui.custom_minimum_size = slot_size
+
+
+func _refresh_mana() -> void:
+	if world == null:
+		return
+	var mana := roundi(world.player_side().get_stat(&"mana"))
+	var capacity := roundi(world.player_side().get_stat(&"mana_capacity"))
+	if _mana_label != null:
+		_mana_label.text = "%d/%d" % [mana, capacity]
+	if _mana_chunks_box == null:
+		return
+
+	# Rebuild the segment stack when capacity changes (it ramps up over the fight).
+	var want := maxi(capacity, 0)
+	if _mana_chunks_box.get_child_count() != want:
+		for ch in _mana_chunks_box.get_children():
+			_mana_chunks_box.remove_child(ch)
+			ch.queue_free()
+		for _i in want:
+			_mana_chunks_box.add_child(_make_mana_chunk())
+
+	# Light the bottom `mana` chunks (available), dim the rest (spent / not yet ramped).
+	var chunks := _mana_chunks_box.get_children()
+	for idx in chunks.size():
+		var from_bottom := chunks.size() - 1 - idx
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = ScreenUI.MANA_LIT if from_bottom < mana else ScreenUI.MANA_DIM
+		sb.set_corner_radius_all(4)
+		(chunks[idx] as Panel).add_theme_stylebox_override("panel", sb)
+
+
+# Advance to the next battle speed, applying it immediately (live time_scale). Per-combat
+# only — not persisted, so the next fight starts back at x1.
+func _on_speed_pressed() -> void:
+	var i := BATTLE_SPEEDS.find(_battle_speed)
+	_battle_speed = BATTLE_SPEEDS[(i + 1) % BATTLE_SPEEDS.size()]
+	Engine.time_scale = _battle_speed
+	_refresh_speed_btn()
+
+
+# Advance to the next pacing preset. UNLIKE speed, this IS the player's persisted setting —
+# the same value the settings panel writes (Vfx.set_overlap): a standing preference for
+# how combat should read, not a per-fight scrub.
+func _on_pacing_pressed() -> void:
+	Vfx.set_overlap(float(Vfx.PACING[(_pacing_index() + 1) % Vfx.PACING.size()]["overlap"]))
+	_refresh_pacing_btn()
+
+
+func _pacing_index() -> int:
+	var key := Vfx.pacing_key()
+	for i in Vfx.PACING.size():
+		if str(Vfx.PACING[i]["key"]) == key:
+			return i
+	return 0
+
+
+func _refresh_pacing_btn() -> void:
+	if _pacing_btn == null:
+		return
+	var i := _pacing_index()
+	_pacing_btn.icon = PACE_ICONS[i]
+	UIScale.tip(_pacing_btn, "%s: %s" % [Loc.t("settings.pacing"),
+			Loc.t("settings.pacing." + str(Vfx.PACING[i]["key"]))])
+
+
+func _refresh_speed_btn() -> void:
+	if _speed_btn != null:
+		# "x1" / "x1.5" — one decimal, a bare ".0" trimmed so the whole multipliers stay
+		# short in a button this narrow.
+		_speed_btn.text = "x" + String.num(_battle_speed, 1).trim_suffix(".0")
+		UIScale.tip(_speed_btn, Loc.t("settings.speed"))
+
+
+# The Ready button's caption speaks the turn state (the old phase captions, mapped onto
+# the command span): the player's open command window arms it; a pick prompt or anyone
+# else's turn parks it.
+func _refresh_done_btn() -> void:
+	if _done_btn == null or _done_label == null or _fight_over:
+		return
+	if _picking:
+		_done_label.text = Loc.t("combat.select_target")
+		_done_btn.disabled = true
+	elif _span_active and _awaiting_command:
+		_done_label.text = Loc.t("combat.ready")
+		_done_btn.disabled = false
+	else:
+		_done_label.text = Loc.t("combat.battle")
+		_done_btn.disabled = true
+	# The caption is a child Label, outside the button's own disabled styling — dim it
+	# manually.
+	_done_label.modulate.a = 0.55 if _done_btn.disabled else 1.0
