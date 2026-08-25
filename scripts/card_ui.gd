@@ -726,6 +726,8 @@ func flash_stat_proc(attr: String) -> void:
 		_brighten(lbl)
 
 
+# A quick over-bright flash back to normal — the relic chip's "fired" discharge (RelicTray.glint),
+# applied to whatever node it's given so it works on any badge shape.
 func _brighten(node: Control) -> void:
 	var tw := create_tween()
 	tw.tween_property(node, "modulate", Color(1.7, 1.7, 1.7), 0.12)
