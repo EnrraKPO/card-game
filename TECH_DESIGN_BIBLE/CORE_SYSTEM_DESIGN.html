@@ -333,14 +333,10 @@ condition.</p>
 <h2><span class="secno">§6</span> The built-in effects of the types</h2>
 
 <p>Placement and the burials are ordinary effects with the standard structure,
-fixed in the type's machinery. <s>Each  trigger
-carries an entity entry with route
-<code>source</code> and condition <code>is_holder</code>.</s></p>
-
-<div class="amendment">A15: unit burial's trigger carries an entity entry with
-route <code>target</code> and condition <code>is_holder</code>; placement's and
-the spell burial's carry route <code>source</code> and condition
-<code>is_holder</code>.</div>
+fixed in the type's machinery. Unit burial's trigger carries an entity entry
+with route <code>target</code> and condition <code>is_holder</code>;
+placement's and the spell burial's carry route <code>source</code> and
+condition <code>is_holder</code>.</p>
 
 <ul>
   <li><b>Unit placement.</b> Trigger <code>play_engaged</code>. Resolver: the
@@ -533,8 +529,7 @@ existential claim universal: "all enemies are wounded" is authored "not: any
     { "kind": "name_is", "role": "mutator_kind", "name": "poison" }
   ]},
   "entity_conditions": { "policy": "all", "entries": [
-    <s>{ "route": "source", "conditions": [ { "kind": "is_holder" } ] },</s>
-    <span class="amendment">{ "route": "target", "conditions": [ { "kind": "is_holder" } ] },</span>
+    { "route": "target", "conditions": [ { "kind": "is_holder" } ] },
     { "route": "world", "negate": true, "conditions": [
       { "kind": "is_enemy" },
       { "kind": "stat_vs_stat", "left": "health", "op": "lt", "right": "max_health", "negate": true }
@@ -659,8 +654,7 @@ spells and abilities are superseded by this document.</p>
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> <s>signed off — Enrra, 2026-08-23.</s>
-  <span class="amendment">Pending revision — A15 landed 2026-08-25.</span>
+  <b>Signature:</b> signed off — Enrra, 2026-08-25.
 </div>
 
 </div>
