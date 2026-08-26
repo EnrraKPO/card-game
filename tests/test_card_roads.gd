@@ -1,10 +1,10 @@
 extends TestCase
 
 # Phase 4 of IMPLEMENTATION_PLAN.html — the card roads. Pins the play effect with pay
-# (Core §5), the substantive effects on play_engaged, the built-in placement and burials
-# and the fielded event (Core §6, §2), the ability expansion (Core §7) with Move
-# (A3, A9), and the main action (Combat Frame §6, A6). Exit: a card plays from hand to
-# board, an ability activates, a death buries — all through the road.
+# and its substantive mutators (Core §5, A18), the baked placement and the burials
+# (Core §6), the ability expansion (Core §7, A18) with Move (A3, A9), and the main
+# action (Combat Frame §6, A6). Exit: a card plays from hand to board, an ability
+# activates, a death buries — all through the road.
 
 
 class TestPicker extends TargetPicker:
@@ -97,17 +97,12 @@ func _test_spell_play() -> void:
 	spell.seed_stat(&"cost", 2.0)
 	WriteAuthority.mint(world, spell)
 	WriteAuthority.insert(side.get_container(&"hand"), spell)
-	# The Fireball shape: a substantive effect on play_engaged, hand-picked enemy unit,
-	# damage payload — authored in the bible's markup.
-	var substantive: Effect = MarkupParse.parse_effect({
-		"trigger": {"event": "play_engaged", "entity_conditions": {"entries": [
-			{"route": "source", "conditions": [{"kind": "is_holder"}]},
-		]}},
-		"targeting": {"decision": "hand_pick",
-				"conditions": [{"kind": "is_enemy"}, {"kind": "is_unit"}]},
-		"payload": [{"damage": {"amount": 4}}],
-	})
-	spell.effects.append(substantive)
+	# The Fireball shape (Core §5, A18): the substantive damage rides the play itself,
+	# alongside the payment — authored targeting, hand-picked enemy unit.
+	var targeting: TargetResolver = MarkupParse.parse_targeting({"decision": "hand_pick",
+			"conditions": [{"kind": "is_enemy"}, {"kind": "is_unit"}]})
+	var substantive: Array[Mutator] = MarkupParse.parse_payload([{"damage": {"amount": 4}}])
+	spell.adopt_play_effect(spell.compose_play_effect(targeting, substantive))
 	var picker := TestPicker.new()
 	picker.answer = foe
 	world.picker = picker
@@ -116,7 +111,7 @@ func _test_spell_play() -> void:
 	check_eq(side.get_stat(&"mana"), 0.0, "the spell's play is paid")
 	check(spell.housing == side.get_container(&"graveyard"),
 			"a spell is spent by its play — the burial lands it in the graveyard")
-	check_eq(foe.get_stat(&"health"), 1.0, "the substantive effect's damage reached the pick")
+	check_eq(foe.get_stat(&"health"), 1.0, "the play's substantive damage reached the pick")
 
 
 func _test_ability_road() -> void:

@@ -495,4 +495,39 @@ standing on it non-conforming, to be corrected.</p>
   the fight spans the rounds the coverage needs.</p>
 </div>
 
+<h2>The amendment repairs — A15–A18, T2 (2026-08-26)</h2>
+
+<div class="brief">
+  <div class="head">B37 — The envelope's <code>play</code> seat (A18 on the
+  delegated envelope, A7/B29).</div>
+  <p>A18 puts the play's substantive mutators on the play effect itself; the
+  envelope therefore grows one seat authoring the play's authored parts:
+  <code>"play": {"targeting"?, "payload"?, "windup"?, "contact"?}</code> —
+  composed onto the type's fixed play trigger (baked conditions, pay, a
+  unit's baked placement); targeting absent = the type fact. Cards only —
+  a stranger on relics and statuses. The ability form's
+  <code>effect.targeting</code> sub-seat is removed the same way: the one
+  authored targeting is the use effect's resolver (Core §7's field list
+  names exactly one targeting).</p>
+  <p>The corollary, decided here: a card whose on-play ask needs its own
+  target beyond the play's election (the slice's Venom Adder and Sniper — a
+  unit's play elects the placement slot, their asks aim an enemy) stays
+  authored as an ordinary reaction to <code>play_engaged</code> with its own
+  targeting — the standard effect structure, no occasion reading. Only
+  substance aimed by the play's own election rides the play seat (the
+  slice's Fireball).</p>
+</div>
+
+<div class="brief">
+  <div class="head">B38 — The occasion's-target decision follows A16's
+  singular target.</div>
+  <p>The stock decision reads the occasion's native core target (one
+  GameEntity, A16) kept to the narrowed field; the class and authored token
+  rename to the singular (<code>occasions_target</code>,
+  <code>OccasionsTargetDecision</code>) — the plural named the demoted
+  EntityEventData stamp and would state a falsehood. No authored content
+  carried the old token (repo-verified). EntityEventData leaves the tree
+  with its demotion: after A18 nothing produces or reads it.</p>
+</div>
+
 </div>

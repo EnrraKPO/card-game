@@ -2,17 +2,16 @@ class_name Unit
 extends Card
 
 # A Unit (Core System Design §1): a Card kind bearing the type's fixed machinery — the
-# main action, the target poll, the placement effect, and the unit's burial effect.
+# main action, the target poll, the placement baked into its play, and the unit's
+# burial effect.
 #
 # Its stats: the strike pipeline reads `attack` and `speed`, damage lands on `shield`
 # first then `health` (Mutation §7); `tapped` is the public mutable tap fact — zero is
 # untapped, above zero is tapped, floored at zero by the WriteAuthority (Combat Frame §6).
 #
 # The built-ins (Core §6; Combat Frame §6, A6):
-#   · Placement — trigger `play_engaged` + the source/is_holder entry; the stock
-#     occasion's-targets resolver elects the play's picked slot; the placement mutator
-#     moves the holder into it. The insert produces `fielded`. Implied fielded
-#     condition removed: its duty begins off-board (B28).
+#   · Placement — a baked-in substantive mutator of the unit's play (A18): the play's
+#     resolver elects the slot; the placement mutator moves the holder into it.
 #   · Burial — trigger `died` + the route-`target` + is_holder entry (Core §6, A16: the
 #     dead unit is died's native target); the burial mutator moves the holder to its
 #     side's graveyard. Implied condition removed: death buries wherever it finds the
@@ -52,16 +51,6 @@ func _init(p_allegiance: Side = null, p_building: bool = false) -> void:
 static func _machinery() -> Array[Effect]:
 	if not _machinery_templates.is_empty():
 		return _machinery_templates
-
-	var placement_trigger := Trigger.new()
-	placement_trigger.event = &"play_engaged"
-	placement_trigger.entity_entries.append(Ability.source_is_holder())
-	var placement_payload: Array[Mutator] = []
-	placement_payload.append(PlacementMutator.new())
-	var placement := Effect.new(placement_trigger,
-			TargetResolver.new([], OccasionsTargetsDecision.new()), placement_payload)
-	placement.fielded_condition_removed = true
-	_machinery_templates.append(placement)
 
 	var burial_trigger := Trigger.new()
 	burial_trigger.event = &"died"
@@ -112,6 +101,13 @@ func _default_play_targeting() -> TargetResolver:
 # run at interactive idle for the previews — side-effect-free.
 func main_action_targets() -> Array[GameEntity]:
 	return main_action.resolver.resolve(Plate.new(Event.new(&"act", self, world.game), self))
+
+
+# The type's baked substantive mutator (Core §6, A18): the placement, first after pay.
+func _baked_substantive() -> Array[Mutator]:
+	var baked: Array[Mutator] = []
+	baked.append(PlacementMutator.new())
+	return baked
 
 
 func _declared_mutable_stats() -> Array[StringName]:

@@ -261,12 +261,13 @@ func _test_decisions() -> void:
 	world.picker = picker
 	check_eq(await picked.engage(plate), [far] as Array[GameEntity], "the picker's pick is the election")
 
-	var stamped := Event.new(&"play_engaged", holder, world.game)
-	var elected: Array[GameEntity] = [near]
-	stamped.components.append(EntityEventData.new(&"targets", elected))
-	var stock := TargetResolver.new(enemies, OccasionsTargetsDecision.new())
-	check_eq(stock.resolve(Plate.new(stamped, holder)), [near] as Array[GameEntity],
-			"the stock form takes the occasion's targets as its own")
+	var carrying := Event.new(&"play_engaged", holder, near)
+	var stock := TargetResolver.new(enemies, OccasionsTargetDecision.new())
+	check_eq(stock.resolve(Plate.new(carrying, holder)), [near] as Array[GameEntity],
+			"the stock form takes the occasion's target as its own")
+	var outside := Event.new(&"play_engaged", holder, holder)
+	check(stock.resolve(Plate.new(outside, holder)).is_empty(),
+			"a carried target outside the narrowed field is not elected")
 
 	var game_default := TargetResolver.game_default()
 	check_eq(game_default.resolve(plate), [world.game] as Array[GameEntity],
@@ -299,12 +300,10 @@ func _test_conductor() -> void:
 	payload.append(RecorderMutator.new(&"second", log))
 	var trigger := Trigger.new()
 	trigger.event = &"probe"
-	# Two recipients: the stock occasion's-targets decision carries both through.
+	# Two recipients: every enemy unit, through the all decision.
 	var effect := Effect.new(trigger,
-			TargetResolver.new(enemies, OccasionsTargetsDecision.new()), payload)
+			TargetResolver.new(enemies, AllDecision.new()), payload)
 	var occasion := Event.new(&"probe", holder, world.game)
-	var both: Array[GameEntity] = [a, b]
-	occasion.components.append(EntityEventData.new(&"targets", both))
 	var conductor := EffectConductor.new(world)
 	var holster: Array[Event] = []
 	await conductor.run(effect, Plate.new(occasion, holder), holster)

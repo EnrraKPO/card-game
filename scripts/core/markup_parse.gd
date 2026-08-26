@@ -37,7 +37,7 @@ static var DECISION_KINDS: Dictionary = {
 	"random": RandomDecision,
 	"stat_ranked": StatRankedDecision,
 	"hand_pick": HandPickDecision,
-	"occasions_targets": OccasionsTargetsDecision,
+	"occasions_target": OccasionsTargetDecision,
 }
 
 

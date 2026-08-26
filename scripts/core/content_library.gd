@@ -4,9 +4,11 @@ extends RefCounted
 # The registry of authored content in the A7 envelope: one object per card — identity
 # (id, display name); kind (`unit` or `spell`, deciding the constructed type); stats as
 # a name→value map seeding construction, validated against the type's declared lists;
-# birth facts where the type bears them (`building`, `king`, `elements` — A7, T1); `effects` — a list of the
+# birth facts where the type bears them (`building`, `king`, `elements` — A7, T1);
+# `play` — the play effect's authored parts (targeting, substantive payload, cues —
+# Core §5, A18, B37), composed onto the type's play trigger; `effects` — a list of the
 # bible's effect markup; `abilities` — a list of the Core §7 ability form. Relics and
-# statuses use the same envelope minus kind. Strangers refused loudly.
+# statuses use the same envelope minus kind and play. Strangers refused loudly.
 #
 # Registration parses ONCE — the parsed effects and expanded ability effects are shared
 # across every copy built and every simulated world (the Mutation §4 lifecycle); build
@@ -43,6 +45,7 @@ static func _register(envelope: Dictionary, into: Dictionary, carded: bool) -> b
 	var allowed: Array = ["id", "name", "stats", "building", "king", "elements", "effects", "abilities"]
 	if carded:
 		allowed.append("kind")
+		allowed.append("play")
 	for key: String in envelope:
 		if not allowed.has(key):
 			push_error("ContentLibrary: envelope key '%s' is a stranger — refused" % key)
@@ -78,6 +81,31 @@ static func _register(envelope: Dictionary, into: Dictionary, carded: bool) -> b
 		if effect == null:
 			return false
 		(parsed.effects as Array[Effect]).append(effect)
+	# The play seat (Core §5, A18): authored targeting and substantive payload composed
+	# onto the type's play trigger — parsed once, shared across every build.
+	if envelope.has("play"):
+		var play_markup: Variant = envelope.play
+		if not (play_markup is Dictionary):
+			push_error("ContentLibrary: '%s': play must be an object — refused" % id)
+			return false
+		for key: String in (play_markup as Dictionary):
+			if not ["targeting", "payload", "windup", "contact"].has(key):
+				push_error("ContentLibrary: '%s': play key '%s' is a stranger — refused" % [id, key])
+				return false
+		var play_targeting: TargetResolver = null
+		if (play_markup as Dictionary).has("targeting"):
+			play_targeting = MarkupParse.parse_targeting((play_markup as Dictionary).targeting)
+			if play_targeting == null:
+				return false
+		var play_payload: Array[Mutator] = MarkupParse.parse_payload(
+				(play_markup as Dictionary).get("payload", []))
+		if play_payload.size() != ((play_markup as Dictionary).get("payload", []) as Array).size():
+			return false
+		var composer: Card = Unit.new() if envelope.kind == "unit" else Spell.new()
+		parsed["play"] = composer.compose_play_effect(play_targeting, play_payload,
+				StringName((play_markup as Dictionary).get("windup", "") as String),
+				StringName((play_markup as Dictionary).get("contact", "") as String))
+
 	# Abilities expand per build (the expansion binds nothing holder-specific — its
 	# parts are stateless — but appointment appends to a holder, so it runs at build
 	# against a template's parse done here for refusal's sake).
@@ -146,6 +174,8 @@ static func _dress(entity: GameEntity, parsed: Dictionary) -> void:
 		entity.seed_stat(StringName(stat), float(parsed.stats[stat]))
 	if entity is Card:
 		(entity as Card).elements = (parsed.elements as Array[StringName]).duplicate()
+		if parsed.has("play"):
+			(entity as Card).adopt_play_effect(parsed.play as Effect)
 	entity.effects.append_array(parsed.effects as Array[Effect])
 	entity.effects.append_array(parsed.ability_effects as Array[Effect])
 	for ability_name: StringName in (parsed.ability_names as Array[StringName]):

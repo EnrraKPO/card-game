@@ -1,10 +1,10 @@
 class_name PlacementMutator
 extends Mutator
 
-# `placement` (Mutation §4): machinery only — never authored; serves placement and the
-# Move ability (Core §6, §7; A3). Recipient the elected slot; act: container move of the
-# holder into the recipient's `slotted_unit` — the container name fixed in the kind. The
-# insert produces `fielded` where the origin was off-board (Core §2).
+# `placement` (Mutation §4): machinery only — never authored. A baked-in substantive
+# mutator of the unit's play (Core §6, A18), and the Move ability's carrier (Core §7;
+# A3). Recipient the elected slot; act: container move of the holder into the
+# recipient's `slotted_unit` — the container name fixed in the kind.
 
 
 func _init() -> void:

@@ -6,13 +6,14 @@ extends GameEntity
 # the authored form at construction and mutable through the write road like any stat —
 # discounts and surcharges are ordinary stat mutations.
 #
-# The play effect, fixed here: trigger — event `play`, source the played card (the
+# The play effect, composed here: trigger — event `play`, source the played card (the
 # route-source + is_holder entry binds it); conditions affordability and holder-in-hand,
-# both baked, authored conditions joining them at the envelope. Targeting: type facts —
-# Card defaults to automatic targeting of the Game; Unit overrides to a manual pick of a
+# both baked. Targeting: authored, or the type fact where none is authored — Card
+# defaults to automatic targeting of the Game; Unit overrides to a manual pick of a
 # Slot; a declined pick ends the play unpaid. Payload: the pay mutator — unique, runs
-# once before the walk, recipient the holder's side. The payment produces
-# `play_engaged`, carrying the play's elected targets.
+# once before the walk, recipient the holder's side — then the card's substantive
+# mutators, routed through the effect's target resolver (A18). The payment produces
+# `play_engaged`.
 #
 # The play effect carries the implied fielded condition REMOVED: its duty is asked of a
 # card in hand (B28).
@@ -39,6 +40,14 @@ func _init(p_allegiance: Side = null) -> void:
 
 
 func _build_play_effect() -> Effect:
+	return compose_play_effect(null, [] as Array[Mutator])
+
+
+# The play effect whole (Core §5, A18): the fixed trigger, the authored targeting or
+# the type fact where null, and the payload — pay, then the type's baked substantive
+# mutators (a unit's placement, Core §6), then the authored substantive mutators.
+func compose_play_effect(targeting: TargetResolver, substantive: Array[Mutator],
+		windup: StringName = &"", contact: StringName = &"") -> Effect:
 	var trigger := Trigger.new()
 	trigger.event = &"play"
 	trigger.entity_entries.append(Ability.source_is_holder())
@@ -47,11 +56,30 @@ func _build_play_effect() -> Effect:
 	holder_entry.conditions.append(BakedConditions.Affordability.new(-1, 0))
 	holder_entry.conditions.append(BakedConditions.InHand.new())
 	trigger.entity_entries.append(holder_entry)
-	var pay: Array[Mutator] = []
-	pay.append(PayMutator.new(-1, 0))
-	var effect := Effect.new(trigger, _default_play_targeting(), pay)
+	var payload: Array[Mutator] = []
+	payload.append(PayMutator.new(-1, 0))
+	payload.append_array(_baked_substantive())
+	payload.append_array(substantive)
+	var effect := Effect.new(trigger,
+			targeting if targeting != null else _default_play_targeting(), payload)
+	effect.windup_presentation = windup
+	effect.contact_presentation = contact
 	effect.fielded_condition_removed = true
 	return effect
+
+
+# Replaces the type-default play effect with a composed one (the envelope's authored
+# play, Core §5) — the one seat that swaps it.
+func adopt_play_effect(effect: Effect) -> void:
+	effects.erase(play_effect)
+	play_effect = effect
+	effects.append(effect)
+
+
+# The type's baked substantive mutators (Core §6): none on the base; Unit bakes its
+# placement into the play.
+func _baked_substantive() -> Array[Mutator]:
+	return []
 
 
 # The type fact (Core §5): a Card targets the Game automatically; Unit overrides.

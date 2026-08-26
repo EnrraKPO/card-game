@@ -184,7 +184,7 @@ func _r4_adder(world: World) -> void:
 	var captain: Unit = _standing(&"captain", world.enemy_side())
 	var poisons: Array[GameEntity] = captain.get_container(&"contained").members.filter(
 			func(e: GameEntity) -> bool: return e is Status and (e as Status).status_id == &"poison")
-	check_eq(poisons.size(), 1, "the play's substantive effect minted Poison onto the picked captain")
+	check_eq(poisons.size(), 1, "the adder's on-play reaction minted Poison onto the picked captain")
 	if not poisons.is_empty():
 		check_eq(poisons[0].get_stat(&"stacks"), 2.0, "with the authored stacks")
 

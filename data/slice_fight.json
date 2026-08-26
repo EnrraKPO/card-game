@@ -58,17 +58,12 @@
       {
         "id": "fireball", "name": "Fireball", "kind": "spell",
         "stats": {"cost": 2},
-        "effects": [
-          {
-            "trigger": {"event": "play_engaged", "entity_conditions": {"entries": [
-              {"route": "source", "conditions": [{"kind": "is_holder"}]}
-            ]}},
-            "targeting": {"decision": "hand_pick",
-              "conditions": [{"kind": "is_enemy"}, {"kind": "is_unit"}]},
-            "payload": [{"damage": {"amount": 4}}],
-            "windup": "bolt"
-          }
-        ]
+        "play": {
+          "targeting": {"decision": "hand_pick",
+            "conditions": [{"kind": "is_enemy"}, {"kind": "is_unit"}]},
+          "payload": [{"damage": {"amount": 4}}],
+          "windup": "bolt"
+        }
       },
       {
         "id": "sniper", "name": "Sniper", "kind": "unit",

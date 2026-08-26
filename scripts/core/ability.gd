@@ -5,16 +5,17 @@ extends RefCounted
 # to have an event fired at it at will; every ability shares the one pair — the ask
 # `use_ability` and the engagement `ability_used` — with the asked ability's name riding
 # both as NameEventData role `ability`. Appointing an ability expands at construction
-# into the ask capability, the USE effect, and the SUBSTANTIVE effect; both the
+# into the ask capability and the USE effect — payload the pay mutator, then the
+# substantive mutators, routed through the effect's target resolver (A18). The
 # ability-name condition and the route-source + is_holder entry are made by the
 # expansion — two units bearing Heal share the event names and are told apart by them.
 #
-# The authored markup form (fields per §7; detail under A7's delegation — B29):
+# The authored markup form (fields per §7; detail under A7's delegation — B29, B37):
 #   {"name": "heal", "cost": {"mana": 2, "tap": 0}?, "targeting": {...},
-#    "effect": {"payload": [...], "targeting": {...}?, "windup": ""?, "contact": ""?}}
-# cost absent = free (Move's form, A3); the substantive effect's targeting defaults to
-# the stock occasion's-targets form; a "trigger" inside the effect is a stranger — the
-# expansion owns both triggers.
+#    "effect": {"payload": [...], "windup": ""?, "contact": ""?}}
+# cost absent = free (Move's form, A3); the one targeting is the use effect's resolver,
+# and every part downstream of the ask rides that one effect — a "trigger" or a second
+# "targeting" inside the effect is a stranger.
 
 
 static func appoint(holder: GameEntity, markup: Dictionary) -> bool:
@@ -50,21 +51,14 @@ static func appoint(holder: GameEntity, markup: Dictionary) -> bool:
 		return false
 	var body: Dictionary = markup.effect
 	for key: String in body:
-		if not ["payload", "targeting", "windup", "contact"].has(key):
+		if not ["payload", "windup", "contact"].has(key):
 			push_error("Ability: '%s' effect key '%s' is a stranger — refused" % [name, key])
 			return false
 	var payload: Array[Mutator] = MarkupParse.parse_payload(body.get("payload", []))
 	if payload.size() != (body.get("payload", []) as Array).size():
 		return false
-	var substantive_targeting: TargetResolver = null
-	if body.has("targeting"):
-		substantive_targeting = MarkupParse.parse_targeting(body.targeting)
-		if substantive_targeting == null:
-			return false
-	else:
-		substantive_targeting = TargetResolver.new([], OccasionsTargetsDecision.new())
 
-	expand(holder, name, mana, tap, targeting, substantive_targeting, payload,
+	expand(holder, name, mana, tap, targeting, payload,
 			StringName(body.get("windup", "") as String),
 			StringName(body.get("contact", "") as String))
 	return true
@@ -72,9 +66,10 @@ static func appoint(holder: GameEntity, markup: Dictionary) -> bool:
 
 # The expansion itself — also the machinery's road (Move appoints through here in code).
 static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
-		targeting: TargetResolver, substantive_targeting: TargetResolver,
-		payload: Array[Mutator], windup: StringName = &"", contact: StringName = &"") -> void:
-	# The use effect: same structure as the play effect (Core §7).
+		targeting: TargetResolver, payload: Array[Mutator],
+		windup: StringName = &"", contact: StringName = &"") -> void:
+	# The use effect: same structure as the play effect (Core §7, A18) — the pay mutator,
+	# then the substantive mutators, routed through the effect's target resolver.
 	var use_trigger := Trigger.new()
 	use_trigger.event = &"use_ability"
 	use_trigger.eventdata_conditions.append(_name_condition(name))
@@ -83,19 +78,13 @@ static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
 	afford_entry.route = &"holder"
 	afford_entry.conditions.append(BakedConditions.Affordability.new(mana, tap))
 	use_trigger.entity_entries.append(afford_entry)
-	var pay: Array[Mutator] = []
-	pay.append(PayMutator.new(mana, tap))
-	holder.effects.append(Effect.new(use_trigger, targeting, pay))
-
-	# The substantive effect: triggered by the engagement, bound by the expansion.
-	var done_trigger := Trigger.new()
-	done_trigger.event = &"ability_used"
-	done_trigger.eventdata_conditions.append(_name_condition(name))
-	done_trigger.entity_entries.append(source_is_holder())
-	var substantive := Effect.new(done_trigger, substantive_targeting, payload)
-	substantive.windup_presentation = windup
-	substantive.contact_presentation = contact
-	holder.effects.append(substantive)
+	var use_payload: Array[Mutator] = []
+	use_payload.append(PayMutator.new(mana, tap))
+	use_payload.append_array(payload)
+	var use := Effect.new(use_trigger, targeting, use_payload)
+	use.windup_presentation = windup
+	use.contact_presentation = contact
+	holder.effects.append(use)
 
 	# The ask capability: the borne name — what may be fired at the holder.
 	holder.abilities.append(name)
@@ -103,12 +92,12 @@ static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
 
 # The Move ability (A3, A9): machinery appoints it on every non-building unit at
 # construction — free, hand-picked vacant ally slot, the placement mutator carrying the
-# move. Rooted buildings do not receive it. The pair is built once and shared (Mutation
-# §4's lifecycle).
-static var _move_pair: Array[Effect] = []
+# move. Rooted buildings do not receive it. The use effect is built once and shared
+# (Mutation §4's lifecycle).
+static var _move_effects: Array[Effect] = []
 
 static func appoint_move(unit: Unit) -> void:
-	if _move_pair.is_empty():
+	if _move_effects.is_empty():
 		var conditions: Array[EntityCondition] = []
 		conditions.append(BakedConditions.IsSlot.new())
 		conditions.append(IsAllyCondition.new())
@@ -117,11 +106,9 @@ static func appoint_move(unit: Unit) -> void:
 		placement.append(PlacementMutator.new())
 		var probe := GameEntity.new()
 		expand(probe, &"move", 0, 0,
-				TargetResolver.new(conditions, HandPickDecision.new()),
-				TargetResolver.new([], OccasionsTargetsDecision.new()),
-				placement)
-		_move_pair = probe.effects
-	unit.effects.append_array(_move_pair)
+				TargetResolver.new(conditions, HandPickDecision.new()), placement)
+		_move_effects = probe.effects
+	unit.effects.append_array(_move_effects)
 	unit.abilities.append(&"move")
 
 

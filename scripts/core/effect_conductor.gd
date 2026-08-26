@@ -17,11 +17,6 @@ extends RefCounted
 # held cues play. (5) Cue the conclusion. Every cue is awaited: blocking lives here, in
 # the flow layer — never in the engine.
 #
-# Interim (A16 struck the delivery's targets accretion from Core §8): the elected
-# targets are still stamped as EntityEventData for the pre-A18 play road — the
-# play_engaged-triggered placement and substantive effects read them. The A18 rebuild
-# retires the stamping.
-
 var _world_ref: WeakRef = null
 
 
@@ -38,18 +33,12 @@ func run(effect: Effect, plate: Plate, holster: Array[Event]) -> void:
 	world.outlet.pause()
 	for mutator: Mutator in effect.payload:
 		if mutator.is_unique():
-			_holster(mutator.issue(plate, null), targets, holster)
+			holster.append_array(mutator.issue(plate, null))
 	for mutator: Mutator in effect.payload:
 		if mutator.is_unique():
 			continue
 		for recipient: GameEntity in targets:
-			_holster(mutator.issue(plate, recipient), targets, holster)
+			holster.append_array(mutator.issue(plate, recipient))
 	await world.outlet.contact(effect.contact_presentation, plate.holder, targets)
 	world.outlet.unpause()
 	await world.outlet.conclude(effect.windup_presentation, plate.holder)
-
-
-func _holster(events: Array[Event], targets: Array[GameEntity], holster: Array[Event]) -> void:
-	for event: Event in events:
-		event.components.append(EntityEventData.new(&"targets", targets))
-		holster.append(event)
