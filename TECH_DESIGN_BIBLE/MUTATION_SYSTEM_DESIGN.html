@@ -411,7 +411,10 @@ submitter exists outside an open delivery.</p>
 <p><b>A procedure is the game's way of resolving one kind of happening into writes and
 events.</b> A procedure is a fixed part of the engine, stateless — all state lives in
 the world's facts — and owns one request shape. Its signature is its typed parameters
-plus the originating request as context; its events are stamped from that context. In
+plus the originating request as context; its events are stamped from that context.
+<ins>The stamp is the request itself: every event originated from a mutation request
+path stamps the request at hand as a <code>RequestEventData</code>; events do not
+carry the mutator_kind as a separate component (A19).</ins> In
 code, the base class is <code>EngineProcedure</code>; each concrete procedure is named
 by the happening it resolves, and its request pairs with it by that name.</p>
 <ul>
@@ -640,7 +643,7 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-26.
+  <b>Signature:</b> <s>signed off — Enrra, 2026-08-26.</s> <ins>Pending revision (A19).</ins>
 </div>
 
 </div>

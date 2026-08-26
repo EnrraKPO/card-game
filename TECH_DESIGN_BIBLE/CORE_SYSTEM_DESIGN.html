@@ -419,17 +419,20 @@ its name. Same structure, separate instances.</p>
 
 <code>NameEventData</code> carries a named fact: <b>role</b>
 (<code>StringName</code> — what the name means to the happening;
-<code>mutator_kind</code> and <code>ability</code> among them) and <b>name</b>
-(<code>StringName</code>); the mutator's kind rides as role
-<code>mutator_kind</code>. A fact of an existing
+<s><code>mutator_kind</code> and</s> <code>ability</code> among them) and <b>name</b>
+(<code>StringName</code>)<s>; the mutator's kind rides as role
+<code>mutator_kind</code></s>. <ins><code>RequestEventData</code> carries the request
+at hand (A19).</ins> A fact of an existing
 shape with a different purpose reuses the class — purpose is a name .</p>
 
 <p>As A16 rules it: "EntityEventData is demoted from being a core
 mechanism, in favor of the native event target."</p>
 
-<p><b>Accretion.</b> Each layer of the road appends the components it knows: a
+<p><b>Accretion.</b> Each layer of the road appends the components it knows: <s>a
 mutator its kind (<code>NameEventData</code>, role
-<code>mutator_kind</code>); a
+<code>mutator_kind</code>);</s> <ins>every event originated from a mutation request
+path stamps the request at hand as a <code>RequestEventData</code>; events do not
+carry the mutator_kind as a separate component (A19);</ins> a
 procedure the facts of its happening. Appending is open to anything on the
 road.</p>
 
@@ -517,7 +520,8 @@ existential claim universal: "all enemies are wounded" is authored "not: any
 <pre>"trigger": {
   "event": "damaged",
   "eventdata_conditions":  { "policy": "all", "conditions": [
-    { "kind": "name_is", "role": "mutator_kind", "name": "poison" }
+<s>    { "kind": "name_is", "role": "mutator_kind", "name": "poison" }</s>
+<ins>    { "kind": "request_kind_is", "name": "poison" }</ins>
   ]},
   "entity_conditions": { "policy": "all", "entries": [
     { "route": "target", "conditions": [ { "kind": "is_holder" } ] },
@@ -558,6 +562,11 @@ writing — the minimal set, growing under Open 8:</p>
       <code>status_id: StringName</code>. True when the subject's
       <code>contained</code> holds a Status of that id, read by checked
       downcast (III §9).</li>
+  <li><ins><code>request_kind_is</code> — EventDataCondition, one member
+      <code>name: StringName</code>. True when the event's stamped
+      <code>RequestEventData</code> (A19) carries a request whose
+      <code>mutator_kind</code> is the name. Deeper request-reading enters
+      when content asks.</ins></li>
 </ul>
 <p>The baked conditions — affordability and holder-in-hand on the play effect
 (§5), affordability on the use effect (§7) — are machinery.
@@ -645,7 +654,7 @@ spells and abilities are superseded by this document.</p>
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-26.
+  <b>Signature:</b> <s>signed off — Enrra, 2026-08-26.</s> <ins>Pending revision (A19).</ins>
 </div>
 
 </div>
