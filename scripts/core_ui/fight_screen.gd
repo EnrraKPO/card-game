@@ -116,10 +116,17 @@ static func real_fight() -> Dictionary:
 	if deck.is_empty() or enemy_king.is_empty():
 		push_error("FightScreen: the catalogue yields no stub fight")
 		return {}
+	# The authored relic and status envelopes live in the slice file — the stub fight
+	# borrows them until the content hookup gives them a catalogue road of their own.
+	# The player tests the Contagion Stone (the dictionary's placeholder relic).
+	var slice_content: Dictionary = slice_fight().get("content", {})
 	return {
 		"seed": 20260824,
-		"content": {"cards": CardCatalogue.envelopes()},
-		"player": {"deck": deck, "units": [{"id": "king", "slot": [1, 0]}]},
+		"content": {"cards": CardCatalogue.envelopes(),
+				"statuses": slice_content.get("statuses", []),
+				"relics": slice_content.get("relics", [])},
+		"player": {"deck": deck, "units": [{"id": "king", "slot": [1, 0]}],
+				"relics": ["contagion_stone"]},
 		"enemy": {"deck": enemy_deck, "units": [{"id": enemy_king, "slot": [1, 0]}]},
 	}
 
@@ -557,6 +564,7 @@ func _register_relic_surfaces() -> void:
 	for member: GameEntity in world.player_side().get_container(&"relics").members:
 		if member is Relic:
 			ids.append(String(member.id))
+	_relic_tray.world_mode = true
 	_relic_tray.world_relic_ids = ids
 	_relic_tray.refresh()
 	for member: GameEntity in world.player_side().get_container(&"relics").members:

@@ -35,10 +35,12 @@ var consumable_check: Callable = Callable()
 var _chips: Dictionary = {}   # relic_id -> BaseButton, so a firing relic can glint its chip
 
 # Combat's injected source (the R4 seam): the fight world's relic ids — the player Side's
-# `relics` container, the entities actually governing the fight. Set by the fight screen
-# once the world stands, followed by refresh(). Empty = the run's possession list (the
-# map HUD's road, unchanged). The catalogue (RelicData) still supplies every chip's look
-# by id in both modes.
+# `relics` container, the entities actually governing the fight. The fight screen flips
+# world_mode and sets the ids once the world stands, then refresh(); in world mode the
+# run list is never consulted — a relic-less world shows a bare zero, never the run's
+# possessions. Off (the map HUD's road) the tray reads the run list, unchanged. The
+# catalogue (RelicData) supplies every chip's look by id in both modes.
+var world_mode: bool = false
 var world_relic_ids: Array[String] = []
 
 
@@ -56,8 +58,8 @@ func refresh() -> void:
 		c.queue_free()
 	_chips.clear()
 	var relics: Array = []
-	if not world_relic_ids.is_empty():
-		# World mode: a bare count — capacity is a run fact the fight world doesn't carry.
+	if world_mode:
+		# A bare count — capacity is a run fact the fight world doesn't carry.
 		relics = world_relic_ids
 		add_child(_make_count_label(relics.size(), -1))
 	elif GameData.current_run != null:

@@ -84,8 +84,17 @@ func run() -> void:
 	for envelope: Variant in (fight.content as Dictionary).cards:
 		if not ContentLibrary.register_card(envelope):
 			check(false, "the stub fight's content refuses '%s'" % (envelope as Dictionary).get("id"))
+	for envelope: Variant in (fight.content as Dictionary).get("statuses", []):
+		if not ContentLibrary.register_status(envelope):
+			check(false, "the stub fight's statuses refuse '%s'" % (envelope as Dictionary).get("id"))
+	for envelope: Variant in (fight.content as Dictionary).get("relics", []):
+		if not ContentLibrary.register_relic(envelope):
+			check(false, "the stub fight's relics refuse '%s'" % (envelope as Dictionary).get("id"))
 	var stage := World.new(int(fight.seed))
 	check(Genesis.setup(stage, fight.player, fight.enemy), "Genesis accepts the stub fight")
+	var seated: Array[GameEntity] = stage.player_side().get_container(&"relics").members
+	check(seated.size() == 1 and seated[0].id == &"contagion_stone",
+			"the stub fight seats the player's test relic")
 	check(stage.player_side().get_container(&"deck").members.size()
 			+ stage.player_side().get_container(&"hand").members.size() == 12,
 			"the player's stub deck deals whole")
