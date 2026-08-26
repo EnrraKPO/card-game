@@ -2,8 +2,7 @@ class_name NameIsCondition
 extends EventDataCondition
 
 # `name_is` (A8): members role and name. True when the occasion carries a NameEventData
-# of that role bearing that name. The kind of the §9 example and the baked ability-name
-# condition.
+# of that role bearing that name. The kind of the baked ability-name condition.
 
 var role: StringName = &""
 var name: StringName = &""
