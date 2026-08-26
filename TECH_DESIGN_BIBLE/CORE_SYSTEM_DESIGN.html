@@ -102,7 +102,8 @@
 <span class="eyebrow">Development instructions · the card system</span>
 <h1>Core System Design</h1>
 <div class="ribbon">
-  <span class="status-chip">Signed</span>
+  <s><span class="status-chip">Signed</span></s>
+  <span class="status-chip" style="background: var(--warn);">Pending revision</span>
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>CARD_INSTRUCTIONS.html (retired to record)</b></span>
@@ -269,7 +270,7 @@ holder — plus each candidate as the typed subject.</p>
 
 <p><b>Structure:</b> conditions, then decision. Conditions narrow the world to
 eligible candidates; the decision picks among them. Decision mechanisms:
-nearest, random, stat-ranked, hand-pick, the occasion's targets. 
+nearest, random, stat-ranked, hand-pick, the occasion's <s>targets</s><ins>target</ins>.
 Hand-pick's decision consults the player.</p>
 
 <p><b>Two phases:</b></p>
@@ -289,14 +290,20 @@ Hand-pick's decision consults the player.</p>
 <p><b>Declined engagement.</b> A declined pick yields an empty election. For an activated ask this
 ends the ask whole.</p>
 
-<p><b>No resolver authored.</b> An effect authored without a resolver targets
-the Game. The default is fixed at construction.  </p>
+<p><b>No resolver authored.</b> <s>An effect authored without a resolver targets
+the Game.</s> <ins>An effect authored without a targeting block falls back to the
+generic AutoResolver: it resolves as the target carried in context, falling
+back to the Game where none is found.</ins> The default is fixed at construction.  </p>
 
-<p><b>Targets on events.</b> A delivery stamps its elected targets on the events
+<p><b>Targets on events.</b> <s>A delivery stamps its elected targets on the events
 it produces as <code>EntityEventData</code> with role <code>targets</code>; a
 singular target rides as a set of one (§8). Downstream resolvers read them from
-the occasion. A derivation such as "adjacent to the occasion's targets" is a
-resolver condition reading that component and narrowing by geometry.</p>
+the occasion.</s> <ins>An event carries its target in the core (§8): the Game
+until a resolver elects one. The target propagates into the branching events
+the cascade produces, and forwards into requests, which carry it until they
+appoint a new target.</ins> A derivation such as "adjacent to the occasion's
+<s>targets</s><ins>target</ins>" is a
+resolver condition reading <s>that component</s> <ins>it</ins> and narrowing by geometry.</p>
 
 <p><b>The unique mutator.</b> A mutator kind may declare the <b>unique</b>
 quality. The conductor runs a unique mutator once per delivery, before the
@@ -420,7 +427,9 @@ its name. Same structure, separate instances.</p>
 <p>An event is a core plus components.</p>
 <ul>
   <li><b>Core:</b> the <b>source</b> — the entity the happening comes from; any
-      GameEntity may be one — and the event's <b>name</b>.</li>
+      GameEntity may be one — <ins>the <b>target</b> — one GameEntity, carried at
+      all times: the Game until a resolver elects one (§4) —</ins> and the
+      event's <b>name</b>.</li>
   <li><b>Components:</b> <code>Array[EventData]</code>.</li>
 </ul>
 
@@ -434,14 +443,16 @@ its name. Same structure, separate instances.</p>
 <code>mutator_kind</code>. A fact of an existing
 shape with a different purpose reuses the class — purpose is a name .</p>
 
-<p><b>EntityEventData</b> is the one class for entity-bearing facts. Members:
+<p><s><b>EntityEventData</b> is the one class for entity-bearing facts. Members:
 <b>role</b> (<code>StringName</code> — what the entities are to the happening;
 <code>targets</code> among them) and <b>entities</b>
-(<code>Array[GameEntity]</code>; a singular fact rides as a set of one).</p>
+(<code>Array[GameEntity]</code>; a singular fact rides as a set of one).</s>
+<ins>As A16 rules it: "EntityEventData is demoted from being a core
+mechanism, in favor of the native event target."</ins></p>
 
 <p><b>Accretion.</b> Each layer of the road appends the components it knows: a
 mutator its kind (<code>NameEventData</code>, role
-<code>mutator_kind</code>); a delivery its elected targets; a
+<code>mutator_kind</code>); <s>a delivery its elected targets;</s> a
 procedure the facts of its happening. Appending is open to anything on the
 road.</p>
 
@@ -499,9 +510,10 @@ the <b>route</b>, authored on the entry. The route list is closed:</p>
 <ul>
   <li><code>source</code> — the occasion's source, a set of one;</li>
   <li><code>holder</code> — the plate's holder, a set of one;</li>
-  <li><code>eventdata</code> — the entities of every EntityEventData on the
+  <li><s><code>eventdata</code> — the entities of every EntityEventData on the
       occasion, pooled; or a role name in its place, yielding that role's
-      entities; a role absent from the occasion yields the empty set;</li>
+      entities; a role absent from the occasion yields the empty set;</s>
+      <ins><code>target</code> — the occasion's target, a GameEntity;</ins></li>
   <li><code>world</code> — every entity that exists. Any narrower fetch is the
       world narrowed by conditions.</li>
 </ul>
@@ -542,7 +554,7 @@ existential claim universal: "all enemies are wounded" is authored "not: any
   ]}
 }</pre>
 <p>Route tokens: <code>source</code>, <code>holder</code>, <code>world</code>,
-<code>eventdata</code>, or a role name. Defaults for absent members: policy
+<s><code>eventdata</code>, or a role name</s> <ins><code>target</code></ins>. Defaults for absent members: policy
 <code>all</code>, negate false, an absent list empty (holds vacuously). Kinds
 shown beyond the roster below are illustrative.</p>
 
@@ -659,7 +671,8 @@ spells and abilities are superseded by this document.</p>
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-26.
+  <s><b>Signature:</b> signed off — Enrra, 2026-08-26.</s><br>
+  Pending revision.
 </div>
 
 </div>
