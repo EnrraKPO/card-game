@@ -350,7 +350,9 @@ func _ready() -> void:
 		_state_label.text = "Genesis refused the fight's configuration."
 		return
 	_register_relic_surfaces()
-	# The reward orb the treasure chest hands over at the ending (the chest plays it by id).
+	# The looks this screen throws by id: the bounty's coin flight and the reward orb the
+	# treasure chest hands over at the ending.
+	Vfx.register_custom("coin_flight", CoinFlightFx.play)
 	Vfx.register_custom("reward_orb", RewardOrbFx.play)
 	# The fight's soundscape keys on the encounter's weight (the old screen's intro band).
 	var enc: EncounterData = GameData.current_encounter
@@ -408,6 +410,12 @@ func _consume_ending(player_won: bool) -> void:
 				else _enemy_grid.get_global_rect()
 		chest = TreasureChest.pop_from(self, seat.get_center(), seat)
 		await chest.opened
+	# Everything the fight's kills earned in experience banks HERE, once, in a single
+	# profile save — win or loss, because a unit killed in a fight that was then lost was
+	# still killed. The gauge has been showing this total all along (see _pay_bounty).
+	if _pending_exp > 0:
+		GameData.grant_experience(_pending_exp)
+		_pending_exp = 0
 	# One-time milestone checks fire for any real match completion — win OR loss.
 	Achievements.record_match_completed()
 	if player_won:
@@ -442,6 +450,55 @@ func _consume_ending(player_won: bool) -> void:
 		# Defeat ends the run (meta-progression kept) and shows the Run Over screen.
 		GameData.end_run()
 		Nav.goto("res://scenes/run_over.tscn")
+
+
+# ── Kill bounties (the old screen's _pay_bounty, re-terminated on the paint pass) ─────
+#
+# Every enemy that dies hands over gold and experience on the spot (GameData.kill_bounty
+# owns the numbers; nothing here knows the rates), and the two halves are cued
+# differently ON PURPOSE:
+#
+#   GOLD  is loud — one coin per gold flies out of the corpse and into the bag on the
+#         left rail, so the amount is a countable thing crossing the screen.
+#   EXP   is quiet — no number, no coin; the narrow gauge beside the strip just grows.
+#
+# Gold lands in the run's purse immediately (spendable the moment the fight ends); the
+# experience is HELD and banked once at the ending, because every grant writes the
+# profile to disk and a save per corpse is a save too many. The arrival wire is the
+# retirement pass in refresh() — the one seam every death's face crosses; the live world
+# is the only world this screen paints, so a simulated kill can never reach it.
+var _pending_exp: int = 0
+var _paid: Dictionary = {}   # Unit → true; a corpse pays exactly once
+
+
+func _pay_bounty(unit: Unit, ui: CardUI) -> void:
+	# The bounty needs a run to pay INTO, and that is the whole test. A living unit
+	# leaving the field (a burial road) is not a kill.
+	var run: RunData = GameData.current_run
+	if run == null or unit == null or unit.allegiance != world.enemy_side() \
+			or unit.get_stat(&"health") > 0.0 or _paid.has(unit):
+		return
+	_paid[unit] = true
+	var bounty: Dictionary = GameData.kill_bounty(CardData.get_card(String(unit.id).get_slice("~", 0)))
+	var gold: int = bounty["gold"]
+	var xp: int = bounty["exp"]   # not `exp` — that shadows the GDScript global
+	if xp > 0:
+		_pending_exp += xp   # the screen holds the debt; the gauge only draws it
+		if _exp_gauge != null:
+			_exp_gauge.add_exp(xp)
+	if gold <= 0 or _gold_bag == null:
+		return
+	# The bag is told coins are coming BEFORE the purse moves: it mirrors RunData whenever
+	# nothing is in flight, so granting first would snap its number to the total and leave
+	# the coins arriving at a figure that already counted them.
+	_gold_bag.expect_coins(gold)
+	run.gold += gold   # spendable at once; the coins are the RECEIPT (GoldBag)
+	# Thrown from where the unit stood: the card is being disposed of this very frame, so
+	# the flight carries a position, not a node.
+	var from: Vector2 = ui.get_global_rect().get_center() if ui != null and is_instance_valid(ui) \
+			else _gold_bag.drop_point()
+	Vfx.play("coin_flight", _gold_bag,
+			{"origin": from, "count": gold, "on_land": _gold_bag.land_coin})
 
 
 # The side's fielded King — the clock's own scan (CombatClock._king_fallen), aimed at the
@@ -1054,6 +1111,7 @@ func refresh() -> void:
 				# chest bursts out of it (_consume_ending).
 				if (unit as Unit).is_king and (unit as Unit).allegiance == world.enemy_side():
 					_fallen_king_rect = ui.get_global_rect()
+				_pay_bounty(unit as Unit, ui)
 				ui.queue_free()
 			_card_uis.erase(unit)
 	_rebuild_hand()
