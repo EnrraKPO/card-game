@@ -108,8 +108,7 @@
 <span class="eyebrow">Development instructions · the write system</span>
 <h1>Mutation System Design</h1>
 <div class="ribbon">
-  <s><span class="status-chip">Signed</span></s>
-  <span class="status-chip" style="background: var(--warn);">Pending revision</span>
+  <span class="status-chip">Signed</span>
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III, retired to record)</b></span>
@@ -375,7 +374,7 @@ happening it asks for, carrying that procedure's parameters as typed members.</p
 <pre>class_name EngineRequest          # the base: the context bundle
     var mutator_kind: StringName  # the manner of the asking — the kind IS the provenance
     var source: GameEntity        # the holder it came from
-    var target: GameEntity        # <s>whom it addresses; null = no target entity exists</s> <ins>the target carried from context, until the mutator appoints a new one (A16)</ins>
+    var target: GameEntity        # the target carried from context, until the mutator appoints a new one (A16)
 
 class StatMutationRequest extends EngineRequest:
     var stat: StringName
@@ -643,8 +642,7 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <s><b>Signature:</b> signed off — Enrra, 2026-08-26.</s><br>
-  Pending revision.
+  <b>Signature:</b> signed off — Enrra, 2026-08-26.
 </div>
 
 </div>
