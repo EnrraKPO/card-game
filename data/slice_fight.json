@@ -99,7 +99,8 @@
             ]}},
             "targeting": {"decision": {"stat_ranked": {"stat": "health", "rank": "highest"}},
               "conditions": [{"kind": "houses_me"}]},
-            "payload": ["poison"]
+            "payload": ["poison"],
+            "windup": "glint"
           },
           {
             "trigger": {"event": "act", "entity_conditions": {"entries": [

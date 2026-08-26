@@ -82,13 +82,15 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 		# machinery's, silent, exactly as below.
 		if visual == &"":
 			return
+		# The announce holds for its span — the old rule's named exceptions: cues drawn
+		# by somebody else, with no library entry to read from (PIP_SPAN / CHIP_SPAN),
+		# released at the handoff like every other beat.
 		if surface is StatusPip:
 			(surface as StatusPip).flash_proc()
+			await _screen.beat(&"", [], Vfx.handoff(VFXPlayer.PIP_SPAN))
 		elif _screen.relic_tray() != null:
 			_screen.relic_tray().glint_chip(surface)
-		# The announce holds like any show (all animations hold presentation by default),
-		# paced through the same overlap dial as every other beat.
-		await _screen.beat(&"", [], Vfx.handoff(0.4))
+			await _screen.beat(&"", [], Vfx.handoff(VFXPlayer.CHIP_SPAN))
 		return
 	var source_ui: CardUI = surface as CardUI
 	match visual:
@@ -144,22 +146,35 @@ func _lunge(source_ui: CardUI, target_ui: CardUI) -> void:
 
 
 # The contact: the board re-reads and the held procedure cues burst here, as one
-# simultaneous read (the pause contract) — and the burst HOLDS: every animation holds
-# presentation by default, so the beat waits out the burst's longest show through the
-# overlap dial before the flow moves on. The impact shake does NOT live here — a
-# contact fires for EVERY delivery, the round machinery's included (the untap rule's
-# recipients are the whole board, and shaking them read as a board-wide vibration at the
-# turn boundary); the shake belongs to the DAMAGE moment, on the struck card, where the
-# old solution kept it (see FightScreen.play_cue).
+# simultaneous read (the pause contract) — paced the old way: each cue is its own
+# concurrent sub-sequence that awaits its show to the show's handoff, sharing the old
+# `remaining` counter box, and the beat drains the box before the flow moves on — the
+# burst reads simultaneous, the tails keep playing under whatever comes next. The impact
+# shake does NOT live here — a contact fires for EVERY delivery, the round machinery's
+# included (the untap rule's recipients are the whole board, and shaking them read as a
+# board-wide vibration at the turn boundary); the shake belongs to the DAMAGE moment, on
+# the struck card, where the old solution kept it (see FightScreen.play_cue).
 func contact(_visual: StringName, _source: GameEntity,
 		_recipients: Array[GameEntity]) -> void:
 	_screen.refresh()
-	var span := 0.0
+	if _held.is_empty():
+		return
+	var remaining := [0]
 	for held: Array in _held:
-		span = maxf(span, _screen.play_cue(held[0], held[1], held[2], held[3]))
+		remaining[0] += 1
+		_burst_one(held, remaining)
 	_held.clear()
-	if span > 0.0:
-		await _screen.beat(&"", [], Vfx.handoff(span))
+	while remaining[0] > 0:
+		if not _screen.is_inside_tree():
+			return
+		await _screen.get_tree().process_frame
+
+
+# One held cue's slice of the burst, run concurrently with its siblings (the old
+# _play_target shape): awaits its own show, ticks the shared counter down on completion.
+func _burst_one(held: Array, remaining: Array) -> void:
+	await _screen.play_cue(held[0], held[1], held[2], held[3])
+	remaining[0] -= 1
 
 
 # The conclusion: the attacker withdraws — the retreat STARTS and the flow moves on under

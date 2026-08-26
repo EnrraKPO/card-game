@@ -10,6 +10,13 @@ extends Node
 # under the core, cues arrive one at a time through the presentation outlet's stream and
 # the presenter builds one VFXEvent per cue (docs/planning/RULINGS.html R13).
 
+# The old pacing's two named spans, carried over with their rule: pacing is never held in
+# fixed sleeps — every beat awaits its own cue, which returns at that cue's handoff (the
+# one global `vfx.overlap` dial). These two exist ONLY for cues drawn by somebody else (a
+# status pip, a relic tray chip) with no library entry to read a span from.
+const PIP_SPAN := 0.30   # a status pip's proc/applied flash (StatusPip)
+const CHIP_SPAN := 0.34   # a relic chip glinting in the tray (RelicTray.glint_chip)
+
 var _root: Node
 
 

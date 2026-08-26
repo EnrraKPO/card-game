@@ -20,7 +20,9 @@ static func resolve(request: StatusRequest) -> Array[Event]:
 		if member is Status and (member as Status).status_id == request.status_id:
 			WriteAuthority.stat_write(member, &"stacks",
 					member.get_stat(&"stacks") + float(request.stacks), events, request)
-			target.world.outlet.cue(&"status_applied", target, float(request.stacks))
+			# The cue's recipient is the STATUS entity — it is what changed, and its pip
+			# is its registered presentation surface (R14); identity rides the reference.
+			target.world.outlet.cue(&"status_applied", member, float(request.stacks))
 			return events
 	var status: Status = ContentLibrary.build_status(request.status_id, target.allegiance)
 	if status == null:
@@ -29,5 +31,5 @@ static func resolve(request: StatusRequest) -> Array[Event]:
 	status.seed_stat(&"stacks", float(request.stacks))
 	WriteAuthority.mint(target.world, status)
 	WriteAuthority.insert(contained, status)
-	target.world.outlet.cue(&"status_applied", target, float(request.stacks))
+	target.world.outlet.cue(&"status_applied", status, float(request.stacks))
 	return events

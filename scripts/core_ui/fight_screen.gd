@@ -456,53 +456,53 @@ func show_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 # variant (A14) rides into the looks that use it — buff/debuff land on the named stat's
 # badge; heal's variant is always the health stat, which its look already anchors on.
 #
-# Returns the show's nominal span in seconds (zero for a log-only cue) — every animation
-# holds presentation by default: the presenter's contact beat holds the burst's longest
-# span through the overlap dial, so a show is never outrun by the flow.
+# PACING is the old solution's, verbatim: no fixed sleeps — every beat awaits its own
+# cue, which returns at that cue's handoff (the one global `vfx.overlap` dial; the spans
+# live in the library data). The pip flash is the exception the old code named: a cue
+# drawn by somebody else, held for its span (VFXPlayer.PIP_SPAN). Await this call to
+# hold presentation for the show; call without await to fire-and-forget.
 func play_cue(visual: StringName, recipient: GameEntity, magnitude: float,
-		variant: StringName = &"") -> float:
+		variant: StringName = &"") -> void:
 	show_cue(visual, recipient, magnitude)
+	# A status application's recipient is the STATUS entity itself — its pip is its
+	# registered surface (R14), so the bloom lands on exactly the status that changed;
+	# no card face is involved. The contact's refresh composed the pip before the burst.
+	if visual == &"status_applied":
+		if SoundData.get_sound(String(visual)) != null:
+			Sfx.play(String(visual))
+		var pip := surface_of(recipient) as StatusPip
+		if pip != null:
+			pip.flash_applied()
+			await beat(&"", [], Vfx.handoff(VFXPlayer.PIP_SPAN))
+		return
 	var ui := card_of(recipient)
 	if ui == null:
-		return 0.0
+		return
 	if SoundData.get_sound(String(visual)) != null:
 		Sfx.play(String(visual))
 	match visual:
 		&"health_damage":
 			_animator.shake_card(ui)   # the impact shake rides the hit, struck cards only
-			_vfx.play(VFXEvent.health_damage(ui, roundi(magnitude)))
-			return 0.6
+			await _vfx.play(VFXEvent.health_damage(ui, roundi(magnitude)))
 		&"shield_hit":
 			_animator.shake_card(ui)
-			_vfx.play(VFXEvent.shield_hit(ui, roundi(magnitude)))
-			return 0.6
+			await _vfx.play(VFXEvent.shield_hit(ui, roundi(magnitude)))
 		&"heal":
-			_vfx.play(VFXEvent.heal(ui, roundi(magnitude)))
-			return 0.6
+			await _vfx.play(VFXEvent.heal(ui, roundi(magnitude)))
 		&"shield_restored":
-			_vfx.play(VFXEvent.shield_restored(ui, roundi(magnitude)))
-			return 0.5
+			await _vfx.play(VFXEvent.shield_restored(ui, roundi(magnitude)))
 		&"buff":
-			_vfx.play(VFXEvent.buff(ui, String(variant), roundi(magnitude)))
-			return 0.5
+			await _vfx.play(VFXEvent.buff(ui, String(variant), roundi(magnitude)))
 		&"debuff":
-			_vfx.play(VFXEvent.debuff(ui, String(variant), roundi(magnitude)))
-			return 0.5
+			await _vfx.play(VFXEvent.debuff(ui, String(variant), roundi(magnitude)))
 		&"dodge":
-			_vfx.play(VFXEvent.dodge(ui))
-			return 0.6
+			await _vfx.play(VFXEvent.dodge(ui))
 		&"crit":
-			_vfx.play(VFXEvent.crit(ui))
-			return 0.6
+			await _vfx.play(VFXEvent.crit(ui))
 		&"card_placed":
-			_vfx.play(VFXEvent.card_placed(ui))
-			return 0.4
-		&"status_applied":
-			ui.flash_status_applied()
-			return 0.4
+			await _vfx.play(VFXEvent.card_placed(ui))
 		_:
 			pass   # an unmapped cue keeps its log line — authoring the look is the fix
-	return 0.0
 
 
 # The windup's target mark on one recipient — the reticle that leads the hit.
