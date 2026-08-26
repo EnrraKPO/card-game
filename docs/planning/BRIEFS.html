@@ -543,4 +543,23 @@ standing on it non-conforming, to be corrected.</p>
   entrance, provenance singular.</p>
 </div>
 
+<h2>The run hookup</h2>
+
+<div class="brief">
+  <div class="head">B40 — Variant envelopes: a fight-changed card seats under
+  <code>"{base id}~{n}"</code>.</div>
+  <p>The run fields cards under definitions the catalogue does not hold: a
+  deck entry modified by its override or charms, an enemy card grown by the
+  encounter's power, the King entering at the run's persisted health. The
+  content registry is id-keyed (one envelope per id), so such a card cannot
+  share its base card's seat. Decided here: the fight's composition
+  (RunFight) registers each distinct changed definition as its own envelope
+  under <code>"{base id}~{n}"</code> — identical definitions share one seat —
+  and presentation resolves the authored seat (art, locale identity, chess
+  pieces) by the base half of the id (CardViewModel). The alternatives
+  refused: extending the Genesis config with per-entry stats would grow the
+  engine for a content concern; dropping the modifications would not be the
+  pre-nuke behaviour.</p>
+</div>
+
 </div>

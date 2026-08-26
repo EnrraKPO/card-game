@@ -33,7 +33,9 @@ static func _authored_face(card: Card) -> CardData:
 	data.display_name = card.display_name
 	for element: StringName in card.elements:
 		data.elements.append(String(element))
-	var authored: CardData = CardData.get_card(String(card.id))
+	# A variant envelope — a run-modified or power-scaled card fielded under
+	# "{base}~{n}" (RunFight, B40) — wears its base card's authored seat.
+	var authored: CardData = CardData.get_card(String(card.id).get_slice("~", 0))
 	if authored != null:
 		data.id = authored.id
 		data.art_path = authored.art_path

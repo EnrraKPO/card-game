@@ -337,8 +337,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.abilities     = base.abilities.duplicate()
 	c.bounty_gold   = base.bounty_gold
 	c.bounty_exp    = base.bounty_exp
-	# Shared, not duplicated: effect structures are stateless and immutable after parse.
-	c.effects       = base.effects
+	# Shared, not duplicated: the authored form is never mutated after load.
 	c.effects_src   = base.effects_src
 	c.art_path      = base.art_path
 	var mult := 1.0 + power * POWER_STAT_GROWTH
