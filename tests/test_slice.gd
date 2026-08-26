@@ -189,8 +189,8 @@ func _r4_adder(world: World) -> void:
 			func(e: GameEntity) -> bool: return e is Status and (e as Status).status_id == &"poison")
 	check_eq(poisons.size(), 1, "the adder's on-play reaction minted Poison onto the picked captain")
 	if not poisons.is_empty():
-		check_eq(poisons[0].get_stat(&"stacks"), 5.0,
-				"the adder's authored 2 plus one per ally attack that connected — the relic's proc (Contagion Stone)")
+		check_eq(poisons[0].get_stat(&"stacks"), 3.0,
+				"the adder's 2 + one per connecting ally attack (Contagion Stone) - one per carrier act (decay)")
 
 
 func _r5_fireball(world: World) -> void:

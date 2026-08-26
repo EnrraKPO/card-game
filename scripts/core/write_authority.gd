@@ -52,11 +52,12 @@ static func stat_write(entity: GameEntity, stat: StringName, value: float,
 
 # The per-fact arithmetic table. One place, growing as signed facts land:
 #   · tapped floors at zero (Combat Frame §6);
+#   · stacks floors at zero — Poison's decay demand (a spent status never goes negative);
 #   · health caps at the bearer's max_health where one is borne and stated — the Heal's
 #     demand (CONTENT_DICTIONARY: "health cap arithmetic in the WriteAuthority"; B36).
 static func _bound(entity: GameEntity, stat: StringName, value: float) -> float:
 	match stat:
-		&"tapped":
+		&"tapped", &"stacks":
 			return maxf(0.0, value)
 		&"health":
 			if entity.bears_stat(&"max_health") and entity.get_stat(&"max_health") > 0.0:

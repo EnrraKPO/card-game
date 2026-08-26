@@ -86,6 +86,9 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 			(surface as StatusPip).flash_proc()
 		elif _screen.relic_tray() != null:
 			_screen.relic_tray().glint_chip(surface)
+		# The announce holds like any show (all animations hold presentation by default),
+		# paced through the same overlap dial as every other beat.
+		await _screen.beat(&"", [], Vfx.handoff(0.4))
 		return
 	var source_ui: CardUI = surface as CardUI
 	match visual:
@@ -140,8 +143,10 @@ func _lunge(source_ui: CardUI, target_ui: CardUI) -> void:
 	await _screen.animator().play_rebound(_ghost, beside)
 
 
-# The contact: the held procedure cues burst here (unpause follows this beat in the
-# conductor's order) and the board re-reads. The impact shake does NOT live here — a
+# The contact: the board re-reads and the held procedure cues burst here, as one
+# simultaneous read (the pause contract) — and the burst HOLDS: every animation holds
+# presentation by default, so the beat waits out the burst's longest show through the
+# overlap dial before the flow moves on. The impact shake does NOT live here — a
 # contact fires for EVERY delivery, the round machinery's included (the untap rule's
 # recipients are the whole board, and shaking them read as a board-wide vibration at the
 # turn boundary); the shake belongs to the DAMAGE moment, on the struck card, where the
@@ -149,6 +154,12 @@ func _lunge(source_ui: CardUI, target_ui: CardUI) -> void:
 func contact(_visual: StringName, _source: GameEntity,
 		_recipients: Array[GameEntity]) -> void:
 	_screen.refresh()
+	var span := 0.0
+	for held: Array in _held:
+		span = maxf(span, _screen.play_cue(held[0], held[1], held[2], held[3]))
+	_held.clear()
+	if span > 0.0:
+		await _screen.beat(&"", [], Vfx.handoff(span))
 
 
 # The conclusion: the attacker withdraws — the retreat STARTS and the flow moves on under

@@ -455,39 +455,54 @@ func show_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 # an authored sounds.json entry named like the cue plays, silence otherwise. The optional
 # variant (A14) rides into the looks that use it — buff/debuff land on the named stat's
 # badge; heal's variant is always the health stat, which its look already anchors on.
+#
+# Returns the show's nominal span in seconds (zero for a log-only cue) — every animation
+# holds presentation by default: the presenter's contact beat holds the burst's longest
+# span through the overlap dial, so a show is never outrun by the flow.
 func play_cue(visual: StringName, recipient: GameEntity, magnitude: float,
-		variant: StringName = &"") -> void:
+		variant: StringName = &"") -> float:
 	show_cue(visual, recipient, magnitude)
 	var ui := card_of(recipient)
 	if ui == null:
-		return
+		return 0.0
 	if SoundData.get_sound(String(visual)) != null:
 		Sfx.play(String(visual))
 	match visual:
 		&"health_damage":
 			_animator.shake_card(ui)   # the impact shake rides the hit, struck cards only
 			_vfx.play(VFXEvent.health_damage(ui, roundi(magnitude)))
+			return 0.6
 		&"shield_hit":
 			_animator.shake_card(ui)
 			_vfx.play(VFXEvent.shield_hit(ui, roundi(magnitude)))
+			return 0.6
 		&"heal":
 			_vfx.play(VFXEvent.heal(ui, roundi(magnitude)))
+			return 0.6
 		&"shield_restored":
 			_vfx.play(VFXEvent.shield_restored(ui, roundi(magnitude)))
+			return 0.5
 		&"buff":
 			_vfx.play(VFXEvent.buff(ui, String(variant), roundi(magnitude)))
+			return 0.5
 		&"debuff":
 			_vfx.play(VFXEvent.debuff(ui, String(variant), roundi(magnitude)))
+			return 0.5
 		&"dodge":
 			_vfx.play(VFXEvent.dodge(ui))
+			return 0.6
 		&"crit":
 			_vfx.play(VFXEvent.crit(ui))
+			return 0.6
 		&"card_placed":
 			_vfx.play(VFXEvent.card_placed(ui))
+			return 0.4
 		&"status_applied":
 			ui.flash_status_applied()
+			return 0.4
 		_:
 			pass   # an unmapped cue keeps its log line — authoring the look is the fix
+	return 0.0
 
 
 # The windup's target mark on one recipient — the reticle that leads the hit.

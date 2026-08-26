@@ -31,11 +31,13 @@ static func pip_view(status: Status) -> StatusPipView:
 	return view
 
 
-# Every Status housed in `holder`'s own `contained` container, as pip views in holding order.
+# Every Status housed in `holder`'s own `contained` container, as pip views in holding
+# order. A spent status (stacks at zero — Poison decayed out) shows no pip: removal is
+# out of frame (Mutation §14), so the entity stays; the view is where "spent" reads.
 static func held_views(holder: GameEntity) -> Array[StatusPipView]:
 	var views: Array[StatusPipView] = []
 	for member: GameEntity in holder.get_container(&"contained").members:
 		var status := member as Status
-		if status != null:
+		if status != null and status.get_stat(&"stacks") > 0.0:
 			views.append(pip_view(status))
 	return views

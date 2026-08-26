@@ -100,6 +100,14 @@
             "targeting": {"decision": {"stat_ranked": {"stat": "health", "rank": "highest"}},
               "conditions": [{"kind": "houses_me"}]},
             "payload": ["poison"]
+          },
+          {
+            "trigger": {"event": "act", "entity_conditions": {"entries": [
+              {"route": "source", "conditions": [{"kind": "houses_me"}]}
+            ]}},
+            "targeting": {"decision": {"stat_ranked": {"stat": "stacks", "rank": "highest"}},
+              "conditions": [{"kind": "is_holder"}]},
+            "payload": [{"stat_mutation": {"stat": "stacks", "delta": -1}}]
           }
         ]
       }
