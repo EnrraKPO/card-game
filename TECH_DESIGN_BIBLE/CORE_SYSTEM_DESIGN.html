@@ -102,8 +102,7 @@
 <span class="eyebrow">Development instructions · the card system</span>
 <h1>Core System Design</h1>
 <div class="ribbon">
-  <s><span class="status-chip">Signed</span></s>
-  <span class="status-chip" style="background: var(--warn);">Pending revision</span>
+  <span class="status-chip">Signed</span>
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>CARD_INSTRUCTIONS.html (retired to record)</b></span>
@@ -202,13 +201,8 @@ the event it produces.
 Conditions about a move's origin read this component; the moved entity's current
 housing is a separate world read.</p>
 
-<p><b>The <code>fielded</code> event.</b> <s>On any insert into a
-<code>slotted_unit</code> container, the membership procedure produces the fact
-event <code>fielded</code>, source the arriving unit, with origin and
-destination stamped. Every route onto the board — play or summon — passes
-through this insert, so on-arrival triggers listen to <code>fielded</code>
-regardless of route.</s> <ins>As T2 records it: at this scope no arrival event
-exists.</ins></p>
+<p><b>The <code>fielded</code> event.</b> As T2 records it: at this scope no arrival event
+exists.</p>
 
 <p><b>Mover mutator addressing.</b> A destination is owner entity plus container
 name, and the name resolves through the owner's container map — one generic
@@ -321,42 +315,32 @@ own target from the plate. The conductor reads only the declaration.</p>
       to a manual pick of a Slot. A declined pick ends the play unpaid
       (§4).</li>
   <li><b>Payload:</b> the pay mutator — unique (§4): runs once, before the
-      walk; recipient the holder's side, whose mana pays<ins> — then the card's
+      walk; recipient the holder's side, whose mana pays — then the card's
       substantive mutators, routed through the effect's target
-      resolver</ins>.</li>
+      resolver.</li>
 </ul>
 
 <p>Cost is a card stat: seeded from the authored form at construction, mutable
 through the write road like any stat. Discounts and surcharges are ordinary
 stat mutations.</p>
 
-<p>The payment produces <code>play_engaged</code><s>, carrying the play's elected
-targets (<code>EntityEventData</code>, role <code>targets</code>). The card's
-substantive effects trigger on <code>play_engaged</code>,
-their trigger carrying an entity
-entry with route <code>source</code> and condition <code>is_holder</code>
-(§8, §9). Their resolvers read the occasion: the stock form takes the
-occasion's targets as its own; authored forms derive from them by
-condition.</s><ins>. The substantive mutators of the play ride the play effect
-itself, alongside the payment (A18).</ins></p>
+<p>The payment produces <code>play_engaged</code>. The substantive mutators of the play ride the play effect
+itself, alongside the payment (A18).</p>
 
 <h2><span class="secno">§6</span> The built-in effects of the types</h2>
 
-<p><s>Placement and the burials</s> <ins>The burials</ins> are ordinary effects with the standard structure,
+<p>The burials are ordinary effects with the standard structure,
 fixed in the type's machinery. Unit burial's trigger carries an entity entry
 with route <code>target</code> and condition <code>is_holder</code>;
-<s>placement's and</s> the spell burial's <s>carry</s> <ins>carries</ins> route <code>source</code> and
+the spell burial's carries route <code>source</code> and
 condition <code>is_holder</code>.</p>
 
 <ul>
-  <li><b>Unit placement.</b> <s>Trigger <code>play_engaged</code>. Resolver: the
-      stock occasion's-targets form — it elects the play's picked slot (§5).
-      Payload: the</s> <ins>The</ins> <b>PlacementMutator</b> <ins>is a baked-in
+  <li><b>Unit placement.</b> The <b>PlacementMutator</b> is a baked-in
       substantive mutator of the unit's play (§5): the play's resolver elects
-      the slot —</ins> target
+      the slot — target
       the elected slot; it introduces the holder as cargo into the MoveRequest
-      (§2). <s>The insert produces
-      <code>fielded</code>.</s></li>
+      (§2).</li>
   <li><b>Unit burial.</b> Trigger <code>died</code>. Resolver: the
       AutoResolver. Payload: the <b>bury mutator</b> — its BuryRequest
       targets the recipient; BuryProcedure places the target in its side's
@@ -397,16 +381,10 @@ into:</p>
        <code>use_ability</code>, conditions =
       the ability-name condition (baked, reads the occasion's
       <code>ability</code> role) and affordability (baked) plus authored;
-      targeting authored; payload the pay mutator<ins>, then the substantive
-      mutators, routed through the effect's target resolver (A18)</ins>. Its payment produces
+      targeting authored; payload the pay mutator, then the substantive
+      mutators, routed through the effect's target resolver (A18). Its payment produces
 
-      <code>ability_used</code> <s>carrying the elected
-      targets and</s> <ins>bearing</ins> the ability's name<s>;</s><ins>.</ins></li>
-  <li><s>the <b>substantive effect</b> — authored — trigger —
-      event =
-      <code>ability_used</code>, with the ability-name condition and the route
-      <code>source</code> +
-      <code>is_holder</code> entry.</s></li>
+      <code>ability_used</code> bearing the ability's name.</li>
 </ul>
 
 <p><b>Discrimination.</b>  The ability-name
@@ -667,8 +645,7 @@ spells and abilities are superseded by this document.</p>
 </ul>
 
 <div class="signoff">
-  <s><b>Signature:</b> signed off — Enrra, 2026-08-26.</s><br>
-  Pending revision.
+  <b>Signature:</b> signed off — Enrra, 2026-08-26.
 </div>
 
 </div>
