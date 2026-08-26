@@ -201,22 +201,10 @@ func _test_container_move() -> void:
 	check(draw.is_empty(), "a deck-to-hand move bears no event yet")
 
 	var slot: Slot = world.board_manager.slot_at(Vector3i(0, 1, 1))
-	var fielded: Array[Event] = MutationEngine.submit(
+	var arrival: Array[Event] = MutationEngine.submit(
 			ContainerMoveRequest.new(&"placement", card, card, slot, &"slotted_unit"))
 	check(card.housing == slot.get_container(&"slotted_unit"), "the unit stands on the slot")
-	check(fielded.size() == 1 and fielded[0].name == &"fielded" and fielded[0].source == card,
-			"arrival from off-board produces fielded, source the arriving unit")
-	var stamps: Array[EventData] = fielded[0].components_of(NameEventData)
-	check(stamps.size() == 2 and (stamps[0] as NameEventData).role == &"origin"
-			and (stamps[0] as NameEventData).name == &"hand"
-			and (stamps[1] as NameEventData).role == &"destination"
-			and (stamps[1] as NameEventData).name == &"slotted_unit",
-			"the move stamps its origin and destination housing")
-
-	var other: Slot = world.board_manager.slot_at(Vector3i(0, 2, 1))
-	var moved: Array[Event] = MutationEngine.submit(
-			ContainerMoveRequest.new(&"placement", card, card, other, &"slotted_unit"))
-	check(moved.is_empty(), "a slot-to-slot move is no arrival — no fielded")
+	check(arrival.is_empty(), "at this scope no arrival event exists (T2)")
 
 
 func _test_pay_cost() -> void:

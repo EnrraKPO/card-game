@@ -3,11 +3,12 @@ extends TestCase
 # Phase 6 of IMPLEMENTATION_PLAN.html — the slice fight. The §4 content authored in the
 # bible's markup (data/slice_fight.json), the fixed encounter assembled, the fight played
 # whole: a scripted playthrough exercising the §5 coverage — strike pipeline, stat
-# mutation with the health cap, poison's mint/stack/tick, the hourglass draw, the play
-# and ability roads with pay, placement and burials with origin gating, hand-pick and
-# its decline, stat-ranked and occasion's-targets elections, the unique pay mutator, the
-# holster's depth-first chains, and the fight's ending. Deterministic under the fight's
-# seed; the pinned numbers are this seed's fight. Visual acceptance is Enrra's.
+# mutation with the health cap, poison's mint/stack/tick, the turn draw, the play and
+# ability roads with pay, placement and burials, hand-pick and its decline, stat-ranked
+# elections, the unique pay mutator, the holster's depth-first chains, and the fight's
+# ending (the hourglass and its arrival event left the slice — T2). Deterministic under
+# the fight's seed; the pinned numbers are this seed's fight. Visual acceptance is
+# Enrra's.
 
 
 # A picker answering from a scripted queue: each entry is a Callable(candidates) -> pick.
@@ -129,13 +130,13 @@ func _playthrough() -> void:
 	_world.clock.enemy_commander = EnemyCommander.new()
 
 	# The deck is shuffled by the seed; the script plays the draws this seed provides
-	# (opening hand cleric/fireball/avenger, deck squire, squire, sentinel, venom_adder),
-	# refusing loudly if the order ever differs.
+	# (opening hand cleric/fireball/avenger; turn draws squire, squire, sentinel,
+	# venom_adder), refusing loudly if the order ever differs.
 	scripted.rounds = [
 		[_r1_squire],
 		[_r2_declined_cleric, _r2_second_squire, _r2_avenger],
-		[_r3_adder, _r3_cleric],
-		[_r4_heal_king, _r4_sentinel],
+		[_r3_cleric, _r3_sentinel],
+		[_r4_adder, _r4_heal_king],
 		[_r5_move_cleric, _r5_fireball],
 	]
 
@@ -160,8 +161,8 @@ func _r1_squire(world: World) -> void:
 	var player: Side = world.player_side()
 	var before: int = player.get_container(&"hand").members.size()
 	await _play(&"squire", [_slot(Vector3i(0, 1, 1))]).call(world)
-	check_eq(player.get_container(&"hand").members.size(), before,
-			"the played card left the hand and the Hourglass drew one back")
+	check_eq(player.get_container(&"hand").members.size(), before - 1,
+			"the played card left the hand")
 	check(_standing(&"squire", player) != null, "the squire stands fielded")
 
 
@@ -175,11 +176,10 @@ func _r2_declined_cleric(world: World) -> void:
 
 func _r2_second_squire(world: World) -> void:
 	await _play(&"squire", [_slot(Vector3i(0, 0, 1))]).call(world)
-	check(_hand(&"venom_adder") != null,
-			"the Hourglass drew the deck's last card for the arrival")
+	check(_hand(&"squire") == null, "both squires stand played — the hand holds no more")
 
 
-func _r3_adder(world: World) -> void:
+func _r4_adder(world: World) -> void:
 	await _play(&"venom_adder", [_slot(Vector3i(0, 2, 1)), _by_id(&"captain")]).call(world)
 	var captain: Unit = _standing(&"captain", world.enemy_side())
 	var poisons: Array[GameEntity] = captain.get_container(&"contained").members.filter(
@@ -205,7 +205,7 @@ func _r3_cleric(world: World) -> void:
 	check(_standing(&"cleric", world.player_side()) != null, "the cleric stands fielded")
 
 
-func _r4_sentinel(world: World) -> void:
+func _r3_sentinel(world: World) -> void:
 	await _play(&"sentinel", [_slot(Vector3i(0, 1, 2))]).call(world)
 	var sentinel: Unit = _standing(&"sentinel", world.player_side())
 	check(sentinel != null and sentinel.is_building and not sentinel.abilities.has(&"move"),

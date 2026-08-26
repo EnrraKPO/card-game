@@ -73,7 +73,7 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 	if surface == null:
 		# The old yank guard: a choreography whose actor has no surface on screen SKIPS
 		# its show outright — the delivery still resolves; rules never depend on the
-		# show. A side-held effect (the hourglass) lands its cues without an approach.
+		# show. A side-held effect lands its cues without an approach.
 		return
 	if not (surface is CardUI):
 		# A non-card holder announces with its kind's own show, whole from the old tree —

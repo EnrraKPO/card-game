@@ -109,26 +109,11 @@
         ]
       }
     ],
-    "relics": [
-      {
-        "id": "hourglass", "name": "Hourglass",
-        "effects": [
-          {
-            "trigger": {"event": "fielded", "entity_conditions": {"entries": [
-              {"route": "source", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]}
-            ]}},
-            "targeting": {"decision": {"stat_ranked": {"stat": "mana", "rank": "highest"}},
-              "conditions": [{"kind": "is_ally"}, {"kind": "is_side"}]},
-            "payload": [{"draw": {"count": 1}}]
-          }
-        ]
-      }
-    ]
+    "relics": []
   },
   "player": {
     "deck": ["squire", "squire", "cleric", "venom_adder", "avenger", "fireball", "sentinel"],
-    "units": [{"id": "king", "slot": [1, 0]}],
-    "relics": ["hourglass"]
+    "units": [{"id": "king", "slot": [1, 0]}]
   },
   "enemy": {
     "deck": ["squire", "squire", "sniper", "sentinel"],
