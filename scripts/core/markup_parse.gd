@@ -7,8 +7,9 @@ extends RefCounted
 # walk. Every authored member parses into its real type. A refusal returns null and the
 # caller propagates it — nothing half-parsed survives.
 #
-# The tables hold the AUTHORED vocabulary only: machinery-only kinds (burial, pay,
-# placement, tap; the Game default decision) never appear in markup and are absent here.
+# The tables hold the AUTHORED vocabulary only: machinery-only kinds (bury, pay,
+# placement, move_unit, tap; the Game and holder machinery decisions) never appear in
+# markup and are absent here.
 # Mutator roster parameters are required, every one (Mutation §4); condition members
 # default where unauthored (negate false).
 
