@@ -83,6 +83,7 @@
   li { margin: 0.4rem 0; }
   .quiet { color: var(--ink-soft); font-size: 0.9rem; }
   s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); opacity: 0.55; }
+  ins { text-decoration: none; background: var(--accent); color: var(--ground); border-radius: 3px; padding: 0.05em 0.3em; font-weight: 600; }
   .amendment {
     border: 2px solid var(--warn); border-radius: 4px; padding: 0.8rem 1.1rem;
     margin: 1.2rem 0; background: var(--warn-soft);
@@ -101,7 +102,8 @@
 <span class="eyebrow">Development instructions · the card system</span>
 <h1>Core System Design</h1>
 <div class="ribbon">
-  <span class="status-chip">Signed</span>
+  <s><span class="status-chip">Signed</span></s>
+  <span class="status-chip" style="background: var(--warn);">Pending revision</span>
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>CARD_INSTRUCTIONS.html (retired to record)</b></span>
@@ -209,11 +211,17 @@ regardless of route.</p>
 
 <p><b>Mover mutator addressing.</b> A destination is owner entity plus container
 name, and the name resolves through the owner's container map — one generic
-lookup. A mover mutator's recipient is the destination's
+lookup. A <ins>move op elects the destination entity as its target; the mutator
+introduces the cargo into the MoveRequest. The play's PlacementMutator and the
+Move ability's MoveUnitMutator each introduce the holder as cargo — the same
+operation, each its own stake; both fix <code>slotted_unit</code>.</ins>
+<s>mover mutator's recipient is the destination's
 owner; the container name is fixed in the mutator kind where the kind serves one
 destination (placement → <code>slotted_unit</code>, burial →
 <code>graveyard</code>), or is a declared typed member on a general
-container-move kind. </p>
+container-move kind.</s> <ins>Where the entity being moved is the target, the
+request is routed to its specific-purpose procedure — DrawProcedure,
+BuryProcedure (III §7).</ins></p>
 
 <p class="quiet">Implementation: back-references follow the established
 weak-reference discipline; world copies remap both ends of every housing
@@ -341,16 +349,22 @@ condition <code>is_holder</code>.</p>
 <ul>
   <li><b>Unit placement.</b> Trigger <code>play_engaged</code>. Resolver: the
       stock occasion's-targets form — it elects the play's picked slot (§5).
-      Payload: the <b>placement mutator</b> — recipient the elected slot; act:
+      Payload: the <s><b>placement mutator</b> — recipient the elected slot; act:
       container move of the holder into the recipient's
-      <code>slotted_unit</code> (§2). The insert produces
+      <code>slotted_unit</code> (§2).</s> <ins><b>PlacementMutator</b> — target
+      the elected slot; it introduces the holder as cargo into the MoveRequest
+      (§2).</ins> The insert produces
       <code>fielded</code>.</li>
-  <li><b>Unit burial.</b> Trigger <code>died</code>. Payload: the <b>burial
+  <li><b>Unit burial.</b> Trigger <code>died</code>. <ins>Resolver: the
+      AutoResolver.</ins> Payload: the <s><b>burial
       mutator</b> — container move of the holder to its side's
-      <code>graveyard</code>. <code>died</code> is a fact event authored by the
+      <code>graveyard</code>.</s> <ins><b>bury mutator</b> — its BuryRequest
+      targets the recipient; BuryProcedure places the target in its side's
+      <code>graveyard</code> (III §7).</ins> <code>died</code> is a fact event authored by the
       WriteAuthority (III §8): every road to zero health produces it.</li>
   <li><b>Spell burial.</b> Trigger <code>play_engaged</code> — a spell is spent
-      by its play. Payload: the burial mutator.</li>
+      by its play. <ins>Resolver: elects the holder, fixed in its
+      machinery.</ins> Payload: the <s>burial</s> <ins>bury</ins> mutator.</li>
 </ul>
 
 <p>A reactor to a burial gates on the move's stamped origin housing (§2).</p>
@@ -654,7 +668,8 @@ spells and abilities are superseded by this document.</p>
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-25.
+  <s><b>Signature:</b> signed off — Enrra, 2026-08-25.</s><br>
+  Pending revision.
 </div>
 
 </div>

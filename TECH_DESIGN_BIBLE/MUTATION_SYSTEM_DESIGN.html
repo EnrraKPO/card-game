@@ -89,6 +89,7 @@
   li { margin: 0.4rem 0; }
   .quiet { color: var(--ink-soft); font-size: 0.9rem; }
   s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); opacity: 0.55; }
+  ins { text-decoration: none; background: var(--accent); color: var(--ground); border-radius: 3px; padding: 0.05em 0.3em; font-weight: 600; }
   .amendment {
     border: 2px solid var(--warn); border-radius: 4px; padding: 0.8rem 1.1rem;
     margin: 1.2rem 0; background: var(--warn-soft);
@@ -107,7 +108,8 @@
 <span class="eyebrow">Development instructions · the write system</span>
 <h1>Mutation System Design</h1>
 <div class="ribbon">
-  <span class="status-chip">Signed</span>
+  <s><span class="status-chip">Signed</span></s>
+  <span class="status-chip" style="background: var(--warn);">Pending revision</span>
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III, retired to record)</b></span>
@@ -314,11 +316,15 @@ mutator's kind.</p>
       the conductor runs it once per delivery, before the per-recipient walk, with a
       null recipient; the mutator appoints its own target from the plate. The
       conductor reads only the declaration.</li>
-  <li><b>Destination addressing.</b> A mover mutator's recipient is the
+  <li><b>Destination addressing.</b> <s>A mover mutator's recipient is the
       destination's owner; the container name is fixed in the kind where the kind
       serves one destination (placement → <code>slotted_unit</code>, burial →
       <code>graveyard</code>), or is a declared typed member on a general
-      container-move kind (Core §2).</li>
+      container-move kind (Core §2).</s> <ins>A move op elects the destination
+      entity as its target; the mutator introduces the cargo into the
+      MoveRequest (Core §2). Where the entity being moved is the target, the
+      request is routed to its specific-purpose procedure — DrawProcedure,
+      BuryProcedure (§7).</ins></li>
   <li><b>Lifecycle: stateless immutable instances.</b> A mutator is constructed once —
       at parse for an authored effect, in code for a machinery effect — and holds only
       its authored parameters; every situational fact arrives on the plate. One
@@ -336,11 +342,13 @@ code. The build-one roster:</p>
   <tr><td>stat mutation</td><td><code>{"stat_mutation": {"stat": StringName, "delta": int}}</code></td><td>StatMutationRequest</td></tr>
   <tr><td>damage</td><td><code>{"damage": {"amount": int}}</code></td><td>DamageRequest</td></tr>
   <tr><td>status</td><td><code>{"status": {"id": StringName, "stacks": int}}</code></td><td>StatusRequest</td></tr>
-  <tr><td>draw</td><td><code>{"draw": {"count": int}}</code></td><td>ContainerMoveRequest</td></tr>
-  <tr><td>burial</td><td>machinery only — never authored</td><td>ContainerMoveRequest</td></tr>
+  <tr><td>draw</td><td><code>{"draw": {"count": int}}</code></td><td><s>ContainerMoveRequest</s> <ins>DrawRequest</ins></td></tr>
+  <tr><td><s>burial</s> <ins>bury</ins></td><td>machinery only — never authored</td><td><s>ContainerMoveRequest</s> <ins>BuryRequest</ins></td></tr>
   <tr><td>pay</td><td>machinery only — never authored; unique</td><td>PayCostRequest</td></tr>
-  <tr><td>placement</td><td>machinery only — never authored; serves placement and
-      the Move ability (Core §6, §7)</td><td>ContainerMoveRequest</td></tr>
+  <tr><td><s>placement</s> <ins>PlacementMutator</ins></td><td>machinery only — never authored<s>; serves placement and
+      the Move ability (Core §6, §7)</s> <ins>(Core §6)</ins></td><td><s>ContainerMoveRequest</s> <ins>MoveRequest</ins></td></tr>
+  <tr><td><ins>MoveUnitMutator</ins></td><td><ins>machinery only — never authored;
+      the Move ability (Core §7)</ins></td><td><ins>MoveRequest</ins></td></tr>
 </table>
 <p>Every roster parameter is required and typed: an authored entry states every
 parameter of its mutator, and an entry omitting one fails parse — a draw of
@@ -448,13 +456,22 @@ by the happening it resolves, and its request pairs with it by that name.</p>
       <td>A target not carrying the status has the object minted and inserted into
       its <code>contained</code>; a target already carrying it has the stacks
       added.</td></tr>
-  <tr><td><b>ContainerMoveProcedure</b></td><td>target · destination (owner entity +
-      container name)</td>
-      <td>Removes the target from its housing, inserts it at the destination.
-      Draw, burial, discard, placement, movement. Stamps origin and destination
+  <tr><td><b><s>ContainerMoveProcedure</s> <ins>MoveProcedure</ins></b></td><td><s>target · destination (owner entity +
+      container name)</s> <ins>target (the destination owner) · cargo · container
+      name</ins></td>
+      <td><s>Removes the target from its housing, inserts it at the destination.
+      Draw, burial, discard, placement, movement.</s> <ins>Removes the cargo from
+      its housing, inserts it into the target's named container. Placement,
+      movement.</ins> Stamps origin and destination
       housing on its event (Core §2); produces <code>fielded</code> when the
       destination is a <code>slotted_unit</code> container and the stamped origin
       housing is not.</td></tr>
+  <tr><td><ins><b>DrawProcedure</b></ins></td><td><ins>target (the drawn
+      card)</ins></td>
+      <td><ins>Moves the target from its deck to its side's hand.</ins></td></tr>
+  <tr><td><ins><b>BuryProcedure</b></ins></td><td><ins>target (the buried
+      entity)</ins></td>
+      <td><ins>Places the target in its side's graveyard.</ins></td></tr>
   <tr><td><b>PayCostProcedure</b></td><td>target (the paying side) · mana · tap</td>
       <td>Commits the cost — mana down on the target side, tap spent on the source —
       and produces the engaged event — <code>play_engaged</code> for the play,
@@ -633,7 +650,8 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-23.
+  <s><b>Signature:</b> signed off — Enrra, 2026-08-23.</s><br>
+  Pending revision.
 </div>
 
 </div>

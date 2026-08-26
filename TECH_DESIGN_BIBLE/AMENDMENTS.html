@@ -267,6 +267,42 @@ follow. A ruling enters this document only by Enrra's word.</p>
   <p><b>Signature:</b> signed off — Enrra, 2026-08-25.</p>
 </div>
 
+<div class="ruling">
+  <div class="head">A16 — The target is native.</div>
+  <p>An event carries a target in its core: one GameEntity, at all times.
+  The target is the Game until a resolver elects one. The target propagates
+  into the branching events the cascade produces, and forwards into
+  requests, which carry it until they appoint a new target. An effect
+  without a targeting block falls back to the generic AutoResolver: it
+  resolves as the target carried in context, falling back to the Game
+  where none is found. EntityEventData is demoted from being a core
+  mechanism, in favor of the native event target. Lands on Core §4, §8,
+  §9; Mutation §6. Ruled by Enrra, 2026-08-25.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A17 — Decoupling of container move logistics.</div>
+  <p>A move op elects the destination entity as its target; the mutator
+  introduces the cargo into the MoveRequest. The Move ability's
+  MoveUnitMutator and the play's PlacementMutator each introduce the
+  holder as cargo — the same operation, each its own stake. Where the
+  entity being moved is the target, the request is routed to its
+  specific-purpose procedure (DrawProcedure, BuryProcedure). The spell's
+  burial effect carries a holder-electing resolver, fixed in its
+  machinery; unit burial rides the AutoResolver. Lands on Core §2, §6;
+  Mutation §4, §7. Ruled by Enrra, 2026-08-26.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A18 — The substantive rides the ask.</div>
+  <p>The substantive mutators of <code>play</code> and
+  <code>use_ability</code> ride the paying effect itself, alongside the
+  payment. The pay mutator is unique; the remaining mutations route
+  through the effect's target resolver. Placement is a baked-in
+  substantive mutator of the unit's play. Lands on Core §5, §6, §7;
+  Mutation §11. Ruled by Enrra, 2026-08-26.</p>
+</div>
+
 <div class="signoff">
   <b>Signature:</b> signed off — Enrra, 2026-08-23, covering A1–A10.
   A ruling recorded after this signature enters with its own dated signature
@@ -287,6 +323,15 @@ Enrra's word.</p>
   composition condition-eligible and mutable — it fits the existing ontology
   (counts-as stats or members) and receives its own ruling when it comes.
   Recorded on Enrra's word, 2026-08-24.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">T2 — The <code>fielded</code> event is cut.</div>
+  <p>At this scope no arrival event exists: ContainerMoveProcedure mints
+  none, the Hourglass leaves the slice, and the event's tests leave the
+  suite. An arrival fact event re-enters under Mutation §8's law — where
+  content cares — with its own ruling. Recorded on Enrra's word,
+  2026-08-26.</p>
 </div>
 
 </div>
