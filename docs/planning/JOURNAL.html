@@ -764,4 +764,39 @@ concern waiting on Enrra, engine-shaped: no event links attacker to victim
 attacker — so the trigger cannot aim "the target"; amendment territory,
 and the piece fails the dictionary gate until ruled.</p>
 
+<h2>2026-08-26 — The mutator_kind double stamp: inspection pending</h2>
+
+<p>Standing after the A15–A18/T2 performance (commits ea92441..bb1e7c4):
+every fact event (<code>died</code>, <code>damaged</code>,
+<code>dodged</code>, <code>crit</code>) carries the
+<code>mutator_kind</code> NameEventData <b>twice</b>. Two stations stamp
+it: the procedure, creating the event, stamps it from the request's
+context bundle (<code>request.mutator_kind</code>, Mutation §6); and the
+Mutator base's <code>issue()</code> appends its kind to the events
+passing back through it on return. Both individually cite signed text —
+A15/Mutation §7 for the carriage, Core §8's accretion clause ("a mutator
+its kind") for the append.</p>
+
+<p>The reading reached in session, to be inspected in depth next
+session before any correction: A15 states <b>what</b> the fact event
+carries; Core §8's accretion states <b>who</b> appends the kind — the
+mutator. Under that reading the procedure's kind-stamp is the intruder:
+an implementation choice of the A15 code repair (which landed the
+carriage in the procedures while the mutator's base append already
+stood), not a ruled second station. The procedure would stamp only the
+event core from context (source; target native per A16) plus its own
+happening's facts; the mutator's single append delivers the kind. Every
+real-flow fact event passes its mutator on return (only mutators mint,
+only the conductor engages mutators — Mutation §7), so the kind always
+arrives.</p>
+
+<p>Consequence to weigh at the inspection: the suite pins the kind on
+<b>directly submitted</b> requests (test_write_road submits to the
+engine with no mutator); under the mutator-owns-the-append reading those
+events carry no kind and the assertions repin to the mutator-issued
+road. The kind stays in the request bundle regardless — procedures
+consume it downward (the applied path's singular provenance: a burn's
+damage carries the burn kind). Nothing corrected yet; both stamps stand
+in code until the inspection rules.</p>
+
 </div>
