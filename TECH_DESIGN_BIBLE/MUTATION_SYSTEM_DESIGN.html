@@ -108,7 +108,8 @@
 <span class="eyebrow">Development instructions · the write system</span>
 <h1>Mutation System Design</h1>
 <div class="ribbon">
-  <span class="status-chip">Signed</span>
+  <s><span class="status-chip">Signed</span></s>
+  <span class="status-chip" style="background: var(--warn);">Pending revision</span>
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III, retired to record)</b></span>
@@ -454,10 +455,11 @@ by the happening it resolves, and its request pairs with it by that name.</p>
       name</td>
       <td>Removes the cargo from
       its housing, inserts it into the target's named container. Placement,
-      movement. Stamps origin and destination
+      movement. <s>Stamps origin and destination
       housing on its event (Core §2); produces <code>fielded</code> when the
       destination is a <code>slotted_unit</code> container and the stamped origin
-      housing is not.</td></tr>
+      housing is not.</s> <ins>As T2 records it: at this scope no arrival event
+      exists.</ins></td></tr>
   <tr><td><b>DrawProcedure</b></td><td>target (the drawn
       card)</td>
       <td>Moves the target from its deck to its side's hand.</td></tr>
@@ -642,7 +644,8 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-26.
+  <s><b>Signature:</b> signed off — Enrra, 2026-08-26.</s><br>
+  Pending revision.
 </div>
 
 </div>
