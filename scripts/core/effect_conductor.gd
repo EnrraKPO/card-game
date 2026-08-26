@@ -17,8 +17,10 @@ extends RefCounted
 # held cues play. (5) Cue the conclusion. Every cue is awaited: blocking lives here, in
 # the flow layer — never in the engine.
 #
-# The delivery appends its elected targets to every event it produces (Core §8
-# accretion: a delivery its elected targets).
+# Interim (A16 struck the delivery's targets accretion from Core §8): the elected
+# targets are still stamped as EntityEventData for the pre-A18 play road — the
+# play_engaged-triggered placement and substantive effects read them. The A18 rebuild
+# retires the stamping.
 
 var _world_ref: WeakRef = null
 

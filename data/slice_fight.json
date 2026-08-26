@@ -48,7 +48,7 @@
         "effects": [
           {
             "trigger": {"event": "died", "entity_conditions": {"entries": [
-              {"route": "source", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]}
+              {"route": "target", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]}
             ]}},
             "targeting": {"decision": "nearest", "conditions": [{"kind": "is_holder"}]},
             "payload": [{"stat_mutation": {"stat": "attack", "delta": 2}}]

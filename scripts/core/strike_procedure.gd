@@ -41,7 +41,11 @@ static func resolve(request: StrikeRequest) -> Array[Event]:
 				game.get_stat(&"dodge_speed_rating"), game.get_stat(&"dodge_difference_rating"),
 				defender_speed - striker_speed, game.get_stat(&"dodge_cap"))
 		if world.rng.randf() * 100.0 < dodge_chance:
-			events.append(Event.new(&"dodged", defender))
+			# The source is mechanical (A15): the strike's source; the dodger is the
+			# event's native target (A16).
+			var dodged := Event.new(&"dodged", request.source, defender)
+			dodged.components.append(NameEventData.new(&"mutator_kind", request.mutator_kind))
+			events.append(dodged)
 			world.outlet.cue(&"dodge", defender, 0.0)   # its cue at commit (MSD s10)
 			return events
 
@@ -58,7 +62,9 @@ static func resolve(request: StrikeRequest) -> Array[Event]:
 			var multiplier: float = minf(game.get_stat(&"crit_multiplier"),
 					game.get_stat(&"crit_multiplier_cap"))
 			amount = roundi(float(amount) * multiplier)
-			events.append(Event.new(&"crit", striker))
+			var crit := Event.new(&"crit", request.source, defender)
+			crit.components.append(NameEventData.new(&"mutator_kind", request.mutator_kind))
+			events.append(crit)
 			world.outlet.cue(&"crit", defender, 0.0)   # its cue at commit (MSD s10)
 
 	# Damage happens inside a connecting strike, so the strike procedure applies the

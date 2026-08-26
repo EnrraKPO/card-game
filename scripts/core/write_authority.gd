@@ -24,10 +24,11 @@ extends RefCounted
 # ── The stat write ─────────────────────────────────────────────────────────────────────
 # Commits `value` to the entity's stat, bounded by the fact's arithmetic. Execution
 # refuses at the concrete bearer — an unborne id, or a write to a read-only stat — loudly,
-# committing nothing (Core §9). Fact events of the write append to `events`. Returns the
-# committed value (the current value on refusal).
+# committing nothing (Core §9). The writer's request travels down as context (Mutation
+# §7); fact events of the write are stamped from it (A15) and append to `events`.
+# Returns the committed value (the current value on refusal).
 static func stat_write(entity: GameEntity, stat: StringName, value: float,
-		events: Array[Event]) -> float:
+		events: Array[Event], context: EngineRequest) -> float:
 	if not entity.bears_stat(stat):
 		push_error("WriteAuthority: '%s' does not bear stat '%s' — write refused"
 				% [entity.get_class_label(), stat])
@@ -40,7 +41,12 @@ static func stat_write(entity: GameEntity, stat: StringName, value: float,
 	var committed: float = _bound(entity, stat, value)
 	entity._stats[stat] = committed
 	if stat == &"health" and previous > 0.0 and committed <= 0.0:
-		events.append(Event.new(&"died", entity))
+		# The source is mechanical (A15): died carries the request's source — the holder
+		# of the effect that minted the request. The dead entity is the event's native
+		# target (Core §8, A16); the mutator's kind rides as context.
+		var died := Event.new(&"died", context.source, entity)
+		died.components.append(NameEventData.new(&"mutator_kind", context.mutator_kind))
+		events.append(died)
 	return committed
 
 

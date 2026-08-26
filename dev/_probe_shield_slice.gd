@@ -117,7 +117,7 @@ func _play(id: StringName, picks: Array) -> Callable:
 			print("  MISSING in hand: ", id)
 			return
 		_picker.queue.append_array(picks)
-		await world.cascade.fire(Event.new(&"play", card))
+		await world.cascade.fire(Event.new(&"play", card, world.game))
 
 
 func _use(unit_id: StringName, ability: StringName, picks: Array) -> Callable:
@@ -127,6 +127,6 @@ func _use(unit_id: StringName, ability: StringName, picks: Array) -> Callable:
 			print("  MISSING fielded: ", unit_id)
 			return
 		_picker.queue.append_array(picks)
-		var ask := Event.new(&"use_ability", unit)
+		var ask := Event.new(&"use_ability", unit, world.game)
 		ask.components.append(NameEventData.new(&"ability", ability))
 		await world.cascade.fire(ask)

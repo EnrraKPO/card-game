@@ -105,19 +105,22 @@ func _test_membership_primitives() -> void:
 func _test_stat_write() -> void:
 	var unit := Unit.new()
 	var events: Array[Event] = []
-	var committed: float = WriteAuthority.stat_write(unit, &"health", 7.0, events)
+	var context := EngineRequest.new(&"test", null, unit)
+	var committed: float = WriteAuthority.stat_write(unit, &"health", 7.0, events, context)
 	check_eq(committed, 7.0, "the stat write commits the value")
 	check_eq(unit.get_stat(&"health"), 7.0, "the committed value is the borne value")
 
 	# tapped floors at zero (Combat Frame §6) — arithmetic owned by the authority.
-	check_eq(WriteAuthority.stat_write(unit, &"tapped", -2.0, events), 0.0, "tapped floors at zero")
+	check_eq(WriteAuthority.stat_write(unit, &"tapped", -2.0, events, context), 0.0,
+			"tapped floors at zero")
 	check(events.is_empty(), "no fact event is issued ahead of need")
 
 	# Refusals commit nothing.
-	WriteAuthority.stat_write(unit, &"mana", 5.0, events)
+	WriteAuthority.stat_write(unit, &"mana", 5.0, events, context)
 	check(not unit.bears_stat(&"mana"), "a write to an unborne stat is refused")
 	var bearer := ReadOnlyBearer.new()
-	WriteAuthority.stat_write(bearer, &"engraving", 4.0, events)
+	WriteAuthority.stat_write(bearer, &"engraving", 4.0, events,
+			EngineRequest.new(&"test", null, bearer))
 	check_eq(bearer.get_stat(&"engraving"), 0.0, "a write to a read-only stat is refused")
 
 
@@ -210,20 +213,18 @@ func _test_aoe_shapes() -> void:
 
 func _test_events() -> void:
 	var unit := Unit.new()
-	var event := Event.new(&"damaged", unit)
-	check(event.source == unit and event.name == &"damaged", "the core: source and name")
+	var striker := Unit.new()
+	var event := Event.new(&"damaged", striker, unit)
+	check(event.source == striker and event.target == unit and event.name == &"damaged",
+			"the core: source, target, and name (A16)")
 	event.components.append(NameEventData.new(&"mutator_kind", &"poison"))
 	event.components.append(StatMutationEventData.new(&"health", -2))
-	var targets: Array[GameEntity] = [unit]
-	event.components.append(EntityEventData.new(&"targets", targets))
 	event.components.append(NameEventData.new(&"origin", &"hand"))
 	var names: Array[EventData] = event.components_of(NameEventData)
 	check_eq(names.size(), 2, "a reader receives all components of the named shape")
 	check_eq((names[0] as NameEventData).role, &"mutator_kind", "components keep arrival order")
 	var stats: Array[EventData] = event.components_of(StatMutationEventData)
 	check((stats[0] as StatMutationEventData).delta == -2, "typed members read back")
-	var entities: Array[EventData] = event.components_of(EntityEventData)
-	check((entities[0] as EntityEventData).entities[0] == unit, "a singular target rides as a set of one")
 
 
 func _test_seeded_rng() -> void:

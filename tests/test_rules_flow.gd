@@ -69,7 +69,7 @@ func _test_conditions() -> void:
 	var world := World.new(1)
 	var mine := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0))
 	var theirs := _fielded_unit(world, world.enemy_side(), Vector3i(1, 0, 0))
-	var occasion := Event.new(&"probe", mine)
+	var occasion := Event.new(&"probe", mine, world.game)
 	var plate := Plate.new(occasion, mine)
 
 	check(IsHolderCondition.new().holds(plate, mine)
@@ -109,9 +109,7 @@ func _test_trigger_routes() -> void:
 	var world := World.new(1)
 	var mine := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0))
 	var theirs := _fielded_unit(world, world.enemy_side(), Vector3i(1, 0, 0))
-	var occasion := Event.new(&"probe", theirs)
-	var victims: Array[GameEntity] = [mine]
-	occasion.components.append(EntityEventData.new(&"victims", victims))
+	var occasion := Event.new(&"probe", theirs, mine)
 
 	var source_entry := Trigger.EntityEntry.new()
 	source_entry.route = &"source"
@@ -123,14 +121,15 @@ func _test_trigger_routes() -> void:
 	holder_entry.conditions.append(IsHolderCondition.new())
 	check(holder_entry.holds(Plate.new(occasion, mine)), "route holder yields the plate's holder")
 
-	var role_entry := Trigger.EntityEntry.new()
-	role_entry.route = &"victims"
-	role_entry.conditions.append(IsAllyCondition.new())
-	check(role_entry.holds(Plate.new(occasion, mine)), "a role-name route yields that role's entities")
-	var absent_entry := Trigger.EntityEntry.new()
-	absent_entry.route = &"bystanders"
-	check(not absent_entry.holds(Plate.new(occasion, mine)),
-			"a role absent from the occasion yields the empty set")
+	var target_entry := Trigger.EntityEntry.new()
+	target_entry.route = &"target"
+	target_entry.conditions.append(IsAllyCondition.new())
+	check(target_entry.holds(Plate.new(occasion, mine)), "route target yields the occasion's target")
+	var miss_entry := Trigger.EntityEntry.new()
+	miss_entry.route = &"target"
+	miss_entry.conditions.append(IsEnemyCondition.new())
+	check(not miss_entry.holds(Plate.new(occasion, mine)),
+			"the target route is the one target — nothing else answers")
 
 	var world_entry := Trigger.EntityEntry.new()
 	world_entry.route = &"world"
@@ -145,14 +144,14 @@ func _test_trigger_routes() -> void:
 func _test_trigger_folds() -> void:
 	var world := World.new(1)
 	var mine := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0))
-	var occasion := Event.new(&"damaged", mine)
+	var occasion := Event.new(&"damaged", mine, mine)
 	occasion.components.append(NameEventData.new(&"mutator_kind", &"poison"))
 	var plate := Plate.new(occasion, mine)
 
 	var trigger := Trigger.new()
 	trigger.event = &"damaged"
 	check(trigger.holds(plate), "empty lists hold vacuously")
-	trigger.event = &"fielded"
+	trigger.event = &"dodged"
 	check(not trigger.holds(plate), "the axial event condition names the occasion")
 
 	trigger.event = &"damaged"
@@ -231,7 +230,7 @@ func _test_decisions() -> void:
 	var near := _fielded_unit(world, world.enemy_side(), Vector3i(1, 1, 0))
 	var far := _fielded_unit(world, world.enemy_side(), Vector3i(1, 0, 3))
 	far.seed_stat(&"health", 9.0)
-	var occasion := Event.new(&"probe", holder)
+	var occasion := Event.new(&"probe", holder, world.game)
 	var plate := Plate.new(occasion, holder)
 	var enemies: Array[EntityCondition] = []
 	enemies.append(IsEnemyCondition.new())
@@ -262,7 +261,7 @@ func _test_decisions() -> void:
 	world.picker = picker
 	check_eq(await picked.engage(plate), [far] as Array[GameEntity], "the picker's pick is the election")
 
-	var stamped := Event.new(&"play_engaged", holder)
+	var stamped := Event.new(&"play_engaged", holder, world.game)
 	var elected: Array[GameEntity] = [near]
 	stamped.components.append(EntityEventData.new(&"targets", elected))
 	var stock := TargetResolver.new(enemies, OccasionsTargetsDecision.new())
@@ -271,7 +270,18 @@ func _test_decisions() -> void:
 
 	var game_default := TargetResolver.game_default()
 	check_eq(game_default.resolve(plate), [world.game] as Array[GameEntity],
-			"no resolver authored: the default targets the Game")
+			"the Card type fact: automatic targeting of the Game")
+
+	# The no-targeting fallback (Core §4, A16): the AutoResolver elects the target
+	# carried in context, falling back to the Game where none is found.
+	var fallback := Effect.new(Trigger.new(), null, [] as Array[Mutator])
+	check(fallback.resolver is AutoResolver, "no targeting authored: the AutoResolver")
+	var carried := Event.new(&"probe", holder, near)
+	check_eq(fallback.resolver.resolve(Plate.new(carried, holder)),
+			[near] as Array[GameEntity], "the AutoResolver resolves as the carried target")
+	var bare := Event.new(&"probe", holder, null)
+	check_eq(fallback.resolver.resolve(Plate.new(bare, holder)),
+			[world.game] as Array[GameEntity], "no target found: the Game")
 
 
 func _test_conductor() -> void:
@@ -292,7 +302,7 @@ func _test_conductor() -> void:
 	# Two recipients: the stock occasion's-targets decision carries both through.
 	var effect := Effect.new(trigger,
 			TargetResolver.new(enemies, OccasionsTargetsDecision.new()), payload)
-	var occasion := Event.new(&"probe", holder)
+	var occasion := Event.new(&"probe", holder, world.game)
 	var both: Array[GameEntity] = [a, b]
 	occasion.components.append(EntityEventData.new(&"targets", both))
 	var conductor := EffectConductor.new(world)
@@ -327,7 +337,7 @@ func _test_cascade_end_to_end() -> void:
 	# attack rises.
 	var effect: Effect = MarkupParse.parse_effect({
 		"trigger": {"event": "died", "entity_conditions": {"entries": [
-			{"route": "source", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]},
+			{"route": "target", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]},
 		]}},
 		"targeting": {"decision": "nearest", "conditions": [{"kind": "is_holder"}]},
 		"payload": [{"stat_mutation": {"stat": "attack", "delta": 2}}],
@@ -357,14 +367,14 @@ func _test_depth_first() -> void:
 	# fresh event fired depth-first, and the avenger's rule reacts to both deaths.
 	var avenge: Effect = MarkupParse.parse_effect({
 		"trigger": {"event": "died", "entity_conditions": {"entries": [
-			{"route": "source", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]},
+			{"route": "target", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]},
 		]}},
 		"targeting": {"decision": "nearest", "conditions": [{"kind": "is_holder"}]},
 		"payload": [{"stat_mutation": {"stat": "attack", "delta": 2}}],
 	})
 	var lash: Effect = MarkupParse.parse_effect({
 		"trigger": {"event": "died", "entity_conditions": {"entries": [
-			{"route": "source", "conditions": [{"kind": "is_holder"}]},
+			{"route": "target", "conditions": [{"kind": "is_holder"}]},
 		]}},
 		"targeting": {"decision": {"stat_ranked": {"stat": "health", "rank": "lowest"}},
 				"conditions": [{"kind": "is_ally"}, {"kind": "is_unit"},
@@ -402,11 +412,11 @@ func _test_implied_fielded() -> void:
 	var rule := Effect.new(trigger, null, payload)
 	carded.effects.append(rule)
 
-	await world.cascade.fire(Event.new(&"probe", world.game))
+	await world.cascade.fire(Event.new(&"probe", world.game, world.game))
 	check(log.is_empty(), "a non-fielded unit's effects do not fire")
 
 	rule.fielded_condition_removed = true
-	await world.cascade.fire(Event.new(&"probe", world.game))
+	await world.cascade.fire(Event.new(&"probe", world.game, world.game))
 	check_eq(log.size(), 1, "the removed condition frees the hand card's effect")
 
 	log.clear()
@@ -415,7 +425,7 @@ func _test_implied_fielded() -> void:
 	WriteAuthority.mint(world, relic)
 	WriteAuthority.insert(side.get_container(&"relics"), relic)
 	relic.effects.append(rule)
-	await world.cascade.fire(Event.new(&"probe", world.game))
+	await world.cascade.fire(Event.new(&"probe", world.game, world.game))
 	check_eq(log.size(), 1, "the condition binds units; other holders are untouched")
 
 

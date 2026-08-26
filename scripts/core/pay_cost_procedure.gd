@@ -16,11 +16,11 @@ static func resolve(request: PayCostRequest) -> Array[Event]:
 	var side: GameEntity = request.target
 	if request.mana != 0:
 		WriteAuthority.stat_write(side, &"mana",
-				side.get_stat(&"mana") - float(request.mana), events)
+				side.get_stat(&"mana") - float(request.mana), events, request)
 	if request.tap != 0:
 		WriteAuthority.stat_write(request.source, &"tapped",
-				request.source.get_stat(&"tapped") + float(request.tap), events)
-	var engaged := Event.new(request.engaged_name, request.source)
+				request.source.get_stat(&"tapped") + float(request.tap), events, request)
+	var engaged := Event.new(request.engaged_name, request.source, request.target)
 	if request.ability != &"":
 		engaged.components.append(NameEventData.new(&"ability", request.ability))
 	events.append(engaged)

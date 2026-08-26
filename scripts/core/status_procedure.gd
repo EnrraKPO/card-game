@@ -19,7 +19,7 @@ static func resolve(request: StatusRequest) -> Array[Event]:
 	for member: GameEntity in contained.members:
 		if member is Status and (member as Status).status_id == request.status_id:
 			WriteAuthority.stat_write(member, &"stacks",
-					member.get_stat(&"stacks") + float(request.stacks), events)
+					member.get_stat(&"stacks") + float(request.stacks), events, request)
 			target.world.outlet.cue(&"status_applied", target, float(request.stacks))
 			return events
 	var status: Status = ContentLibrary.build_status(request.status_id, target.allegiance)

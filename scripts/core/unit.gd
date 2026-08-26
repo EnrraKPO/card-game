@@ -13,7 +13,8 @@ extends Card
 #     occasion's-targets resolver elects the play's picked slot; the placement mutator
 #     moves the holder into it. The insert produces `fielded`. Implied fielded
 #     condition removed: its duty begins off-board (B28).
-#   · Burial — trigger `died` + the entry; the burial mutator moves the holder to its
+#   · Burial — trigger `died` + the route-`target` + is_holder entry (Core §6, A16: the
+#     dead unit is died's native target); the burial mutator moves the holder to its
 #     side's graveyard. Implied condition removed: death buries wherever it finds the
 #     holder (B28).
 #   · The main action — trigger `act` + the entry + the baked untapped condition;
@@ -64,7 +65,10 @@ static func _machinery() -> Array[Effect]:
 
 	var burial_trigger := Trigger.new()
 	burial_trigger.event = &"died"
-	burial_trigger.entity_entries.append(Ability.source_is_holder())
+	var burial_entry := Trigger.EntityEntry.new()
+	burial_entry.route = &"target"
+	burial_entry.conditions.append(IsHolderCondition.new())
+	burial_trigger.entity_entries.append(burial_entry)
 	var burial_payload: Array[Mutator] = []
 	burial_payload.append(BurialMutator.new())
 	var burial := Effect.new(burial_trigger, null, burial_payload)
@@ -107,7 +111,7 @@ func _default_play_targeting() -> TargetResolver:
 # The target poll (Core §1; Combat Frame §6): the main action resolver's resolve phase,
 # run at interactive idle for the previews — side-effect-free.
 func main_action_targets() -> Array[GameEntity]:
-	return main_action.resolver.resolve(Plate.new(Event.new(&"act", self), self))
+	return main_action.resolver.resolve(Plate.new(Event.new(&"act", self, world.game), self))
 
 
 func _declared_mutable_stats() -> Array[StringName]:

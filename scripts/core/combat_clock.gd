@@ -54,7 +54,7 @@ func run_fight(round_cap: int = 0) -> StringName:
 func run_round() -> void:
 	var w: World = world()
 	# The opening.
-	await w.cascade.fire(Event.new(&"round_started", w.game))
+	await w.cascade.fire(Event.new(&"round_started", w.game, w.game))
 	if _ended():
 		return
 	# The enemy commands first, then the player (A5).
@@ -71,7 +71,7 @@ func run_round() -> void:
 	for unit: Unit in order:
 		if unit.housing == null or unit.housing.name != &"slotted_unit":
 			continue
-		await w.cascade.fire(Event.new(&"act", unit))
+		await w.cascade.fire(Event.new(&"act", unit, w.game))
 		if _ended():
 			return
 

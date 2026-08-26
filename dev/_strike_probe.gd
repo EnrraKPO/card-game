@@ -21,7 +21,7 @@ func _ready() -> void:
 				var card := members[index] as Card
 				if card is Unit and card.payable():
 					screen._pending_destination = Vector3i(0, 1, 1)
-					screen.commanded.emit(Event.new(&"play", card))
+					screen.commanded.emit(Event.new(&"play", card, screen.world.game))
 					break
 			while not (screen._span_active and screen._awaiting_command):
 				await get_tree().create_timer(0.15).timeout

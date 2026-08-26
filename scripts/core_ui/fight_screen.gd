@@ -594,7 +594,7 @@ func _on_hand_clicked(card: Card) -> void:
 			picked.emit(card)
 		return
 	if _span_active and _awaiting_command:
-		commanded.emit(Event.new(&"play", card))
+		commanded.emit(Event.new(&"play", card, world.game))
 
 
 # ── The idle click (the old combat's _input road, on the new surfaces) ────────────────
@@ -692,7 +692,7 @@ func _on_ability_clicked(ability_name: StringName) -> void:
 	var selected: Unit = _selected_unit()
 	if _span_active and _awaiting_command and selected != null \
 			and selected.allegiance == world.player_side():
-		var ask := Event.new(&"use_ability", selected)
+		var ask := Event.new(&"use_ability", selected, world.game)
 		ask.components.append(NameEventData.new(&"ability", ability_name))
 		commanded.emit(ask)
 
@@ -1126,7 +1126,7 @@ func _commit_place(card_ui: CardUI, slot_ui: SlotUI) -> void:
 	if card == null:
 		return
 	_pending_destination = _address_of_slot_ui(slot_ui)
-	commanded.emit(Event.new(&"play", card))
+	commanded.emit(Event.new(&"play", card, world.game))
 
 
 # The reposition commit: the chosen slot answers the Move ability's destination ask — the
@@ -1139,7 +1139,7 @@ func _commit_move(card_ui: CardUI, slot_ui: SlotUI) -> void:
 	if unit == null:
 		return
 	_pending_destination = _address_of_slot_ui(slot_ui)
-	var ask := Event.new(&"use_ability", unit)
+	var ask := Event.new(&"use_ability", unit, world.game)
 	ask.components.append(NameEventData.new(&"ability", &"move"))
 	commanded.emit(ask)
 

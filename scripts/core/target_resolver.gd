@@ -42,8 +42,9 @@ func _narrow(plate: Plate) -> Array[GameEntity]:
 	return eligible
 
 
-# The default fixed at construction for an effect authored without a resolver: it
-# targets the Game (Core §4).
+# Automatic targeting of the Game — the Card type's play-targeting fact (Core §5).
+# An effect authored without a targeting block falls back to the AutoResolver instead
+# (Core §4, A16).
 static func game_default() -> TargetResolver:
 	return TargetResolver.new([], GameDecision.new())
 

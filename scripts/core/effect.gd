@@ -6,9 +6,10 @@ extends RefCounted
 # the flow by one road: its trigger. The triad's parts each answer one question — when
 # (the trigger), whom (the resolver), what (the payload) — and hold no flow.
 #
-# An effect authored without a resolver targets the Game; the default is fixed at
-# construction (Core §4). The windup and contact presentation names are the cues the
-# conductor speaks at steps 2 and 4 (Mutation §11).
+# An effect authored without a targeting block falls back to the generic AutoResolver —
+# it resolves as the target carried in context, falling back to the Game where none is
+# found; the default is fixed at construction (Core §4, A16). The windup and contact
+# presentation names are the cues the conductor speaks at steps 2 and 4 (Mutation §11).
 #
 # Every effect of a unit carries the implied default condition THE HOLDER IS FIELDED —
 # housed in a slot's `slotted_unit` (Mutation §2) — which an authored form may
@@ -29,7 +30,7 @@ var fielded_condition_removed: bool = false
 
 func _init(p_trigger: Trigger, p_resolver: TargetResolver, p_payload: Array[Mutator]) -> void:
 	trigger = p_trigger
-	resolver = p_resolver if p_resolver != null else TargetResolver.game_default()
+	resolver = p_resolver if p_resolver != null else AutoResolver.new()
 	payload = p_payload
 
 

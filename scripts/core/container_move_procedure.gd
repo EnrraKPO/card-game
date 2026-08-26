@@ -27,7 +27,7 @@ static func resolve(request: ContainerMoveRequest) -> Array[Event]:
 	WriteAuthority.insert(destination, target)
 	var events: Array[Event] = []
 	if destination.name == &"slotted_unit" and origin.name != &"slotted_unit":
-		var fielded := Event.new(&"fielded", target)
+		var fielded := Event.new(&"fielded", request.source, request.target)
 		fielded.components.append(NameEventData.new(&"origin", origin.name))
 		fielded.components.append(NameEventData.new(&"destination", destination.name))
 		target.world.outlet.cue(&"card_placed", target, 0.0)   # its cue at commit (MSD s10)

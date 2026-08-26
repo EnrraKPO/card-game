@@ -52,13 +52,19 @@ func _test_stat_mutation() -> void:
 func _test_died() -> void:
 	var world := World.new(1)
 	var unit := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0), 2.0, 3.0, 1.0, 0.0)
+	var killer := _fielded_unit(world, world.enemy_side(), Vector3i(1, 0, 0), 2.0, 3.0, 1.0, 0.0)
 	var events: Array[Event] = MutationEngine.submit(
-			StatMutationRequest.new(&"poison", unit, unit, &"health", -3))
+			StatMutationRequest.new(&"poison", killer, unit, &"health", -3))
 	check_eq(events.size(), 1, "health reaching zero produces one event")
-	check(events[0].name == &"died" and events[0].source == unit,
-			"died, source the dying entity")
+	check(events[0].name == &"died" and events[0].source == killer,
+			"died, source the request's source (A15)")
+	var kinds: Array[EventData] = events[0].components_of(NameEventData)
+	check(kinds.size() == 1 and (kinds[0] as NameEventData).role == &"mutator_kind"
+			and (kinds[0] as NameEventData).name == &"poison",
+			"died carries the mutator kind")
+	check(events[0].target == unit, "died carries the dead unit as its native target (A16)")
 	var again: Array[Event] = MutationEngine.submit(
-			StatMutationRequest.new(&"poison", unit, unit, &"health", -1))
+			StatMutationRequest.new(&"poison", killer, unit, &"health", -1))
 	check(again.is_empty(), "died is the crossing, not every write below zero")
 
 
@@ -66,12 +72,21 @@ func _test_damage() -> void:
 	var world := World.new(1)
 	var unit := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0), 2.0, 4.0, 1.0, 5.0)
 
+	var dealer := _fielded_unit(world, world.enemy_side(), Vector3i(1, 0, 0), 2.0, 4.0, 1.0, 0.0)
 	var absorbed: Array[Event] = MutationEngine.submit(
-			DamageRequest.new(&"damage", null, unit, 3))
+			DamageRequest.new(&"damage", dealer, unit, 3))
 	check(unit.get_stat(&"shield") == 2.0 and unit.get_stat(&"health") == 4.0,
 			"shield absorbs first")
 	check_eq(absorbed.size(), 1, "an absorbed hit returns the damaged event alone")
 	check_eq(absorbed[0].name, &"damaged", "the damaged event names the happening")
+	check(absorbed[0].source == dealer, "damaged, source the request's source (A15)")
+	var absorbed_kinds: Array[EventData] = absorbed[0].components_of(NameEventData)
+	check(absorbed_kinds.size() == 1
+			and (absorbed_kinds[0] as NameEventData).role == &"mutator_kind"
+			and (absorbed_kinds[0] as NameEventData).name == &"damage",
+			"damaged carries the mutator kind")
+	check(absorbed[0].target == unit,
+			"damaged carries the damaged unit as its native target (A16)")
 	var facts: Array[EventData] = absorbed[0].components_of(StatMutationEventData)
 	check(facts.size() == 1 and (facts[0] as StatMutationEventData).stat == &"shield"
 			and (facts[0] as StatMutationEventData).delta == -3,
@@ -110,8 +125,10 @@ func _test_strike_dodge() -> void:
 	var defender := _fielded_unit(world, world.enemy_side(), Vector3i(1, 2, 0), 1.0, 10.0, 0.0, 0.0)
 	var events: Array[Event] = MutationEngine.submit(StrikeRequest.new(&"strike", striker, defender))
 	check_eq(defender.get_stat(&"health"), 10.0, "a dodge ends the strike — no damage")
-	check(events.size() == 1 and events[0].name == &"dodged" and events[0].source == defender,
-			"the dodged event, source the dodger")
+	check(events.size() == 1 and events[0].name == &"dodged" and events[0].source == striker,
+			"the dodged event, source the request's source (A15)")
+	check(events[0].target == defender,
+			"dodged carries the dodger as its native target (A16)")
 
 	var tower := _fielded_unit(world, world.enemy_side(), Vector3i(1, 1, 0), 0.0, 10.0, 0.0, 0.0)
 	tower.is_building = true

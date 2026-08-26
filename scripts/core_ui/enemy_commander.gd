@@ -30,7 +30,7 @@ func command(world: World) -> void:
 		for member: GameEntity in side.get_container(&"hand").members.duplicate():
 			var card := member as Card
 			if card != null and card.payable():
-				await world.cascade.fire(Event.new(&"play", card))
+				await world.cascade.fire(Event.new(&"play", card, world.game))
 				asked = true
 				break
 		# Yield when nothing was asked, or the ask committed nothing (a declined or

@@ -43,7 +43,8 @@ static var DECISION_KINDS: Dictionary = {
 
 # ── The effect ─────────────────────────────────────────────────────────────────────────
 # {"trigger": {...}, "targeting": {...}?, "payload": [...]?, "windup": ""?, "contact": ""?}
-# — targeting absent = the Game default (Core §4); payload absent = an empty delivery.
+# — targeting absent = the AutoResolver fallback (Core §4, A16); payload absent = an
+# empty delivery.
 
 static func parse_effect(markup: Dictionary) -> Effect:
 	for key: String in markup:
@@ -83,7 +84,7 @@ static func parse_effect(markup: Dictionary) -> Effect:
 
 static func serialize_effect(effect: Effect) -> Dictionary:
 	var out: Dictionary = {"trigger": serialize_trigger(effect.trigger)}
-	if not (effect.resolver.decision is GameDecision and effect.resolver.conditions.is_empty()):
+	if not (effect.resolver is AutoResolver):
 		out["targeting"] = serialize_targeting(effect.resolver)
 	if not effect.payload.is_empty():
 		out["payload"] = serialize_payload(effect.payload)

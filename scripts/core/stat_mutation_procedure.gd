@@ -18,9 +18,10 @@ const CUED_STATS: Array[StringName] = [&"health", &"max_health", &"attack", &"sp
 
 
 static func apply(target: GameEntity, stat: StringName, delta: int,
-		_context: EngineRequest) -> Array[Event]:
+		context: EngineRequest) -> Array[Event]:
 	var events: Array[Event] = []
-	WriteAuthority.stat_write(target, stat, target.get_stat(stat) + float(delta), events)
+	WriteAuthority.stat_write(target, stat, target.get_stat(stat) + float(delta), events,
+			context)
 	# Its cue at commit (MSD s10): a health raise reads as a heal; other visible unit
 	# stats read as buff/debuff by sign. The heal/buff/debuff cues utter the stat's name
 	# as the variant (A14) so presentation can land the show on the stat that moved.

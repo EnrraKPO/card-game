@@ -11,10 +11,9 @@ extends RefCounted
 # hands each entity to the entry's conditions. EventDataConditions carry no route and
 # receive the occasion.
 #
-# The route list is closed: `source` — the occasion's source, a set of one; `holder` —
-# the plate's holder, a set of one; `eventdata` — the entities of every EntityEventData
-# on the occasion, pooled; a role name in its place yields that role's entities, an
-# absent role the empty set; `world` — every entity that exists.
+# The route list is closed (Core §9, A16): `source` — the occasion's source, a set of
+# one; `holder` — the plate's holder, a set of one; `target` — the occasion's target, a
+# set of one; `world` — every entity that exists.
 
 
 # An entity entry: a route, a list of conditions, and a negate. Its conditions are
@@ -50,22 +49,16 @@ class EntityEntry:
 			&"holder":
 				var holder: Array[GameEntity] = [plate.holder]
 				return holder
+			&"target":
+				var target: Array[GameEntity] = []
+				if plate.occasion.target != null:
+					target.append(plate.occasion.target)
+				return target
 			&"world":
 				return plate.world().all_entities()
-			&"eventdata":
-				var pooled: Array[GameEntity] = []
-				for component: EventData in plate.occasion.components_of(EntityEventData):
-					pooled.append_array((component as EntityEventData).entities)
-				return pooled
 			_:
-				# A role name: that role's entities; a role absent from the occasion
-				# yields the empty set.
-				var of_role: Array[GameEntity] = []
-				for component: EventData in plate.occasion.components_of(EntityEventData):
-					var entities := component as EntityEventData
-					if entities.role == route:
-						of_role.append_array(entities.entities)
-				return of_role
+				push_error("Trigger: route '%s' is not on the closed list" % route)
+				return []
 
 
 # The axial event condition: the occasion's name.

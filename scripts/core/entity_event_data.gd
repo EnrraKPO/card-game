@@ -1,9 +1,10 @@
 class_name EntityEventData
 extends EventData
 
-# The one class for entity-bearing facts (Core System Design §8): role — what the
-# entities are to the happening (`targets` among them) — and the entities; a singular
-# fact rides as a set of one.
+# Entity-bearing facts: role — what the entities are to the happening — and the
+# entities. Demoted from being a core mechanism in favor of the native event target
+# (Core §8, A16). Its one remaining seat is the delivery's `targets` stamping, which the
+# pre-A18 play road still reads (occasions_targets); the A18 rebuild retires both.
 
 var role: StringName = &""
 var entities: Array[GameEntity] = []

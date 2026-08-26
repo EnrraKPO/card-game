@@ -60,7 +60,7 @@ func _test_unit_play() -> void:
 	world.picker = picker
 
 	check(unit.payable(), "the payability query answers for an affordable hand card")
-	await world.cascade.fire(Event.new(&"play", unit))
+	await world.cascade.fire(Event.new(&"play", unit, world.game))
 	check_eq(side.get_stat(&"mana"), 1.0, "the play's cost is paid from the holder's side")
 	check(unit.housing == slot.get_container(&"slotted_unit"),
 			"the placement effect fields the unit on the picked slot")
@@ -74,7 +74,7 @@ func _test_declined_and_unaffordable() -> void:
 	var unit := _hand_unit(world, side, 3.0)
 
 	# The default picker declines: the empty election refuses the ask before payment.
-	await world.cascade.fire(Event.new(&"play", unit))
+	await world.cascade.fire(Event.new(&"play", unit, world.game))
 	check_eq(side.get_stat(&"mana"), 4.0, "a declined pick ends the play unpaid")
 	check(unit.housing.name == &"hand", "the card stays in hand")
 
@@ -83,7 +83,7 @@ func _test_declined_and_unaffordable() -> void:
 	picker.answer = world.board_manager.slot_at(Vector3i(0, 0, 0))
 	world.picker = picker
 	check(not dear.payable(), "payability sees past the open mana")
-	await world.cascade.fire(Event.new(&"play", dear))
+	await world.cascade.fire(Event.new(&"play", dear, world.game))
 	check(side.get_stat(&"mana") == 4.0 and dear.housing.name == &"hand",
 			"an unaffordable play does not engage")
 
@@ -112,7 +112,7 @@ func _test_spell_play() -> void:
 	picker.answer = foe
 	world.picker = picker
 
-	await world.cascade.fire(Event.new(&"play", spell))
+	await world.cascade.fire(Event.new(&"play", spell, world.game))
 	check_eq(side.get_stat(&"mana"), 0.0, "the spell's play is paid")
 	check(spell.housing == side.get_container(&"graveyard"),
 			"a spell is spent by its play — the burial lands it in the graveyard")
@@ -125,7 +125,8 @@ func _test_ability_road() -> void:
 	side.seed_stat(&"mana", 3.0)
 	var cleric := _fielded_unit(world, side, Vector3i(0, 0, 0))
 	var wounded := _fielded_unit(world, side, Vector3i(0, 1, 0))
-	WriteAuthority.stat_write(wounded, &"health", 2.0, [] as Array[Event])
+	WriteAuthority.stat_write(wounded, &"health", 2.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, wounded))
 	var rival := _fielded_unit(world, side, Vector3i(0, 2, 0))
 	# The Heal shape (Core §7's markup form): cost, hand-picked ally unit, positive
 	# health stat mutation.
@@ -148,7 +149,7 @@ func _test_ability_road() -> void:
 	picker.answer = wounded
 	world.picker = picker
 
-	var ask := Event.new(&"use_ability", cleric)
+	var ask := Event.new(&"use_ability", cleric, world.game)
 	ask.components.append(NameEventData.new(&"ability", &"heal"))
 	await world.cascade.fire(ask)
 	check_eq(side.get_stat(&"mana"), 1.0, "the ability's cost is paid — once, by the asked holder")
@@ -176,7 +177,7 @@ func _test_move() -> void:
 	var picker := TestPicker.new()
 	picker.answer = destination
 	world.picker = picker
-	var ask := Event.new(&"use_ability", walker)
+	var ask := Event.new(&"use_ability", walker, world.game)
 	ask.components.append(NameEventData.new(&"ability", &"move"))
 	await world.cascade.fire(ask)
 	check(walker.housing == destination.get_container(&"slotted_unit"),
@@ -189,15 +190,17 @@ func _test_main_action() -> void:
 	var striker := _fielded_unit(world, world.player_side(), Vector3i(0, 1, 3))
 	var front := _fielded_unit(world, world.enemy_side(), Vector3i(1, 1, 0))
 	var back := _fielded_unit(world, world.enemy_side(), Vector3i(1, 1, 3))
-	WriteAuthority.stat_write(front, &"health", 9.0, [] as Array[Event])
-	WriteAuthority.stat_write(back, &"health", 9.0, [] as Array[Event])
+	WriteAuthority.stat_write(front, &"health", 9.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, front))
+	WriteAuthority.stat_write(back, &"health", 9.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, back))
 	check_eq(striker.main_action_targets(), [front] as Array[GameEntity],
 			"the target poll answers the attack preference — nearer column wins")
 
-	await world.cascade.fire(Event.new(&"act", striker))
+	await world.cascade.fire(Event.new(&"act", striker, world.game))
 	check_eq(front.get_stat(&"health"), 7.0, "the main action strikes the elected enemy")
 	check_eq(striker.get_stat(&"tapped"), 1.0, "acting spends the tap")
-	await world.cascade.fire(Event.new(&"act", striker))
+	await world.cascade.fire(Event.new(&"act", striker, world.game))
 	check_eq(front.get_stat(&"health"), 7.0, "a tapped unit's main action does not engage")
 
 
@@ -205,11 +208,12 @@ func _test_death_buries() -> void:
 	var world := World.new(7)
 	world.game.seed_stat(&"crit_base", 0.0)
 	var striker := _fielded_unit(world, world.player_side(), Vector3i(0, 1, 3))
-	WriteAuthority.stat_write(striker, &"attack", 9.0, [] as Array[Event])
+	WriteAuthority.stat_write(striker, &"attack", 9.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, striker))
 	var victim := _fielded_unit(world, world.enemy_side(), Vector3i(1, 1, 0))
 	var slot: Slot = world.board_manager.slot_at(Vector3i(1, 1, 0))
 
-	await world.cascade.fire(Event.new(&"act", striker))
+	await world.cascade.fire(Event.new(&"act", striker, world.game))
 	check(victim.get_stat(&"health") <= 0.0, "the lethal strike lands")
 	check(victim.housing == world.enemy_side().get_container(&"graveyard"),
 			"the death buries — the built-in effect walked the holder to its graveyard")

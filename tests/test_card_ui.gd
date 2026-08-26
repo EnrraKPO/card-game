@@ -217,7 +217,8 @@ func _card_bridge_composes_from_the_core() -> void:
 	var status: Status = ContentLibrary.build_status(&"poison", unit.allegiance)
 	WriteAuthority.mint(world, status)
 	var no_events: Array[Event] = []
-	WriteAuthority.stat_write(status, &"stacks", 3.0, no_events)
+	WriteAuthority.stat_write(status, &"stacks", 3.0, no_events,
+			EngineRequest.new(&"test", null, status))
 	WriteAuthority.insert(unit.get_container(&"contained"), status)
 	var views: Array[StatusPipView] = CardViewModel.status_views(unit)
 	check_eq(views.size(), 1, "a held status composes one view")

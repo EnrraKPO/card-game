@@ -119,12 +119,12 @@ func _test_shield_recovery() -> void:
 	MutationEngine.submit(DamageRequest.new(&"test", null, guard, 2))
 	check_eq(guard.get_stat(&"shield"), 1.0, "damage spends the shield first")
 
-	await world.cascade.fire(Event.new(&"round_started", world.game))
+	await world.cascade.fire(Event.new(&"round_started", world.game, world.game))
 	check_eq(guard.get_stat(&"shield"), 3.0,
 			"the shield recovery rule raises the shield to its authored value")
 
 	MutationEngine.submit(StatMutationRequest.new(&"test", null, guard, &"shield", 4))
-	await world.cascade.fire(Event.new(&"round_started", world.game))
+	await world.cascade.fire(Event.new(&"round_started", world.game, world.game))
 	check_eq(guard.get_stat(&"shield"), 7.0,
 			"shield standing above the authored value stays — a raise, never a drain")
 
@@ -133,7 +133,8 @@ func _test_fight_ends() -> void:
 	var world := _fight_world(22)
 	var player_king := world.board_manager.slot_at(Vector3i(0, 1, 0)) \
 			.get_container(&"slotted_unit").members[0] as Unit
-	WriteAuthority.stat_write(player_king, &"attack", 30.0, [] as Array[Event])
+	WriteAuthority.stat_write(player_king, &"attack", 30.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, player_king))
 	var outcome: StringName = await world.clock.run_fight(5)
 	check_eq(outcome, &"victory", "the enemy king's death ends the fight in victory")
 	var enemy_king_grave: EntityContainer = world.enemy_side().get_container(&"graveyard")
@@ -142,7 +143,8 @@ func _test_fight_ends() -> void:
 	var doomed := _fight_world(23)
 	var enemy_king := doomed.board_manager.slot_at(Vector3i(1, 1, 0)) \
 			.get_container(&"slotted_unit").members[0] as Unit
-	WriteAuthority.stat_write(enemy_king, &"attack", 30.0, [] as Array[Event])
+	WriteAuthority.stat_write(enemy_king, &"attack", 30.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, enemy_king))
 	check_eq(await doomed.clock.run_fight(5), &"defeat",
 			"the player king's death ends the fight in defeat")
 
@@ -151,8 +153,10 @@ func _test_pass_over() -> void:
 	var world := _fight_world(24)
 	# A fast player reaper kills the enemy king's escort before its moment.
 	var reaper: Card = ContentLibrary.build_card(&"squire", world.player_side())
-	WriteAuthority.stat_write(reaper, &"attack", 9.0, [] as Array[Event])
-	WriteAuthority.stat_write(reaper, &"speed", 9.0, [] as Array[Event])
+	WriteAuthority.stat_write(reaper, &"attack", 9.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, reaper))
+	WriteAuthority.stat_write(reaper, &"speed", 9.0, [] as Array[Event],
+			EngineRequest.new(&"test", null, reaper))
 	WriteAuthority.mint(world, reaper)
 	WriteAuthority.insert(world.board_manager.slot_at(Vector3i(0, 0, 3))
 			.get_container(&"slotted_unit"), reaper)
