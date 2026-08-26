@@ -545,13 +545,20 @@ func relic_tray() -> RelicTray:
 	return _relic_tray
 
 
-# The relic chips' R14 registration, at tray build: each of the player's Relic entities
-# keyed to its chip — the tray renders the run's relics, the same ids Genesis seats on the
-# player's side. An enemy relic (or any relic the tray shows no chip for — a run-less
-# catalogue fight's) resolves to nothing and lawfully shows nothing.
+# The relic chips: combat's tray reads the GAME WORLD — the player Side's `relics`
+# container, the entities actually governing the fight — injected here once the world
+# stands (the tray's world mode; the map HUD keeps the run list). Then the R14
+# registration keys each Relic entity to its chip. A relic the catalogue has no look
+# for builds no chip and lawfully shows nothing; an enemy relic has no chip either.
 func _register_relic_surfaces() -> void:
 	if _relic_tray == null or world == null:
 		return
+	var ids: Array[String] = []
+	for member: GameEntity in world.player_side().get_container(&"relics").members:
+		if member is Relic:
+			ids.append(String(member.id))
+	_relic_tray.world_relic_ids = ids
+	_relic_tray.refresh()
 	for member: GameEntity in world.player_side().get_container(&"relics").members:
 		var relic := member as Relic
 		if relic == null:
@@ -1356,8 +1363,9 @@ func _build_halves_gutter() -> Control:
 
 
 # The vertical relic strip, owning the whole left rail: with no header during combat this
-# is where the run's relics live — a full-height column of big chips, framed like the mana
-# gauge so the two read as one family. Read-only here (discarding is the map HUD's job).
+# is where the fight's relics live — a full-height column of big chips, framed like the
+# mana gauge so the two read as one family. Read-only here (discarding is the map HUD's
+# job); the world's relic ids are injected at _register_relic_surfaces once Genesis runs.
 func _build_relic_strip() -> Control:
 	var strip := Panel.new()
 	strip.custom_minimum_size.x = 122.0 if UIScale.is_compact() else 92.0

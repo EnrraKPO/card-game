@@ -34,6 +34,13 @@ var consumable_check: Callable = Callable()
 
 var _chips: Dictionary = {}   # relic_id -> BaseButton, so a firing relic can glint its chip
 
+# Combat's injected source (the R4 seam): the fight world's relic ids — the player Side's
+# `relics` container, the entities actually governing the fight. Set by the fight screen
+# once the world stands, followed by refresh(). Empty = the run's possession list (the
+# map HUD's road, unchanged). The catalogue (RelicData) still supplies every chip's look
+# by id in both modes.
+var world_relic_ids: Array[String] = []
+
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 5)
@@ -48,12 +55,16 @@ func refresh() -> void:
 	for c in get_children():
 		c.queue_free()
 	_chips.clear()
-	if GameData.current_run == null:
+	var relics: Array = []
+	if not world_relic_ids.is_empty():
+		# World mode: a bare count — capacity is a run fact the fight world doesn't carry.
+		relics = world_relic_ids
+		add_child(_make_count_label(relics.size(), -1))
+	elif GameData.current_run != null:
+		relics = GameData.current_run.relics
+		add_child(_make_count_label(relics.size(), GameData.value("relic.capacity")))
+	else:
 		return
-
-	var relics: Array = GameData.current_run.relics
-	var capacity: int = GameData.value("relic.capacity")
-	add_child(_make_count_label(relics.size(), capacity))
 
 	for relic_id: String in relics:
 		var relic := RelicData.get_relic(relic_id)
@@ -92,12 +103,13 @@ func chip_of(relic_id: String) -> Control:
 
 # "Relics 2/5" — the at-a-glance read of how many slots are used and how many remain. The vertical
 # strip is too narrow for the word, so there it's just "2/5" (the strip carries a "Relics" tooltip).
+# Capacity -1 (world mode) drops the "/cap" half — a bare count.
 func _make_count_label(used: int, capacity: int) -> Label:
 	var lbl := Label.new()
 	lbl.add_theme_font_size_override("font_size", 22 if UIScale.is_compact() else 18)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if vertical:
-		lbl.text = "%d/%d" % [used, capacity]
+		lbl.text = ("%d" % used) if capacity < 0 else ("%d/%d" % [used, capacity])
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.add_theme_color_override("font_color", Color(0.72, 0.78, 0.92))   # on the dark
 		# track panel combat frames the strip with (ScreenUI.MANA_TRACK_BG)
