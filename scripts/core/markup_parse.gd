@@ -17,6 +17,7 @@ static var CONDITION_KINDS: Dictionary = {
 	"is_holder": IsHolderCondition,
 	"has_status": HasStatusCondition,
 	"name_is": NameIsCondition,
+	"request_kind_is": RequestKindIsCondition,
 	"is_ally": IsAllyCondition,
 	"is_enemy": IsEnemyCondition,
 	"is_unit": IsUnitCondition,

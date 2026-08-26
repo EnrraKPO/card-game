@@ -7,8 +7,9 @@ extends EngineProcedure
 # kind the same way.
 #
 # The damaged event: source the request's source — the holder of the effect that minted
-# the request (A15) — target the damaged entity in the core (A16), the committed writes
-# riding as StatMutationEventData; the authority's died follows it in return order.
+# the request (A15) — target the damaged entity in the core (A16), the request at hand
+# stamped as RequestEventData (A19), the committed writes riding as
+# StatMutationEventData; the authority's died follows it in return order.
 
 
 static func resolve(request: DamageRequest) -> Array[Event]:
@@ -30,7 +31,7 @@ static func apply(target: GameEntity, amount: int, context: EngineRequest) -> Ar
 				target.get_stat(&"health") - remainder, authority_events, context)
 		target.world.outlet.cue(&"health_damage", target, remainder)   # its cue at commit
 	var damaged := Event.new(&"damaged", context.source, target)
-	damaged.components.append(NameEventData.new(&"mutator_kind", context.mutator_kind))
+	damaged.components.append(RequestEventData.new(context))
 	if absorbed > 0.0:
 		damaged.components.append(StatMutationEventData.new(&"shield", -roundi(absorbed)))
 	if remainder > 0.0:

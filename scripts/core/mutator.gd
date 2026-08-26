@@ -13,9 +13,10 @@ extends RefCounted
 # situational fact arrives on the plate. One instance is shared across card copies and
 # simulated worlds.
 #
-# Contract: issue(plate, recipient) → events. The base appends the kind to every
-# returned event (Core §8 accretion: a mutator its kind — NameEventData, role
-# `mutator_kind`); the mutator object itself never travels.
+# Contract: issue(plate, recipient) → events. The mutator appends nothing to them —
+# every event on the request path already carries the request at hand as a
+# RequestEventData, stamped where it was minted (A19); the mutator object itself
+# never travels.
 
 var kind: StringName = &""
 
@@ -28,10 +29,7 @@ func is_unique() -> bool:
 
 
 func issue(plate: Plate, recipient: GameEntity) -> Array[Event]:
-	var events: Array[Event] = _issue(plate, recipient)
-	for event: Event in events:
-		event.components.append(NameEventData.new(&"mutator_kind", kind))
-	return events
+	return _issue(plate, recipient)
 
 
 func _issue(_plate: Plate, _recipient: GameEntity) -> Array[Event]:

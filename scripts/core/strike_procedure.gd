@@ -44,7 +44,7 @@ static func resolve(request: StrikeRequest) -> Array[Event]:
 			# The source is mechanical (A15): the strike's source; the dodger is the
 			# event's native target (A16).
 			var dodged := Event.new(&"dodged", request.source, defender)
-			dodged.components.append(NameEventData.new(&"mutator_kind", request.mutator_kind))
+			dodged.components.append(RequestEventData.new(request))
 			events.append(dodged)
 			world.outlet.cue(&"dodge", defender, 0.0)   # its cue at commit (MSD s10)
 			return events
@@ -63,7 +63,7 @@ static func resolve(request: StrikeRequest) -> Array[Event]:
 					game.get_stat(&"crit_multiplier_cap"))
 			amount = roundi(float(amount) * multiplier)
 			var crit := Event.new(&"crit", request.source, defender)
-			crit.components.append(NameEventData.new(&"mutator_kind", request.mutator_kind))
+			crit.components.append(RequestEventData.new(request))
 			events.append(crit)
 			world.outlet.cue(&"crit", defender, 0.0)   # its cue at commit (MSD s10)
 

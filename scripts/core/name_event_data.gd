@@ -2,7 +2,7 @@ class_name NameEventData
 extends EventData
 
 # A named fact (Core System Design §8): role — what the name means to the happening
-# (`mutator_kind` and `ability` among them, `origin` and `destination` for a move's
+# (`ability` among them, `origin` and `destination` for a move's
 # stamped housings, §2) — and the name itself.
 
 var role: StringName = &""

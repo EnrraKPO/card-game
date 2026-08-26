@@ -217,12 +217,12 @@ func _test_events() -> void:
 	var event := Event.new(&"damaged", striker, unit)
 	check(event.source == striker and event.target == unit and event.name == &"damaged",
 			"the core: source, target, and name (A16)")
-	event.components.append(NameEventData.new(&"mutator_kind", &"poison"))
+	event.components.append(NameEventData.new(&"ability", &"heal"))
 	event.components.append(StatMutationEventData.new(&"health", -2))
 	event.components.append(NameEventData.new(&"origin", &"hand"))
 	var names: Array[EventData] = event.components_of(NameEventData)
 	check_eq(names.size(), 2, "a reader receives all components of the named shape")
-	check_eq((names[0] as NameEventData).role, &"mutator_kind", "components keep arrival order")
+	check_eq((names[0] as NameEventData).role, &"ability", "components keep arrival order")
 	var stats: Array[EventData] = event.components_of(StatMutationEventData)
 	check((stats[0] as StatMutationEventData).delta == -2, "typed members read back")
 

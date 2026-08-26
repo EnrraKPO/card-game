@@ -94,15 +94,25 @@ func _test_conditions() -> void:
 			and not HousesMeCondition.new().holds(status_plate, theirs), "houses_me")
 
 	var named := NameIsCondition.new()
-	named.role = &"mutator_kind"
-	named.name = &"poison"
+	named.role = &"ability"
+	named.name = &"heal"
 	check(not named.holds(plate, occasion), "name_is over an absent component is false")
-	occasion.components.append(NameEventData.new(&"mutator_kind", &"poison"))
+	occasion.components.append(NameEventData.new(&"ability", &"heal"))
 	check(named.holds(plate, occasion), "name_is finds its role and name")
 	named.negate = true
 	check(not named.holds(plate, occasion), "negate inverts the natural answer")
 	occasion.components.clear()
 	check(named.holds(plate, occasion), "over an absent component the inverted answer is true")
+
+	var kinded := RequestKindIsCondition.new()
+	kinded.name = &"poison"
+	check(not kinded.holds(plate, occasion), "request_kind_is over an unstamped event is false")
+	occasion.components.append(RequestEventData.new(
+			DamageRequest.new(&"poison", mine, theirs, 1)))
+	check(kinded.holds(plate, occasion), "request_kind_is reads the stamped request's kind (A19)")
+	kinded.name = &"strike"
+	check(not kinded.holds(plate, occasion), "a different kind does not answer")
+	occasion.components.clear()
 
 
 func _test_trigger_routes() -> void:
@@ -145,7 +155,8 @@ func _test_trigger_folds() -> void:
 	var world := World.new(1)
 	var mine := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0))
 	var occasion := Event.new(&"damaged", mine, mine)
-	occasion.components.append(NameEventData.new(&"mutator_kind", &"poison"))
+	occasion.components.append(RequestEventData.new(
+			DamageRequest.new(&"poison", mine, mine, 1)))
 	var plate := Plate.new(occasion, mine)
 
 	var trigger := Trigger.new()
@@ -155,11 +166,9 @@ func _test_trigger_folds() -> void:
 	check(not trigger.holds(plate), "the axial event condition names the occasion")
 
 	trigger.event = &"damaged"
-	var wrong := NameIsCondition.new()
-	wrong.role = &"mutator_kind"
+	var wrong := RequestKindIsCondition.new()
 	wrong.name = &"strike"
-	var right := NameIsCondition.new()
-	right.role = &"mutator_kind"
+	var right := RequestKindIsCondition.new()
 	right.name = &"poison"
 	trigger.eventdata_conditions = [wrong, right]
 	check(not trigger.holds(plate), "policy all needs every member")
@@ -195,7 +204,7 @@ func _test_roundtrip() -> void:
 		"trigger": {
 			"event": "damaged",
 			"eventdata_conditions": {"policy": "any", "conditions": [
-				{"kind": "name_is", "role": "mutator_kind", "name": "poison"},
+				{"kind": "request_kind_is", "name": "poison"},
 			]},
 			"entity_conditions": {"entries": [
 				{"route": "source", "conditions": [{"kind": "is_holder"}]},

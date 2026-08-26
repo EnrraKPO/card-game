@@ -4,8 +4,9 @@ extends EngineProcedure
 # Commits the cost (Mutation System Design §7): mana down on the target side, tap spent
 # on the source — and produces the engaged event, play_engaged for the play,
 # ability_used for an ability use, the ability's name carried forward as NameEventData
-# role `ability` (Core §7). The engaged event's source is the asked entity, stamped from
-# the request (Core §8); the elected targets are appended by the delivery.
+# role `ability` (Core §7). The engaged event's source is the asked entity, the request
+# at hand stamped as RequestEventData (A19); the elected targets are appended by the
+# delivery.
 #
 # Affordability is the trigger's baked condition, upstream — this procedure commits what
 # was asked.
@@ -21,6 +22,7 @@ static func resolve(request: PayCostRequest) -> Array[Event]:
 		WriteAuthority.stat_write(request.source, &"tapped",
 				request.source.get_stat(&"tapped") + float(request.tap), events, request)
 	var engaged := Event.new(request.engaged_name, request.source, request.target)
+	engaged.components.append(RequestEventData.new(request))
 	if request.ability != &"":
 		engaged.components.append(NameEventData.new(&"ability", request.ability))
 	events.append(engaged)

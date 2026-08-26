@@ -43,9 +43,9 @@ static func stat_write(entity: GameEntity, stat: StringName, value: float,
 	if stat == &"health" and previous > 0.0 and committed <= 0.0:
 		# The source is mechanical (A15): died carries the request's source — the holder
 		# of the effect that minted the request. The dead entity is the event's native
-		# target (Core §8, A16); the mutator's kind rides as context.
+		# target (Core §8, A16); the request at hand rides as RequestEventData (A19).
 		var died := Event.new(&"died", context.source, entity)
-		died.components.append(NameEventData.new(&"mutator_kind", context.mutator_kind))
+		died.components.append(RequestEventData.new(context))
 		events.append(died)
 	return committed
 

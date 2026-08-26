@@ -53,15 +53,15 @@ func _test_died() -> void:
 	var world := World.new(1)
 	var unit := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0), 2.0, 3.0, 1.0, 0.0)
 	var killer := _fielded_unit(world, world.enemy_side(), Vector3i(1, 0, 0), 2.0, 3.0, 1.0, 0.0)
-	var events: Array[Event] = MutationEngine.submit(
-			StatMutationRequest.new(&"poison", killer, unit, &"health", -3))
+	var ask := StatMutationRequest.new(&"poison", killer, unit, &"health", -3)
+	var events: Array[Event] = MutationEngine.submit(ask)
 	check_eq(events.size(), 1, "health reaching zero produces one event")
 	check(events[0].name == &"died" and events[0].source == killer,
 			"died, source the request's source (A15)")
-	var kinds: Array[EventData] = events[0].components_of(NameEventData)
-	check(kinds.size() == 1 and (kinds[0] as NameEventData).role == &"mutator_kind"
-			and (kinds[0] as NameEventData).name == &"poison",
-			"died carries the mutator kind")
+	var stamps: Array[EventData] = events[0].components_of(RequestEventData)
+	check(stamps.size() == 1 and (stamps[0] as RequestEventData).request == ask
+			and (stamps[0] as RequestEventData).request.mutator_kind == &"poison",
+			"died carries the request at hand (A19)")
 	check(events[0].target == unit, "died carries the dead unit as its native target (A16)")
 	var again: Array[Event] = MutationEngine.submit(
 			StatMutationRequest.new(&"poison", killer, unit, &"health", -1))
@@ -73,18 +73,17 @@ func _test_damage() -> void:
 	var unit := _fielded_unit(world, world.player_side(), Vector3i(0, 0, 0), 2.0, 4.0, 1.0, 5.0)
 
 	var dealer := _fielded_unit(world, world.enemy_side(), Vector3i(1, 0, 0), 2.0, 4.0, 1.0, 0.0)
-	var absorbed: Array[Event] = MutationEngine.submit(
-			DamageRequest.new(&"damage", dealer, unit, 3))
+	var ask := DamageRequest.new(&"damage", dealer, unit, 3)
+	var absorbed: Array[Event] = MutationEngine.submit(ask)
 	check(unit.get_stat(&"shield") == 2.0 and unit.get_stat(&"health") == 4.0,
 			"shield absorbs first")
 	check_eq(absorbed.size(), 1, "an absorbed hit returns the damaged event alone")
 	check_eq(absorbed[0].name, &"damaged", "the damaged event names the happening")
 	check(absorbed[0].source == dealer, "damaged, source the request's source (A15)")
-	var absorbed_kinds: Array[EventData] = absorbed[0].components_of(NameEventData)
-	check(absorbed_kinds.size() == 1
-			and (absorbed_kinds[0] as NameEventData).role == &"mutator_kind"
-			and (absorbed_kinds[0] as NameEventData).name == &"damage",
-			"damaged carries the mutator kind")
+	var absorbed_stamps: Array[EventData] = absorbed[0].components_of(RequestEventData)
+	check(absorbed_stamps.size() == 1
+			and (absorbed_stamps[0] as RequestEventData).request == ask,
+			"damaged carries the request at hand (A19)")
 	check(absorbed[0].target == unit,
 			"damaged carries the damaged unit as its native target (A16)")
 	var facts: Array[EventData] = absorbed[0].components_of(StatMutationEventData)
