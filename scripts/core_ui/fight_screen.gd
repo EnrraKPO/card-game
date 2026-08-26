@@ -162,6 +162,9 @@ var _arena_chrome_w: float = 0.0   # the fixed width flanking the board — _res
 # The fight has ended: the Ready button became Leave, and the state machine's captions
 # must not reclaim it.
 var _fight_over: bool = false
+# Where the enemy King's card stood when it fell — the treasure chest bursts out of that
+# spot at the ending (the old king-fall band's blast seat). Zero until a king falls.
+var _fallen_king_rect := Rect2()
 
 var _slot_uis: Dictionary[Vector3i, SlotUI] = {}
 # The board card faces, one per fielded unit, reused across refreshes so a unit's card is a
@@ -347,6 +350,15 @@ func _ready() -> void:
 		_state_label.text = "Genesis refused the fight's configuration."
 		return
 	_register_relic_surfaces()
+	# The reward orb the treasure chest hands over at the ending (the chest plays it by id).
+	Vfx.register_custom("reward_orb", RewardOrbFx.play)
+	# The fight's soundscape keys on the encounter's weight (the old screen's intro band).
+	var enc: EncounterData = GameData.current_encounter
+	var is_boss: bool = enc != null and enc.type == EncounterData.Type.BOSS
+	var is_elite: bool = enc != null and enc.type == EncounterData.Type.ELITE
+	Sfx.play("combat_boss_intro" if is_boss else "combat_start")
+	Sfx.music("music_boss" if is_boss else ("music_elite" if is_elite else "music_combat"))
+	Sfx.ambience("amb_combat_battlefield")
 	refresh()
 	_run.call_deferred()
 
@@ -356,6 +368,11 @@ func _run() -> void:
 	refresh()
 	_state_label.text = "VICTORY" if outcome == &"victory" else "DEFEAT"
 	_fight_over = true
+	# A run's fight consumes its own ending — rewards, map advance, navigation. Without a
+	# run and its encounter (the shell's stub fight) the Ready button becomes Leave.
+	if GameData.current_run != null and GameData.current_encounter != null:
+		await _consume_ending(outcome == &"victory")
+		return
 	_done_label.text = "Leave"
 	_done_label.modulate.a = 1.0
 	_done_btn.disabled = false
@@ -367,6 +384,73 @@ func _leave() -> void:
 	var destination := "res://scenes/map.tscn" if GameData.current_run != null \
 			else "res://scenes/entry_screen.tscn"
 	Nav.goto(destination)
+
+
+# The fight's ending pays the run — the old combat screen's _handle_combat_end,
+# re-terminated on the clock's outcome: the ending dressing, the enemy King's treasure
+# chest as the gate into the rewards, the encounter's automatic rewards and outcome, the
+# King's wounds carried back, the map advanced and saved, and the flow routed onward —
+# reward screen on a win, straight to the map on a boss win (→ Stage Cleared / Run
+# Successful), Run Over on a loss.
+func _consume_ending(player_won: bool) -> void:
+	var enc: EncounterData = GameData.current_encounter
+	var run: RunData = GameData.current_run
+	Sfx.play("combat_victory" if player_won else "combat_defeat")
+	# The screen-level dressing plays out BEFORE navigation (awaited — Nav.goto would cut
+	# it off mid-swell); target is the whole combat screen.
+	await Vfx.play("screen_victory_rays" if player_won else "screen_defeat_shroud", self)
+	# The enemy King left a chest where it fell, and it is a real gate: the rewards are
+	# what is inside it, so nothing is applied and no screen changes until the player
+	# opens it.
+	var chest: TreasureChest = null
+	if player_won:
+		var seat: Rect2 = _fallen_king_rect if _fallen_king_rect.size != Vector2.ZERO \
+				else _enemy_grid.get_global_rect()
+		chest = TreasureChest.pop_from(self, seat.get_center(), seat)
+		await chest.opened
+	# One-time milestone checks fire for any real match completion — win OR loss.
+	Achievements.record_match_completed()
+	if player_won:
+		# The encounter's automatic rewards (gold + crafting materials + experience) in
+		# one place, uniformly for boss and normal wins; the card pick is the reward
+		# screen's. Then the King's wounds carry back into the run (it survived, so
+		# health > 0).
+		GameData.apply_encounter_rewards(enc)
+		var king: Unit = _fielded_king(world.player_side())
+		if king != null:
+			run.king_damage = maxi(0, run.king_max_health() - roundi(king.get_stat(&"health")))
+		enc.outcome = EncounterData.Outcome.WIN
+		# Advance map state now that the battle is won.
+		var state: MapState = GameData.current_map_state
+		if state != null:
+			if enc.completing_node_id >= 0 \
+					and enc.completing_node_id not in state.visited_nodes:
+				state.visited_nodes.append(enc.completing_node_id)
+			if enc.destination_node_id >= 0:
+				state.current_node_id = enc.destination_node_id
+		var is_boss: bool = enc.type == EncounterData.Type.BOSS
+		GameData.save_run()
+		# When the chest handed over, the reward orb is hanging mid-screen right now —
+		# the screen it leads to GROWS out of that spot instead of cutting to it.
+		var arrival: String = "screen_grow_in" if chest != null else ""
+		if is_boss:
+			Nav.goto("res://scenes/map.tscn", arrival)
+		else:
+			Nav.goto("res://scenes/reward_screen.tscn", arrival)
+	else:
+		enc.outcome = EncounterData.Outcome.LOSE
+		# Defeat ends the run (meta-progression kept) and shows the Run Over screen.
+		GameData.end_run()
+		Nav.goto("res://scenes/run_over.tscn")
+
+
+# The side's fielded King — the clock's own scan (CombatClock._king_fallen), aimed at the
+# survivor: the ending reads its health to carry the run's wounds.
+func _fielded_king(side: Side) -> Unit:
+	for entity: GameEntity in world.all_entities():
+		if entity is Unit and (entity as Unit).is_king and entity.allegiance == side:
+			return entity as Unit
+	return null
 
 
 # ── The command span (PlayerCommander's surface) ──────────────────────────────────────
@@ -966,6 +1050,10 @@ func refresh() -> void:
 		if not seen.has(unit):
 			var ui := _card_uis[unit] as CardUI
 			if ui != null and is_instance_valid(ui):
+				# The enemy King's fall leaves its spot behind — the ending's treasure
+				# chest bursts out of it (_consume_ending).
+				if (unit as Unit).is_king and (unit as Unit).allegiance == world.enemy_side():
+					_fallen_king_rect = ui.get_global_rect()
 				ui.queue_free()
 			_card_uis.erase(unit)
 	_rebuild_hand()
