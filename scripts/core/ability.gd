@@ -91,9 +91,9 @@ static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
 
 
 # The Move ability (A3, A9): machinery appoints it on every non-building unit at
-# construction — free, hand-picked vacant ally slot, the placement mutator carrying the
-# move. Rooted buildings do not receive it. The use effect is built once and shared
-# (Mutation §4's lifecycle).
+# construction — free, hand-picked vacant ally slot, the MoveUnitMutator carrying the
+# move (A17). Rooted buildings do not receive it. The use effect is built once and
+# shared (Mutation §4's lifecycle).
 static var _move_effects: Array[Effect] = []
 
 static func appoint_move(unit: Unit) -> void:
@@ -102,11 +102,11 @@ static func appoint_move(unit: Unit) -> void:
 		conditions.append(BakedConditions.IsSlot.new())
 		conditions.append(IsAllyCondition.new())
 		conditions.append(BakedConditions.SlotVacant.new())
-		var placement: Array[Mutator] = []
-		placement.append(PlacementMutator.new())
+		var carrier: Array[Mutator] = []
+		carrier.append(MoveUnitMutator.new())
 		var probe := GameEntity.new()
 		expand(probe, &"move", 0, 0,
-				TargetResolver.new(conditions, HandPickDecision.new()), placement)
+				TargetResolver.new(conditions, HandPickDecision.new()), carrier)
 		_move_effects = probe.effects
 	unit.effects.append_array(_move_effects)
 	unit.abilities.append(&"move")

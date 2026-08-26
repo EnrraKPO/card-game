@@ -2,9 +2,9 @@ class_name PlacementMutator
 extends Mutator
 
 # `placement` (Mutation §4): machinery only — never authored. A baked-in substantive
-# mutator of the unit's play (Core §6, A18), and the Move ability's carrier (Core §7;
-# A3). Recipient the elected slot; act: container move of the holder into the
-# recipient's `slotted_unit` — the container name fixed in the kind.
+# mutator of the unit's play (Core §6, A18): the play's resolver elects the slot — the
+# move op's destination target — and the mutator introduces the holder as cargo into
+# the MoveRequest (Core §2, A17), the container name fixed: `slotted_unit`.
 
 
 func _init() -> void:
@@ -12,5 +12,5 @@ func _init() -> void:
 
 
 func _issue(plate: Plate, recipient: GameEntity) -> Array[Event]:
-	return MutationEngine.submit(ContainerMoveRequest.new(
-			kind, plate.holder, plate.holder, recipient, &"slotted_unit"))
+	return MutationEngine.submit(MoveRequest.new(
+			kind, plate.holder, recipient, plate.holder, &"slotted_unit"))

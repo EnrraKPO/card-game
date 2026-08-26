@@ -29,8 +29,12 @@ static func submit(request: EngineRequest) -> Array[Event]:
 		return DamageProcedure.resolve(request)
 	if request is StatusRequest:
 		return StatusProcedure.resolve(request)
-	if request is ContainerMoveRequest:
-		return ContainerMoveProcedure.resolve(request)
+	if request is MoveRequest:
+		return MoveProcedure.resolve(request)
+	if request is DrawRequest:
+		return DrawProcedure.resolve(request)
+	if request is BuryRequest:
+		return BuryProcedure.resolve(request)
 	if request is PayCostRequest:
 		return PayCostProcedure.resolve(request)
 	push_error("MutationEngine: no procedure claims the shape '%s' — refused"

@@ -195,16 +195,23 @@ func _test_container_move() -> void:
 	WriteAuthority.mint(world, card)
 	WriteAuthority.insert(side.get_container(&"deck"), card)
 
-	var draw: Array[Event] = MutationEngine.submit(
-			ContainerMoveRequest.new(&"draw", side, card, side, &"hand"))
-	check(card.housing == side.get_container(&"hand"), "the move rehouses the target")
+	# The moved entity as target routes to its specific-purpose procedure (A17).
+	var draw: Array[Event] = MutationEngine.submit(DrawRequest.new(&"draw", side, card))
+	check(card.housing == side.get_container(&"hand"),
+			"the draw moves the target from its deck to its side's hand")
 	check(draw.is_empty(), "a deck-to-hand move bears no event yet")
 
+	# A move op elects the destination as target; the mutator introduces the cargo (A17).
 	var slot: Slot = world.board_manager.slot_at(Vector3i(0, 1, 1))
 	var arrival: Array[Event] = MutationEngine.submit(
-			ContainerMoveRequest.new(&"placement", card, card, slot, &"slotted_unit"))
+			MoveRequest.new(&"placement", card, slot, card, &"slotted_unit"))
 	check(card.housing == slot.get_container(&"slotted_unit"), "the unit stands on the slot")
 	check(arrival.is_empty(), "at this scope no arrival event exists (T2)")
+
+	var bury: Array[Event] = MutationEngine.submit(BuryRequest.new(&"bury", card, card))
+	check(card.housing == side.get_container(&"graveyard"),
+			"the bury places the target in its side's graveyard")
+	check(bury.is_empty(), "a burial bears no event yet")
 
 
 func _test_pay_cost() -> void:
@@ -244,7 +251,8 @@ func _test_refusals() -> void:
 	check(stranger.is_empty(), "a request no procedure claims is refused at submission")
 	var unhoused := Unit.new(world.player_side())
 	WriteAuthority.mint(world, unhoused)
-	var no_move: Array[Event] = MutationEngine.submit(
-			ContainerMoveRequest.new(&"draw", null, unhoused, world.player_side(), &"hand"))
+	var no_move: Array[Event] = MutationEngine.submit(MoveRequest.new(
+			&"placement", null, world.board_manager.slot_at(Vector3i(0, 0, 0)),
+			unhoused, &"slotted_unit"))
 	check(no_move.is_empty() and unhoused.housing == null,
-			"a move of an unhoused target is refused")
+			"a move of unhoused cargo is refused")
