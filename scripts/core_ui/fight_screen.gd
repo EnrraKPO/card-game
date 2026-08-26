@@ -1117,6 +1117,42 @@ func refresh() -> void:
 	_rebuild_hand()
 	_refresh_inspect()
 	_refresh_done_btn()
+	_derive_king_peril()
+
+
+# The header's HP field and the critical heartbeat, derived from the King's live board
+# health on every paint (the old screen's _on_king_health_changed, re-terminated on the
+# paint pass — the core's stats carry no signals): RunData only finalizes king_damage at
+# the ending, so the header is wired to the LIVE health to tick during the fight; the
+# King in its last quarter is the run itself in peril — a heartbeat glow rides the card
+# while critical, attached/detached on the threshold crossings (with one warning sting).
+const KING_CRITICAL_RATIO := 0.25
+var _king_critical := false
+var _king_hp_shown: int = -1   # last health the header was told; -1 = not yet derived
+
+func _derive_king_peril() -> void:
+	var run: RunData = GameData.current_run
+	if run == null:
+		return
+	var king: Unit = _fielded_king(world.player_side())
+	if king == null:
+		return
+	var current: int = roundi(king.get_stat(&"health"))
+	if current == _king_hp_shown:
+		return
+	_king_hp_shown = current
+	GameSignals.hp_changed.emit(current, run.king_max_health())
+	var critical := current > 0 \
+			and current <= int(ceil(run.king_max_health() * KING_CRITICAL_RATIO))
+	if critical != _king_critical:
+		_king_critical = critical
+		var king_ui := _card_uis.get(king) as CardUI
+		if king_ui != null:
+			if critical:
+				Sfx.play("combat_king_low")
+				Vfx.attach("king_critical_pulse", king_ui)
+			else:
+				Vfx.detach("king_critical_pulse", king_ui)
 
 
 # Injects one slot widget's whole state — occupant card, ground view, cues — from the world's
