@@ -135,4 +135,26 @@ plan; a piece turns "approved" on Enrra's word.</p>
 its demands' citations. Pieces beyond the slice enter as parity content is
 defined.</p>
 
+<h2>Placeholder pieces</h2>
+<p class="quiet">Test content outside the slice set; working labels, existing
+assets reused. Same rule: authorable only with every demand ruled.</p>
+
+<table>
+  <tr><th>Piece</th><th>Type</th><th>What it does</th><th>Engineering it stands on</th><th>Status</th></tr>
+  <tr>
+    <td>Contagion Stone</td><td>Relic</td>
+    <td>When an ally unit's attack damages a victim, applies 1 Poison to
+        it. (The journal's test relic; asset reused:
+        <code>assets/relics/contagion_stone.png</code> by the id
+        convention.)</td>
+    <td>The <code>damaged</code> event carrying the attacker as source (A15)
+        and the victim as native target (A16); the stamped request read by
+        <code>request_kind_is</code> strike (A19, Core §9);
+        <code>is_ally</code>, <code>is_unit</code> (A8);
+        <code>occasions_target</code> decision; status mutator; the Relic
+        holder road (entity, <code>relics</code> container, Genesis seat).</td>
+    <td>approved (Enrra, 2026-08-26 — authoring ordered)</td>
+  </tr>
+</table>
+
 </div>

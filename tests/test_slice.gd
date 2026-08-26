@@ -64,6 +64,9 @@ func run() -> void:
 	_picker = QueuePicker.new()
 	_world.picker = _picker
 	check(Genesis.setup(_world, fight.player, fight.enemy), "genesis assembles the encounter")
+	var relics: Array[GameEntity] = _world.player_side().get_container(&"relics").members
+	check(relics.size() == 1 and relics[0].id == &"contagion_stone",
+			"genesis seats the player's relic")
 	await _playthrough()
 
 
@@ -186,7 +189,8 @@ func _r4_adder(world: World) -> void:
 			func(e: GameEntity) -> bool: return e is Status and (e as Status).status_id == &"poison")
 	check_eq(poisons.size(), 1, "the adder's on-play reaction minted Poison onto the picked captain")
 	if not poisons.is_empty():
-		check_eq(poisons[0].get_stat(&"stacks"), 2.0, "with the authored stacks")
+		check_eq(poisons[0].get_stat(&"stacks"), 5.0,
+				"the adder's authored 2 plus one per ally attack that connected — the relic's proc (Contagion Stone)")
 
 
 func _r5_fireball(world: World) -> void:

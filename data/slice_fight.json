@@ -104,11 +104,32 @@
         ]
       }
     ],
-    "relics": []
+    "relics": [
+      {
+        "id": "contagion_stone", "name": "Contagion Stone",
+        "effects": [
+          {
+            "trigger": {
+              "event": "damaged",
+              "eventdata_conditions": {"conditions": [
+                {"kind": "request_kind_is", "name": "strike"}
+              ]},
+              "entity_conditions": {"entries": [
+                {"route": "source", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]}
+              ]}
+            },
+            "targeting": {"decision": "occasions_target"},
+            "payload": [{"status": {"id": "poison", "stacks": 1}}],
+            "windup": "glint"
+          }
+        ]
+      }
+    ]
   },
   "player": {
     "deck": ["squire", "squire", "cleric", "venom_adder", "avenger", "fireball", "sentinel"],
-    "units": [{"id": "king", "slot": [1, 0]}]
+    "units": [{"id": "king", "slot": [1, 0]}],
+    "relics": ["contagion_stone"]
   },
   "enemy": {
     "deck": ["squire", "squire", "sniper", "sentinel"],
