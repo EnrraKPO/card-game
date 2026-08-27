@@ -12,7 +12,7 @@ extends GameEntity
 # defaults to automatic targeting of the Game; Unit overrides to a manual pick of a
 # Slot; a declined pick ends the play unpaid. Payload: the pay mutator — unique, runs
 # once before the walk, recipient the holder's side — then the card's substantive
-# mutators, routed through the effect's target resolver (A18). The payment produces
+# mutators, routed through the effect's target resolver. The payment produces
 # `play_engaged`.
 #
 # The play effect carries the implied fielded condition REMOVED: its duty is asked of a
@@ -43,7 +43,7 @@ func _build_play_effect() -> Effect:
 	return compose_play_effect(null, [] as Array[Mutator])
 
 
-# The play effect whole (Core §5, A18): the fixed trigger, the authored targeting or
+# The play effect whole (Core §5): the fixed trigger, the authored targeting or
 # the type fact where null, and the payload — pay, then the type's baked substantive
 # mutators (a unit's placement, Core §6), then the authored substantive mutators.
 func compose_play_effect(targeting: TargetResolver, substantive: Array[Mutator],

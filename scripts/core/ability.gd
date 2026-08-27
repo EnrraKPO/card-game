@@ -6,11 +6,11 @@ extends RefCounted
 # `use_ability` and the engagement `ability_used` — with the asked ability's name riding
 # both as NameEventData role `ability`. Appointing an ability expands at construction
 # into the ask capability and the USE effect — payload the pay mutator, then the
-# substantive mutators, routed through the effect's target resolver (A18). The
+# substantive mutators, routed through the effect's target resolver. The
 # ability-name condition and the route-source + is_holder entry are made by the
 # expansion — two units bearing Heal share the event names and are told apart by them.
 #
-# The authored markup form (fields per §7; detail under A7's delegation — B29, B37):
+# The authored markup form (fields per §7; detail under A7's delegation — B29):
 #   {"name": "heal", "cost": {"mana": 2, "tap": 0}?, "targeting": {...},
 #    "effect": {"payload": [...], "windup": ""?, "contact": ""?}}
 # cost absent = free (Move's form, A3); the one targeting is the use effect's resolver,
@@ -68,7 +68,7 @@ static func appoint(holder: GameEntity, markup: Dictionary) -> bool:
 static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
 		targeting: TargetResolver, payload: Array[Mutator],
 		windup: StringName = &"", contact: StringName = &"") -> void:
-	# The use effect: same structure as the play effect (Core §7, A18) — the pay mutator,
+	# The use effect: same structure as the play effect (Core §7) — the pay mutator,
 	# then the substantive mutators, routed through the effect's target resolver.
 	var use_trigger := Trigger.new()
 	use_trigger.event = &"use_ability"

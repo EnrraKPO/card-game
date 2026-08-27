@@ -6,7 +6,7 @@ extends RefCounted
 # a name→value map seeding construction, validated against the type's declared lists;
 # birth facts where the type bears them (`building`, `king`, `elements` — A7, T1);
 # `play` — the play effect's authored parts (targeting, substantive payload, cues —
-# Core §5, A18, B37), composed onto the type's play trigger; `effects` — a list of the
+# Core §5), composed onto the type's play trigger; `effects` — a list of the
 # bible's effect markup; `abilities` — a list of the Core §7 ability form. Relics and
 # statuses use the same envelope minus kind and play. Strangers refused loudly.
 #
@@ -81,7 +81,7 @@ static func _register(envelope: Dictionary, into: Dictionary, carded: bool) -> b
 		if effect == null:
 			return false
 		(parsed.effects as Array[Effect]).append(effect)
-	# The play seat (Core §5, A18): authored targeting and substantive payload composed
+	# The play seat (Core §5): authored targeting and substantive payload composed
 	# onto the type's play trigger — parsed once, shared across every build.
 	if envelope.has("play"):
 		var play_markup: Variant = envelope.play

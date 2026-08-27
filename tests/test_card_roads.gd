@@ -1,8 +1,8 @@
 extends TestCase
 
 # Phase 4 of IMPLEMENTATION_PLAN.html — the card roads. Pins the play effect with pay
-# and its substantive mutators (Core §5, A18), the baked placement and the burials
-# (Core §6), the ability expansion (Core §7, A18) with Move (A3, A9), and the main
+# and its substantive mutators (Core §5), the baked placement and the burials
+# (Core §6), the ability expansion (Core §7) with Move (A3, A9), and the main
 # action (Combat Frame §6, A6). Exit: a card plays from hand to board, an ability
 # activates, a death buries — all through the road.
 
@@ -97,7 +97,7 @@ func _test_spell_play() -> void:
 	spell.seed_stat(&"cost", 2.0)
 	WriteAuthority.mint(world, spell)
 	WriteAuthority.insert(side.get_container(&"hand"), spell)
-	# The Fireball shape (Core §5, A18): the substantive damage rides the play itself,
+	# The Fireball shape (Core §5): the substantive damage rides the play itself,
 	# alongside the payment — authored targeting, hand-picked enemy unit.
 	var targeting: TargetResolver = MarkupParse.parse_targeting({"decision": "hand_pick",
 			"conditions": [{"kind": "is_enemy"}, {"kind": "is_unit"}]})

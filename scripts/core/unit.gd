@@ -10,7 +10,7 @@ extends Card
 # untapped, above zero is tapped, floored at zero by the WriteAuthority (Combat Frame §6).
 #
 # The built-ins (Core §6; Combat Frame §6, A6):
-#   · Placement — a baked-in substantive mutator of the unit's play (A18): the play's
+#   · Placement — a baked-in substantive mutator of the unit's play: the play's
 #     resolver elects the slot; the placement mutator moves the holder into it.
 #   · Burial — trigger `died` + the route-`target` + is_holder entry (Core §6, A16: the
 #     dead unit is died's native target); resolver the AutoResolver; the bury mutator's
@@ -104,7 +104,7 @@ func main_action_targets() -> Array[GameEntity]:
 	return main_action.resolver.resolve(Plate.new(Event.new(&"act", self, world.game), self))
 
 
-# The type's baked substantive mutator (Core §6, A18): the placement, first after pay.
+# The type's baked substantive mutator (Core §6): the placement, first after pay.
 func _baked_substantive() -> Array[Mutator]:
 	var baked: Array[Mutator] = []
 	baked.append(PlacementMutator.new())

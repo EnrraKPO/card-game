@@ -2,7 +2,7 @@ class_name PlacementMutator
 extends Mutator
 
 # `placement` (Mutation §4): machinery only — never authored. A baked-in substantive
-# mutator of the unit's play (Core §6, A18): the play's resolver elects the slot — the
+# mutator of the unit's play (Core §6): the play's resolver elects the slot — the
 # move op's destination target — and the mutator introduces the holder as cargo into
 # the MoveRequest (Core §2, A17), the container name fixed: `slotted_unit`.
 
