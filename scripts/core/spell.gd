@@ -3,7 +3,7 @@ extends Card
 
 # A Spell (Core System Design §1, §6): a Card kind. Its machinery: the spell's burial
 # effect — trigger `play_engaged` + the source/is_holder entry, a spell is spent by its
-# play; resolver electing the holder, fixed in this machinery (A17); payload the bury
+# play; resolver electing the holder, fixed in this machinery (Core §6); payload the bury
 # mutator, whose BuryRequest targets the recipient.
 
 

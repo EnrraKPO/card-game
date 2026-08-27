@@ -1,7 +1,7 @@
 class_name MoveProcedure
 extends EngineProcedure
 
-# Resolves a container move (Mutation System Design §7, A17): removes the cargo from its
+# Resolves a container move (Mutation System Design §7): removes the cargo from its
 # housing, inserts it into the target's named container — one procedure performing the
 # two membership primitives (Core §2). Placement, movement. Where the entity being
 # moved is the target, the request is routed to its specific-purpose procedure instead —

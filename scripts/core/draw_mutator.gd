@@ -3,7 +3,7 @@ extends Mutator
 
 # `draw` (Mutation §4): authored {"draw": {"count": int}}. Reads the deck's top from the
 # world and asks that the card move to hand — one DrawRequest per card, target the
-# drawn card (A17: the entity being moved is the target, routed to its
+# drawn card (the entity being moved is the target, routed to its
 # specific-purpose procedure); the recipient is the drawing side. The deck's top is its
 # first member (B22); a deck holding fewer than `count` yields the draws that exist.
 #

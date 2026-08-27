@@ -1,7 +1,7 @@
 class_name DrawRequest
 extends EngineRequest
 
-# Asks the DrawProcedure (Mutation §7, A17): the target is the drawn card — the entity
+# Asks the DrawProcedure (Mutation §7): the target is the drawn card — the entity
 # being moved is the target, so the request routes to its specific-purpose procedure.
 
 

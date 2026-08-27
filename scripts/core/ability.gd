@@ -92,7 +92,7 @@ static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
 
 # The Move ability (A3, A9): machinery appoints it on every non-building unit at
 # construction — free, hand-picked vacant ally slot, the MoveUnitMutator carrying the
-# move (A17). Rooted buildings do not receive it. The use effect is built once and
+# move. Rooted buildings do not receive it. The use effect is built once and
 # shared (Mutation §4's lifecycle).
 static var _move_effects: Array[Effect] = []
 

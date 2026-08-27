@@ -194,13 +194,13 @@ func _test_container_move() -> void:
 	WriteAuthority.mint(world, card)
 	WriteAuthority.insert(side.get_container(&"deck"), card)
 
-	# The moved entity as target routes to its specific-purpose procedure (A17).
+	# The moved entity as target routes to its specific-purpose procedure (Core §2).
 	var draw: Array[Event] = MutationEngine.submit(DrawRequest.new(&"draw", side, card))
 	check(card.housing == side.get_container(&"hand"),
 			"the draw moves the target from its deck to its side's hand")
 	check(draw.is_empty(), "a deck-to-hand move bears no event yet")
 
-	# A move op elects the destination as target; the mutator introduces the cargo (A17).
+	# A move op elects the destination as target; the mutator introduces the cargo (Core §2).
 	var slot: Slot = world.board_manager.slot_at(Vector3i(0, 1, 1))
 	var arrival: Array[Event] = MutationEngine.submit(
 			MoveRequest.new(&"placement", card, slot, card, &"slotted_unit"))

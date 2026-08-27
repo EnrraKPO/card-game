@@ -1,7 +1,7 @@
 class_name MoveRequest
 extends EngineRequest
 
-# Asks the MoveProcedure (Core §2, A17): a move op elects the destination entity as its
+# Asks the MoveProcedure (Core §2): a move op elects the destination entity as its
 # target; the mutator introduces the cargo. The container name resolves through the
 # target's container map — one generic lookup (Mutation §7).
 

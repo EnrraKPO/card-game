@@ -15,7 +15,7 @@ extends Card
 #   · Burial — trigger `died` + the route-`target` + is_holder entry (Core §6, A16: the
 #     dead unit is died's native target); resolver the AutoResolver; the bury mutator's
 #     BuryRequest targets the recipient — BuryProcedure places it in its side's
-#     graveyard (A17). Implied condition removed: death buries wherever it finds the
+#     graveyard. Implied condition removed: death buries wherever it finds the
 #     holder (B28).
 #   · The main action — trigger `act` + the entry + the baked untapped condition;
 #     targeting the attack resolver (enemy units, the attack-preference decision,
