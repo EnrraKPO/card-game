@@ -1,0 +1,323 @@
+<meta charset="utf-8">
+<title>Kind Rosters</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 52rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 2.2rem 0 0.6rem; }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; vertical-align: top; }
+  th { background: var(--surface); font-weight: 600; }
+  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); background: var(--warn-soft); color: var(--warn); border-radius: 3px; padding: 0.05em 0.3em; }
+  ins { text-decoration: none; background: var(--accent); color: var(--ground); border-radius: 3px; padding: 0.05em 0.3em; font-weight: 600; }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Canonical documentation · the kind rosters</span>
+<h1>Kind Rosters</h1>
+<div class="ribbon">
+  <span class="status-chip">Signed</span>
+  <span>Authored: <b>2026-08-27</b></span>
+  <span>Mechanics: <b>Core System Design · Mutation System Design</b></span>
+</div>
+
+<p>The registry of concrete kinds populating the system's extensible families.
+The designs define each family's mechanics — its signature, how a kind enters,
+the combination vocabulary — and appoint no exhaustive population; this
+document holds the population. A kind enters here only by Enrra's word.
+<b>Machinery</b> marks a kind constructed in code by the type machinery or the
+engine, absent from the authored vocabulary; every other kind is authorable.</p>
+
+<h2><span class="secno">§1</span> Conditions</h2>
+<p>Mechanics: Core §9 (families, seats, routes, negation, parse).</p>
+
+<table>
+  <tr><th>Kind</th><th>Family</th><th>Members</th><th>Purpose</th></tr>
+  <tr><td><code>is_holder</code></td><td>Entity</td><td>—</td>
+      <td>True when the subject is the plate's holder. Under route
+      <code>source</code>, the discriminating condition of every play and every
+      ability; the source fetch is the route's work.</td></tr>
+  <tr><td><code>has_status</code></td><td>Entity</td><td><code>status_id</code></td>
+      <td>True when the subject's <code>contained</code> holds a Status of that
+      id.</td></tr>
+  <tr><td><code>is_ally</code></td><td>Entity</td><td>—</td>
+      <td>The subject's allegiance compared to the holder's — true when both
+      are stated and the same. An entity of no side is nobody's ally.</td></tr>
+  <tr><td><code>is_enemy</code></td><td>Entity</td><td>—</td>
+      <td>The subject's allegiance compared to the holder's — true when both
+      are stated and different. An entity of no side is nobody's enemy.</td></tr>
+  <tr><td><code>is_unit</code></td><td>Entity</td><td>—</td>
+      <td>A type check.</td></tr>
+  <tr><td><code>is_side</code></td><td>Entity</td><td>—</td>
+      <td>A type check.</td></tr>
+  <tr><td><code>houses_me</code></td><td>Entity</td><td>—</td>
+      <td>True when the subject owns the container housing the holder — a
+      status's read of the unit carrying it.</td></tr>
+  <tr><td><code>name_is</code></td><td>EventData</td><td><code>role</code>, <code>name</code></td>
+      <td>True when the occasion carries a NameEventData of that role bearing
+      that name. The kind of the baked ability-name condition.</td></tr>
+  <tr><td><code>request_kind_is</code></td><td>EventData</td><td><code>name</code></td>
+      <td>True when the occasion's stamped RequestEventData carries a request
+      whose <code>mutator_kind</code> is the name. Deeper request-reading
+      enters when content asks.</td></tr>
+</table>
+
+<p><b>Machinery conditions</b>, housed together, each still a Condition:
+affordability (the cost within open mana; a tap price is affordable while the
+holder is untapped), holder-in-hand, untapped, is-a-slot, vacant-slot,
+fielded (housed in a slot's <code>slotted_unit</code>), is-a-side.</p>
+
+<h2><span class="secno">§2</span> Resolver decisions</h2>
+<p>Mechanics: Core §4 (the resolver's two phases, unknowns, empty election).</p>
+
+<table>
+  <tr><th>Kind</th><th>Members</th><th>Purpose</th></tr>
+  <tr><td>nearest</td><td>—</td>
+      <td>Ranks by the symmetric distance from the holder's standing, electing
+      the single nearest candidate. Deterministic; ties break by address in
+      reading order. A candidate standing nowhere falls out.</td></tr>
+  <tr><td>random</td><td>—</td>
+      <td>Elects one candidate uniformly. The roll settles at engagement, from
+      the world's seeded rng.</td></tr>
+  <tr><td>stat_ranked</td><td><code>stat</code>, <code>rank</code></td>
+      <td>Ranks by a stat, electing the single highest or lowest bearer.
+      Deterministic; ties break to the earliest candidate; a candidate not
+      bearing the stat falls out.</td></tr>
+  <tr><td>hand_pick</td><td>—</td>
+      <td>Consults the player through the world's picker seam; the pick
+      settles at engagement. A declined pick yields an empty election — for an
+      activated ask, the ask ends whole, unpaid.</td></tr>
+  <tr><td>occasions_target</td><td>—</td>
+      <td>The stock derivation: takes the target carried in the occasion's
+      core as its own, kept to the narrowed field.</td></tr>
+  <tr><td>attack <i>(machinery)</i></td><td>—</td>
+      <td>The main action's fixed targeting: ranks by BoardGeometry's
+      attack-preference comparator, electing one. Ties break by row then
+      column.</td></tr>
+  <tr><td>all <i>(machinery)</i></td><td>—</td>
+      <td>Elects the narrowed field whole — the base rules' decision; a
+      delivery walks every recipient.</td></tr>
+  <tr><td>holder <i>(machinery)</i></td><td>—</td>
+      <td>Elects the plate's holder — the spell burial's resolver.</td></tr>
+  <tr><td>game <i>(machinery)</i></td><td>—</td>
+      <td>Automatic targeting of the Game — the Card type's play-targeting
+      fact.</td></tr>
+</table>
+
+<p>The <b>AutoResolver</b> is the fallback resolver of an effect authored
+without a targeting block: it resolves as the target carried in context,
+falling back to the Game where none is found. No conditions, nothing
+unknown.</p>
+
+<h2><span class="secno">§3</span> Mutators</h2>
+<p>Mechanics: Mutation §4 (kind, unique, addressing, lifecycle).</p>
+
+<table>
+  <tr><th>Kind</th><th>Authored form</th><th>Purpose</th></tr>
+  <tr><td><code>stat_mutation</code></td><td><code>{"stat", "delta"}</code></td>
+      <td>Applies the delta to the recipient's stat.</td></tr>
+  <tr><td><code>damage</code></td><td><code>{"amount"}</code></td>
+      <td>Deals the amount to the recipient.</td></tr>
+  <tr><td><code>status</code></td><td><code>{"id", "stacks"}</code></td>
+      <td>Grants the recipient stacks of the status.</td></tr>
+  <tr><td><code>strike</code></td><td>—</td>
+      <td>Asks that the recipient be struck; the striker is the holder.</td></tr>
+  <tr><td><code>draw</code></td><td><code>{"count"}</code></td>
+      <td>Asks the deck's top cards to hand — one request per card, target the
+      drawn card, recipient the drawing side. A shorter deck yields the draws
+      that exist.</td></tr>
+  <tr><td><code>poison</code></td><td>—</td>
+      <td>The Poison status's periodic ask: damages the recipient per the
+      holder's stacks, the damage carrying the poison kind. Stacks are a fact
+      of the holding status, read at issuance.</td></tr>
+  <tr><td><code>pay</code> <i>(machinery, unique)</i></td><td>—</td>
+      <td>Runs once per delivery, before the walk; appoints the holder's side,
+      whose mana pays. The engaged event's name derives from the occasion —
+      <code>play_engaged</code> / <code>ability_used</code>, the ability's
+      name carried forward.</td></tr>
+  <tr><td><code>placement</code> <i>(machinery)</i></td><td>—</td>
+      <td>The unit play's baked substantive: the play's resolver elects the
+      slot — the destination target — and the mutator introduces the holder as
+      cargo, container <code>slotted_unit</code>.</td></tr>
+  <tr><td><code>move_unit</code> <i>(machinery)</i></td><td>—</td>
+      <td>The Move ability's carrier — the same operation as the placement,
+      each its own stake.</td></tr>
+  <tr><td><code>bury</code> <i>(machinery)</i></td><td>—</td>
+      <td>Asks the recipient's burial; its request targets the
+      recipient.</td></tr>
+  <tr><td><code>tap</code> <i>(machinery, unique)</i></td><td>—</td>
+      <td>Appoints its holder; sets <code>tapped</code> — the main action's
+      spend.</td></tr>
+  <tr><td><code>untap</code> <i>(machinery)</i></td><td>—</td>
+      <td>The untap rule's ask: clears the recipient's spent taps in one
+      request.</td></tr>
+  <tr><td><code>ramp</code> <i>(machinery)</i></td><td>—</td>
+      <td>The ramp rule's ask: raises the recipient side's
+      <code>mana_capacity</code> by the Game's <code>mana_ramp</code>, read at
+      issuance. Capacity is uncapped.</td></tr>
+  <tr><td><code>refill</code> <i>(machinery)</i></td><td>—</td>
+      <td>The refill rule's ask: raises the recipient side's <code>mana</code>
+      to capacity — a raise, never a drain.</td></tr>
+  <tr><td><code>shield_recovery</code> <i>(machinery)</i></td><td>—</td>
+      <td>The shield recovery rule's ask: raises the recipient unit's
+      <code>shield</code> to its authored value — a raise, never a drain; a
+      unit authored without shield recovers to nothing.</td></tr>
+</table>
+
+<h2><span class="secno">§4</span> Requests and procedures</h2>
+<p>Mechanics: Mutation §6 (the request's context bundle), §7 (the engine, the
+two entrances, application). Each request pairs with the procedure that claims
+its shape; the pair is one row.</p>
+
+<table>
+  <tr><th>Pair</th><th>Own members</th><th>Resolution</th></tr>
+  <tr><td>StatMutation</td><td><code>stat</code>, <code>delta</code></td>
+      <td>Applies the delta to the target's stat.</td></tr>
+  <tr><td>Strike</td><td>—</td>
+      <td>The striker is the source; the amount reads from its attack. Dodge →
+      (interception, slot reserved) → crit → damage; a connecting strike
+      applies damage.</td></tr>
+  <tr><td>Damage</td><td><code>amount</code></td>
+      <td>Shield absorbs first, remainder to health.</td></tr>
+  <tr><td>Status</td><td><code>status_id</code>, <code>stacks</code></td>
+      <td>A target not carrying the status has the object minted and inserted
+      into its <code>contained</code>; a carrying target has the stacks
+      added.</td></tr>
+  <tr><td>Move</td><td><code>cargo</code>, <code>container_name</code></td>
+      <td>Target the destination owner; removes the cargo from its housing,
+      inserts it into the target's named container. Placement,
+      movement.</td></tr>
+  <tr><td>Draw</td><td>—</td>
+      <td>Target the drawn card — the moved entity is the target; moves it
+      from its deck to its side's hand.</td></tr>
+  <tr><td>Bury</td><td>—</td>
+      <td>Target the buried entity; places it in its side's graveyard.</td></tr>
+  <tr><td>PayCost</td><td><code>mana</code>, <code>tap</code>,
+      <code>engaged_name</code>, <code>ability</code></td>
+      <td>Commits the cost — mana down on the target side, tap spent on the
+      source — and produces the engaged event, the ability's name carried
+      forward.</td></tr>
+</table>
+
+<h2><span class="secno">§5</span> EventData shapes</h2>
+<p>Mechanics: Core §8 (one class per shape of fact; purpose is a name).</p>
+
+<table>
+  <tr><th>Shape</th><th>Members</th><th>Purpose</th></tr>
+  <tr><td>StatMutationEventData</td><td><code>stat</code>, <code>delta</code></td>
+      <td>A committed stat write riding its event.</td></tr>
+  <tr><td>NameEventData</td><td><code>role</code>, <code>name</code></td>
+      <td>A named fact: what the name means to the happening
+      (<code>ability</code> among the roles), and the name.</td></tr>
+  <tr><td>RequestEventData</td><td><code>request</code></td>
+      <td>The request at hand, stamped on every event originated from a
+      mutation request path.</td></tr>
+</table>
+
+<h2><span class="secno">§6</span> Event names</h2>
+<p>Mechanics: Core §8 (the event core, sources, accretion); names enter when
+content asks.</p>
+
+<table>
+  <tr><th>Name</th><th>Fired by</th><th>Purpose</th></tr>
+  <tr><td><code>round_started</code></td><td>the clock</td>
+      <td>A round's open; the base rules trigger on it. Source and target the
+      Game.</td></tr>
+  <tr><td><code>act</code></td><td>the clock</td>
+      <td>The ask at each fielded unit in activation order; the main action
+      triggers on it. Source the asked unit.</td></tr>
+  <tr><td><code>play</code> / <code>play_engaged</code></td><td>the commander seam / PayCostProcedure</td>
+      <td>The play's ask and its engagement. Ask source the played card;
+      engaged source the same entity.</td></tr>
+  <tr><td><code>use_ability</code> / <code>ability_used</code></td><td>the activation surface / PayCostProcedure</td>
+      <td>The ability's ask and its engagement, the ability's name riding both
+      as NameEventData.</td></tr>
+  <tr><td><code>damaged</code></td><td>DamageProcedure</td>
+      <td>A damage resolution's fact event; target the damaged entity, the
+      committed writes riding as StatMutationEventData.</td></tr>
+  <tr><td><code>dodged</code></td><td>StrikeProcedure</td>
+      <td>A dodge ends the strike; target the dodger.</td></tr>
+  <tr><td><code>crit</code></td><td>StrikeProcedure</td>
+      <td>A connecting strike's crit; target the defender.</td></tr>
+  <tr><td><code>died</code></td><td>the WriteAuthority</td>
+      <td>Health crossing to zero — every road produces it; target the dead
+      entity. Burial triggers on it.</td></tr>
+</table>
+
+<div class="signoff">
+  <b>Signature:</b> signed off — Enrra, 2026-08-27.
+</div>
+
+</div>

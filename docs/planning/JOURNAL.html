@@ -843,4 +843,40 @@ only EntityEventData claim, contradicted by code and by the ruling that
 demoted it. Adjacent: Core cites "III §7", "III §8", "III §9" as live
 law in twelve places, all pointing at the retired document.</p>
 
+<h2>2026-08-27 — Housekeeping owed: content and parsing logistics</h2>
+
+<p><b>Called out by Enrra at the Kind Rosters authoring.</b> The rosters
+draft surfaced that the authored vocabulary's boundaries are demand-history,
+not appointed logistics: machinery kinds (the <code>all</code>, <code>attack</code>,
+<code>holder</code>, <code>game</code> decisions; the machinery mutators) are
+unofferred rather than forbidden — each is one parse-table row from
+authorability, and content will plausibly ask (<code>all</code> for any area
+effect first). Nothing states, per kind, what the parse tables offer, what
+they refuse, and by what rule a kind crosses.</p>
+
+<p><b>The housekeeping owed:</b> appoint precise logistics to author and
+parse content — which kinds the authored vocabulary offers, the crossing
+rule for a machinery kind entering it, and the parse tables' conformance to
+the appointed population. A future pass, on Enrra's word.</p>
+
+<p><b>Consideration points, appointed by Enrra — both concerns:</b></p>
+
+<p><b>(a) Old-schema tolerance in user saves.</b> Load paths migrate old
+save shapes: <code>profile_data.gd</code> (the renown→experience key,
+pre-owned-deck saves, the effect-scrubbed divide discarding an in-flight
+run once), <code>run_data.gd</code> (absolute-health saves, bare-string
+deck lists), <code>deck_card.gd</code> (the <code>{id, mods}</code> form,
+bare strings). The pass decides which migrations remain warranted and
+which old shapes the load refuses outright.</p>
+
+<p><b>(b) Tolerate-and-drop in authored content gates.</b>
+<code>ability_data.gd</code>, <code>relic_data.gd</code>, and
+<code>status_data.gd</code> accept a data file carrying the dead
+<code>effects</code> key, error, and drop it (<code>status_data</code>
+likewise for <code>spread</code>); the catalogue conversion carries the
+old files' non-converting effect/ability reference strings raw in
+<code>effects_src</code>. Authored content is ours, not the wild's: the
+pass weighs cleansing the data files once and hardening the gates from
+tolerate-and-drop to refusal.</p>
+
 </div>
