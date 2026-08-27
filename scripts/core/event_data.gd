@@ -5,5 +5,4 @@ extends RefCounted
 # fact. A fact of an existing shape with a different purpose reuses the class — purpose
 # is a name (the role), never a new shape. Concrete shapes: StatMutationEventData,
 # NameEventData, RequestEventData (the request at hand); the family grows one
-# class per genuinely new shape. (EntityEventData left with its demotion — the event
-# target is native in the core, A16.)
+# class per genuinely new shape.

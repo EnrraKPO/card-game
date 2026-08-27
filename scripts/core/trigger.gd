@@ -11,7 +11,7 @@ extends RefCounted
 # hands each entity to the entry's conditions. EventDataConditions carry no route and
 # receive the occasion.
 #
-# The route list is closed (Core §9, A16): `source` — the occasion's source, a set of
+# The route list is closed (Core §9): `source` — the occasion's source, a set of
 # one; `holder` — the plate's holder, a set of one; `target` — the occasion's target, a
 # set of one; `world` — every entity that exists.
 

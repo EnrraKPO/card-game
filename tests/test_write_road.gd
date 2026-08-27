@@ -62,7 +62,7 @@ func _test_died() -> void:
 	check(stamps.size() == 1 and (stamps[0] as RequestEventData).request == ask
 			and (stamps[0] as RequestEventData).request.mutator_kind == &"poison",
 			"died carries the request at hand")
-	check(events[0].target == unit, "died carries the dead unit as its native target (A16)")
+	check(events[0].target == unit, "died carries the dead unit as its native target")
 	var again: Array[Event] = MutationEngine.submit(
 			StatMutationRequest.new(&"poison", killer, unit, &"health", -1))
 	check(again.is_empty(), "died is the crossing, not every write below zero")
@@ -85,7 +85,7 @@ func _test_damage() -> void:
 			and (absorbed_stamps[0] as RequestEventData).request == ask,
 			"damaged carries the request at hand")
 	check(absorbed[0].target == unit,
-			"damaged carries the damaged unit as its native target (A16)")
+			"damaged carries the damaged unit as its native target")
 	var facts: Array[EventData] = absorbed[0].components_of(StatMutationEventData)
 	check(facts.size() == 1 and (facts[0] as StatMutationEventData).stat == &"shield"
 			and (facts[0] as StatMutationEventData).delta == -3,
@@ -127,7 +127,7 @@ func _test_strike_dodge() -> void:
 	check(events.size() == 1 and events[0].name == &"dodged" and events[0].source == striker,
 			"the dodged event, source the request's source (A15)")
 	check(events[0].target == defender,
-			"dodged carries the dodger as its native target (A16)")
+			"dodged carries the dodger as its native target")
 
 	var tower := _fielded_unit(world, world.enemy_side(), Vector3i(1, 1, 0), 0.0, 10.0, 0.0, 0.0)
 	tower.is_building = true

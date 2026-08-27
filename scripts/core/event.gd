@@ -3,12 +3,12 @@ extends RefCounted
 
 # An event is a core plus components (Core System Design §8). The core: the source — the
 # entity the happening comes from; any GameEntity may be one — the target — one
-# GameEntity, carried at all times: the Game until a resolver elects one (§4, A16) — and
+# GameEntity, carried at all times: the Game until a resolver elects one (§4) — and
 # the event's name. Components are an Array[EventData], appended by each layer of the
 # road that knows a fact of the happening (accretion is open to anything on the road).
 #
 # The target propagates into the branching events the cascade produces, and forwards
-# into requests, which carry it until they appoint a new target (§4, A16).
+# into requests, which carry it until they appoint a new target (§4).
 #
 # Ask events are imperative verbs (play, use_ability, act); happening events are past
 # tense (play_engaged, ability_used, died) — §7.

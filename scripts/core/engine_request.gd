@@ -17,7 +17,7 @@ var mutator_kind: StringName = &""
 # The holder it came from.
 var source: GameEntity = null
 
-# The target carried from context, until the mutator appoints a new one (A16).
+# The target carried from context, until the mutator appoints a new one (Mutation §6).
 var target: GameEntity = null
 
 

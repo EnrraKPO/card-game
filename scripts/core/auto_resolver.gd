@@ -1,7 +1,7 @@
 class_name AutoResolver
 extends TargetResolver
 
-# The generic AutoResolver (Core System Design §4, A16): the fallback for an effect
+# The generic AutoResolver (Core System Design §4): the fallback for an effect
 # authored without a targeting block, fixed at construction. It resolves as the target
 # carried in context — the occasion's target — falling back to the Game where none is
 # found. No conditions, nothing unknown: engagement answers from its resolution.

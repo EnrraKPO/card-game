@@ -45,7 +45,7 @@ static var DECISION_KINDS: Dictionary = {
 
 # ── The effect ─────────────────────────────────────────────────────────────────────────
 # {"trigger": {...}, "targeting": {...}?, "payload": [...]?, "windup": ""?, "contact": ""?}
-# — targeting absent = the AutoResolver fallback (Core §4, A16); payload absent = an
+# — targeting absent = the AutoResolver fallback (Core §4); payload absent = an
 # empty delivery.
 
 static func parse_effect(markup: Dictionary) -> Effect:

@@ -1,7 +1,7 @@
 class_name OccasionsTargetDecision
 extends Decision
 
-# The occasion's target (Core §4, A16): the stock derivation — it takes the target
+# The occasion's target (Core §4): the stock derivation — it takes the target
 # carried in the occasion's core as its own, kept to the narrowed field. Deterministic.
 
 

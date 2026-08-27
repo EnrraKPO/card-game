@@ -282,7 +282,7 @@ func _test_decisions() -> void:
 	check_eq(game_default.resolve(plate), [world.game] as Array[GameEntity],
 			"the Card type fact: automatic targeting of the Game")
 
-	# The no-targeting fallback (Core §4, A16): the AutoResolver elects the target
+	# The no-targeting fallback (Core §4): the AutoResolver elects the target
 	# carried in context, falling back to the Game where none is found.
 	var fallback := Effect.new(Trigger.new(), null, [] as Array[Mutator])
 	check(fallback.resolver is AutoResolver, "no targeting authored: the AutoResolver")

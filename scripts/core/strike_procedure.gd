@@ -42,7 +42,7 @@ static func resolve(request: StrikeRequest) -> Array[Event]:
 				defender_speed - striker_speed, game.get_stat(&"dodge_cap"))
 		if world.rng.randf() * 100.0 < dodge_chance:
 			# The source is mechanical (A15): the strike's source; the dodger is the
-			# event's native target (A16).
+			# event's native target (Core §8).
 			var dodged := Event.new(&"dodged", request.source, defender)
 			dodged.components.append(RequestEventData.new(request))
 			events.append(dodged)

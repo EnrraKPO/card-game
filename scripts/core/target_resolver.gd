@@ -44,7 +44,7 @@ func _narrow(plate: Plate) -> Array[GameEntity]:
 
 # Automatic targeting of the Game — the Card type's play-targeting fact (Core §5).
 # An effect authored without a targeting block falls back to the AutoResolver instead
-# (Core §4, A16).
+# (Core §4).
 static func game_default() -> TargetResolver:
 	return TargetResolver.new([], GameDecision.new())
 

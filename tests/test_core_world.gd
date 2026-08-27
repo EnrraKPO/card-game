@@ -216,7 +216,7 @@ func _test_events() -> void:
 	var striker := Unit.new()
 	var event := Event.new(&"damaged", striker, unit)
 	check(event.source == striker and event.target == unit and event.name == &"damaged",
-			"the core: source, target, and name (A16)")
+			"the core: source, target, and name (Core §8)")
 	event.components.append(NameEventData.new(&"ability", &"heal"))
 	event.components.append(StatMutationEventData.new(&"health", -2))
 	event.components.append(NameEventData.new(&"origin", &"hand"))

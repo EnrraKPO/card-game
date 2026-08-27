@@ -8,7 +8,7 @@ extends RefCounted
 #
 # An effect authored without a targeting block falls back to the generic AutoResolver —
 # it resolves as the target carried in context, falling back to the Game where none is
-# found; the default is fixed at construction (Core §4, A16). The windup and contact
+# found; the default is fixed at construction (Core §4). The windup and contact
 # presentation names are the cues the conductor speaks at steps 2 and 4 (Mutation §11).
 #
 # Every effect of a unit carries the implied default condition THE HOLDER IS FIELDED —

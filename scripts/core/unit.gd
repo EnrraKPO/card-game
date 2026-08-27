@@ -12,7 +12,7 @@ extends Card
 # The built-ins (Core §6; Combat Frame §6, A6):
 #   · Placement — a baked-in substantive mutator of the unit's play: the play's
 #     resolver elects the slot; the placement mutator moves the holder into it.
-#   · Burial — trigger `died` + the route-`target` + is_holder entry (Core §6, A16: the
+#   · Burial — trigger `died` + the route-`target` + is_holder entry (Core §6: the
 #     dead unit is died's native target); resolver the AutoResolver; the bury mutator's
 #     BuryRequest targets the recipient — BuryProcedure places it in its side's
 #     graveyard. Implied condition removed: death buries wherever it finds the
