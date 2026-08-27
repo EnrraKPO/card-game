@@ -1,7 +1,7 @@
 class_name BoardGeometry
 extends RefCounted
 
-# The geometry class (Core System Design §3, named by AMENDMENTS.html A1): pure static
+# The geometry class (Core System Design §3): pure static
 # functions — stateless; coordinates and the halves' facing relation in, coordinates out.
 # All mirroring arithmetic between the two halves lives in this class ALONE.
 #

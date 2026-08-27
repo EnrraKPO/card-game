@@ -1342,7 +1342,7 @@ func _commit_place(card_ui: CardUI, slot_ui: SlotUI) -> void:
 
 
 # The reposition commit: the chosen slot answers the Move ability's destination ask — the
-# same seam the place commit uses, on the use_ability road (A3/A9: Move is machinery on
+# same seam the place commit uses, on the use_ability road (A9: Move is machinery on
 # every non-building unit, free).
 func _commit_move(card_ui: CardUI, slot_ui: SlotUI) -> void:
 	if not (_span_active and _awaiting_command):

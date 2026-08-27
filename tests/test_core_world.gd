@@ -3,8 +3,8 @@ extends TestCase
 # Phase 1 of IMPLEMENTATION_PLAN.html — the world's skeleton. Pins computation only:
 # entity construction and declarations (Core §1, §9), the container map and the
 # membership primitives with their invariants (Core §2, Mutation §8), the stat write and
-# its arithmetic, mint, the board's birth and fetch (Core §3), BoardGeometry (Core §3,
-# A1 — the attack comparator pinned bit-identical to the pre-nuke ordering), the event
+# its arithmetic, mint, the board's birth and fetch (Core §3), BoardGeometry (Core §3
+# — the attack comparator pinned bit-identical to the pre-nuke ordering), the event
 # structure (Core §8), and the world's seeded rng.
 
 

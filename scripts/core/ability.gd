@@ -13,7 +13,7 @@ extends RefCounted
 # The authored markup form (fields per §7; detail under A7's delegation — B29):
 #   {"name": "heal", "cost": {"mana": 2, "tap": 0}?, "targeting": {...},
 #    "effect": {"payload": [...], "windup": ""?, "contact": ""?}}
-# cost absent = free (Move's form, A3); the one targeting is the use effect's resolver,
+# cost absent = free (Move's form, A9); the one targeting is the use effect's resolver,
 # and every part downstream of the ask rides that one effect — a "trigger" or a second
 # "targeting" inside the effect is a stranger.
 
@@ -90,7 +90,7 @@ static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
 	holder.abilities.append(name)
 
 
-# The Move ability (A3, A9): machinery appoints it on every non-building unit at
+# The Move ability (A9): machinery appoints it on every non-building unit at
 # construction — free, hand-picked vacant ally slot, the MoveUnitMutator carrying the
 # move. Rooted buildings do not receive it. The use effect is built once and
 # shared (Mutation §4's lifecycle).

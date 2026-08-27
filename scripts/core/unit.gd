@@ -22,7 +22,7 @@ extends Card
 #     electing one); payload the tap mutator then the strike. Acting is free: no pay
 #     mutator, no engaged pair. The target poll is this resolver's resolve phase.
 #
-# Move (A3, A9): machinery appoints the Move ability at construction — buildings do not
+# Move (A9): machinery appoints the Move ability at construction — buildings do not
 # receive it, and a building never dodges and is rooted (`is_building`, the envelope's
 # birth fact, fixed at construction).
 
