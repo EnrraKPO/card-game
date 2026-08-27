@@ -9,7 +9,7 @@ extends Card
 # first then `health` (Mutation §7); `tapped` is the public mutable tap fact — zero is
 # untapped, above zero is tapped, floored at zero by the WriteAuthority (Combat Frame §6).
 #
-# The built-ins (Core §6; Combat Frame §6, A6):
+# The built-ins (Core §6; Combat Frame §6):
 #   · Placement — a baked-in substantive mutator of the unit's play: the play's
 #     resolver elects the slot; the placement mutator moves the holder into it.
 #   · Burial — trigger `died` + the route-`target` + is_holder entry (Core §6: the

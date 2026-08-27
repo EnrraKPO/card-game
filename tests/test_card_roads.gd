@@ -3,7 +3,7 @@ extends TestCase
 # Phase 4 of IMPLEMENTATION_PLAN.html — the card roads. Pins the play effect with pay
 # and its substantive mutators (Core §5), the baked placement and the burials
 # (Core §6), the ability expansion (Core §7) with Move (A3, A9), and the main
-# action (Combat Frame §6, A6). Exit: a card plays from hand to board, an ability
+# action (Combat Frame §6). Exit: a card plays from hand to board, an ability
 # activates, a death buries — all through the road.
 
 

@@ -1,7 +1,7 @@
 class_name AttackDecision
 extends Decision
 
-# The attack resolver's decision (Combat Frame §6, A6; Core §3): ranks by
+# The attack resolver's decision (Combat Frame §6; Core §3): ranks by
 # BoardGeometry's attack-preference comparator from the holder's standing, electing one.
 # Machinery — the main action's fixed targeting, never authored. Deterministic: ties
 # break by the candidate's row then column, the pre-nuke ordering kept bit-identical.

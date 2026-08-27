@@ -57,7 +57,7 @@ func run_round() -> void:
 	await w.cascade.fire(Event.new(&"round_started", w.game, w.game))
 	if _ended():
 		return
-	# The enemy commands first, then the player (A5).
+	# The enemy commands first, then the player (Combat Frame §5).
 	await enemy_commander.command(w)
 	if _ended():
 		return
