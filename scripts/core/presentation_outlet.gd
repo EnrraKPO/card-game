@@ -3,7 +3,7 @@ extends RefCounted
 
 # The world's presentation outlet (Mutation System Design §10). A procedure issues its cue
 # on the spot, at commit — named visual, recipient, magnitude, plus one optional variant
-# (AMENDMENTS.html A14: e.g. buff effects routing to different stats) — fire-and-forget,
+# (e.g. buff effects routing to different stats) — fire-and-forget,
 # synchronous, never awaited; the engine never waits. The live world bears the presenter
 # behind this surface (Phase 5); a simulated world bears this base as-is: deaf — it
 # receives everything and plays nothing.

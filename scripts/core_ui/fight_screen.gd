@@ -594,7 +594,7 @@ func show_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 # presenter tells, the dispatch table answers; a recipient without a card face — a Side, a
 # Game, a hand card — keeps the log line only). Sounds ride the same names, data-gated:
 # an authored sounds.json entry named like the cue plays, silence otherwise. The optional
-# variant (A14) rides into the looks that use it — buff/debuff land on the named stat's
+# variant (MSD §10) rides into the looks that use it — buff/debuff land on the named stat's
 # badge; heal's variant is always the health stat, which its look already anchors on.
 #
 # PACING is the old solution's, verbatim: no fixed sleeps — every beat awaits its own

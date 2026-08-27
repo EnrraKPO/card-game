@@ -88,7 +88,7 @@
   ul, ol { padding-left: 1.2rem; }
   li { margin: 0.4rem 0; }
   .quiet { color: var(--ink-soft); font-size: 0.9rem; }
-  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); opacity: 0.55; }
+  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); background: var(--warn-soft); color: var(--warn); border-radius: 3px; padding: 0.05em 0.3em; }
   ins { text-decoration: none; background: var(--accent); color: var(--ground); border-radius: 3px; padding: 0.05em 0.3em; font-weight: 600; }
   .amendment {
     border: 2px solid var(--warn); border-radius: 4px; padding: 0.8rem 1.1rem;
@@ -546,7 +546,8 @@ reaction.</p>
 
 <h2><span class="secno">§10</span> Presentation: the pause</h2>
 <p><b>A procedure issues its cue on the spot, at commit</b> — named visual,
-recipient, magnitude — fire-and-forget, synchronous, never awaited. The engine never
+recipient, magnitude<ins>, and one additional optional variant input — e.g.
+buff effects routing to different stats</ins> — fire-and-forget, synchronous, never awaited. The engine never
 waits; the return chain carries events alone.</p>
 <ul>
   <li><b>The cue's destination is the world's presentation outlet.</b> The live world
@@ -642,7 +643,7 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-27.
+  <b>Signature:</b> <s>signed off — Enrra, 2026-08-27.</s> <ins>Pending revision.</ins>
 </div>
 
 </div>
