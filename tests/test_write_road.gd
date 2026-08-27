@@ -61,7 +61,7 @@ func _test_died() -> void:
 	var stamps: Array[EventData] = events[0].components_of(RequestEventData)
 	check(stamps.size() == 1 and (stamps[0] as RequestEventData).request == ask
 			and (stamps[0] as RequestEventData).request.mutator_kind == &"poison",
-			"died carries the request at hand (A19)")
+			"died carries the request at hand")
 	check(events[0].target == unit, "died carries the dead unit as its native target (A16)")
 	var again: Array[Event] = MutationEngine.submit(
 			StatMutationRequest.new(&"poison", killer, unit, &"health", -1))
@@ -83,7 +83,7 @@ func _test_damage() -> void:
 	var absorbed_stamps: Array[EventData] = absorbed[0].components_of(RequestEventData)
 	check(absorbed_stamps.size() == 1
 			and (absorbed_stamps[0] as RequestEventData).request == ask,
-			"damaged carries the request at hand (A19)")
+			"damaged carries the request at hand")
 	check(absorbed[0].target == unit,
 			"damaged carries the damaged unit as its native target (A16)")
 	var facts: Array[EventData] = absorbed[0].components_of(StatMutationEventData)

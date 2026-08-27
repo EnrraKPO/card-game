@@ -15,7 +15,7 @@ extends RefCounted
 #
 # Contract: issue(plate, recipient) → events. The mutator appends nothing to them —
 # every event on the request path already carries the request at hand as a
-# RequestEventData, stamped where it was minted (A19); the mutator object itself
+# RequestEventData, stamped where it was minted; the mutator object itself
 # never travels.
 
 var kind: StringName = &""

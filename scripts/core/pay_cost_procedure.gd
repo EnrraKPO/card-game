@@ -5,7 +5,7 @@ extends EngineProcedure
 # on the source — and produces the engaged event, play_engaged for the play,
 # ability_used for an ability use, the ability's name carried forward as NameEventData
 # role `ability` (Core §7). The engaged event's source is the asked entity, the request
-# at hand stamped as RequestEventData (A19); the elected targets are appended by the
+# at hand stamped as RequestEventData; the elected targets are appended by the
 # delivery.
 #
 # Affordability is the trigger's baked condition, upstream — this procedure commits what

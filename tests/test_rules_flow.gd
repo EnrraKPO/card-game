@@ -109,7 +109,7 @@ func _test_conditions() -> void:
 	check(not kinded.holds(plate, occasion), "request_kind_is over an unstamped event is false")
 	occasion.components.append(RequestEventData.new(
 			DamageRequest.new(&"poison", mine, theirs, 1)))
-	check(kinded.holds(plate, occasion), "request_kind_is reads the stamped request's kind (A19)")
+	check(kinded.holds(plate, occasion), "request_kind_is reads the stamped request's kind")
 	kinded.name = &"strike"
 	check(not kinded.holds(plate, occasion), "a different kind does not answer")
 	occasion.components.clear()

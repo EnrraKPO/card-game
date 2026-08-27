@@ -1,7 +1,7 @@
 class_name RequestKindIsCondition
 extends EventDataCondition
 
-# `request_kind_is` (Core §9, A19): one member, name. True when the occasion's stamped
+# `request_kind_is` (Core §9): one member, name. True when the occasion's stamped
 # RequestEventData carries a request whose mutator_kind is the name. The kind of the §9
 # example; deeper request-reading enters when content asks.
 
