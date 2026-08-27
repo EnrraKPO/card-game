@@ -68,6 +68,12 @@
   }
   ul, ol { padding-left: 1.2rem; }
   li { margin: 0.4rem 0; }
+  s, .scratch { text-decoration: line-through; text-decoration-color: #B3392B; background: #F3E3E0; color: #B3392B; border-radius: 3px; padding: 0.05em 0.3em; }
+  ins { text-decoration: none; background: var(--accent); color: var(--ground); border-radius: 3px; padding: 0.05em 0.3em; font-weight: 600; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) s, :root:not([data-theme="light"]) .scratch { text-decoration-color: #E06A55; background: #3A2622; color: #E06A55; }
+  }
+  :root[data-theme="dark"] s, :root[data-theme="dark"] .scratch { text-decoration-color: #E06A55; background: #3A2622; color: #E06A55; }
   .signoff {
     border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
     margin-top: 3rem; background: var(--surface);
@@ -106,9 +112,12 @@ document in the bible and to any other signed document of the project.</p>
 Enrra's approval of the edits. Steps 4 and 7 are separate commits: git holds both
 the visible diff and the clean signed result.</p>
 
+<p><ins>At steps 3 and 6, <code>index.html</code> is updated to reflect the
+document's current state — in revision or signed.</ins></p>
+
 <div class="signoff">
   <b>Sign-off</b><br>
-  <span>Signed by Enrra, 2026-08-27.</span>
+  <span><s>Signed by Enrra, 2026-08-27.</s> <ins>Pending revision.</ins></span>
 </div>
 
 </div>
