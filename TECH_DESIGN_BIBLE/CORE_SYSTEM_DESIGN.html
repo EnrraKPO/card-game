@@ -106,12 +106,12 @@
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>CARD_INSTRUCTIONS.html (retired to record)</b></span>
-  <span>Reference: <b>MUTATION_SYSTEM_DESIGN.html — one system, two documents; it absorbs §10's amendments (MUTATION_INSTRUCTIONS.html (III) retired to record)</b></span>
+  <span>Reference: <b>MUTATION_SYSTEM_DESIGN.html — one system, two documents<s>; it absorbs §10's amendments (MUTATION_INSTRUCTIONS.html (III) retired to record)</s></b></span>
 </div>
 
 <p>Scope: the card types and their built-in effects, containers and housing, the
 board, the target resolver, the play road, abilities, the event structure, and
-conditions. The write machinery these run on is III.</p>
+conditions. The write machinery these run on is <s>III</s> <ins>the Mutation System Design</ins>.</p>
 
 <h2><span class="secno">§1</span> Entity types</h2>
 
@@ -119,7 +119,7 @@ conditions. The write machinery these run on is III.</p>
 <ul>
   <li><code>GameEntity</code> is the root. Every GameEntity holds effects, bears
       stats, holds a container map (§2) declaring <code>contained</code>, and
-      bears a back-reference to the world it lives in (III).</li>
+      bears a back-reference to the world it lives in <s>(III)</s>.</li>
   <li>Extending <code>GameEntity</code> directly: <code>Game</code> (bears the
       base rules and their stats), <code>Side</code> (declares the
       <code>deck</code>, <code>hand</code>, <code>graveyard</code>, and
@@ -130,7 +130,7 @@ conditions. The write machinery these run on is III.</p>
 </ul>
 
 <p> The world is the object entities live in; it embeds
-the BoardManager (§3), owns the presentation outlet and the seeded rng (III),
+the BoardManager (§3), owns the presentation outlet and the seeded rng <s>(III)</s> <ins>(Mutation §10–§11)</ins>,
 and is what simulation copies.</p>
 
 <p><b>Ownership.</b> The world holds the Game as a plain member. The Game houses the
@@ -177,7 +177,7 @@ as it declares its stat ids. <code>GameEntity</code> declares
 <code>hand</code>, <code>graveyard</code>, <code>board</code> (§3), and
 <code>relics</code>; a Slot declares <code>slotted_unit</code>. Parse
 refuses a container name the authored subject type does not declare. Which
-names each remaining type declares is Open 2 (§11).</p>
+names each remaining type declares is Open 2 <s>(§11)</s>.</p>
 
 <p><b>Occupancy.</b> A unit is fielded in a slot when it is a member of that
 slot's <code>slotted_unit</code> container.  Current content fields one unit per slot; the mechanics support any
@@ -212,7 +212,7 @@ Move ability's MoveUnitMutator each introduce the holder as cargo — the same
 operation, each its own stake; both fix <code>slotted_unit</code>.
 Where the entity being moved is the target, the
 request is routed to its specific-purpose procedure — DrawProcedure,
-BuryProcedure (III §7).</p>
+BuryProcedure <s>(III §7)</s> <ins>(Mutation §7)</ins>.</p>
 
 <p class="quiet">Implementation: back-references follow the established
 weak-reference discipline; world copies remap both ends of every housing
@@ -236,7 +236,7 @@ slots.</p>
 <h3>The geometry class</h3>
 <p>A class of pure static functions — stateless; coordinates
 and the halves' facing relation in, coordinates out. Its name is pending ruling
-(§11). All mirroring arithmetic between the two halves lives in this class
+<s>(§11)</s> <ins>(Opens)</ins>. All mirroring arithmetic between the two halves lives in this class
 alone. Members:</p>
 <ul>
   <li><b>Symmetric distance</b> — two coordinates in.</li>
@@ -344,8 +344,8 @@ condition <code>is_holder</code>.</p>
   <li><b>Unit burial.</b> Trigger <code>died</code>. Resolver: the
       AutoResolver. Payload: the <b>bury mutator</b> — its BuryRequest
       targets the recipient; BuryProcedure places the target in its side's
-      <code>graveyard</code> (III §7). <code>died</code> is a fact event authored by the
-      WriteAuthority (III §8): every road to zero health produces it.</li>
+      <code>graveyard</code> <s>(III §7)</s> <ins>(Mutation §7)</ins>. <code>died</code> is a fact event authored by the
+      WriteAuthority <s>(III §8)</s> <ins>(Mutation §8)</ins>: every road to zero health produces it.</li>
   <li><b>Spell burial.</b> Trigger <code>play_engaged</code> — a spell is spent
       by its play. Resolver: elects the holder, fixed in its
       machinery. Payload: the bury mutator.</li>
@@ -462,7 +462,7 @@ the world to eligible candidates before the decision (§4). </p>
 <h3>Inputs</h3>
 <p>Every condition receives the plate — <b>occasion</b> (Event) and <b>holder</b>
 (GameEntity); the world is reached through the holder's world back-reference
-(III) — plus a typed <b>subject</b> supplied by the seat: the resolver hands
+<s>(III)</s> <ins>(Mutation §5)</ins> — plus a typed <b>subject</b> supplied by the seat: the resolver hands
 each candidate; the  trigger hands
 EventDataConditions the occasion and
 EntityConditions the entities its routes yield. Mutators receive the same plate,
@@ -554,7 +554,7 @@ writing — the minimal set, growing under Open 8:</p>
   <li><code>has_status</code> — EntityCondition, one member
       <code>status_id: StringName</code>. True when the subject's
       <code>contained</code> holds a Status of that id, read by checked
-      downcast (III §9).</li>
+      downcast <s>(III §9)</s>.</li>
   <li><code>request_kind_is</code> — EventDataCondition, one member
       <code>name: StringName</code>. True when the event's stamped
       <code>RequestEventData</code> carries a request whose
@@ -581,10 +581,10 @@ markup, refusing unknown keys and type mismatches loudly; serialization is the
 mirror walk.  Every authored member parses into its
 real type — a stat name becomes a stat id or the parse refuses.</p>
 
-<h2><span class="secno">§10</span> Amendments to The Mutation of Facts III</h2>
-<p class="quiet">Each lands on III at the amendment pass; III's statements on
+<h2 class="scratch"><span class="secno">§10</span> Amendments to The Mutation of Facts III</h2>
+<p class="quiet scratch">Each lands on III at the amendment pass; III's statements on
 spells and abilities are superseded by this document.</p>
-<ul>
+<ul class="scratch">
   <li><b>§10–§11, the hierarchy:</b> board presence relocates from a base type
       onto <code>Slot</code>; <code>Unit</code> derives from <code>Card</code>;
       the inheritance chart redraws.</li>
@@ -625,7 +625,7 @@ spells and abilities are superseded by this document.</p>
       gather's bucket table.</li>
 </ul>
 
-<h2><span class="secno">§11</span> Opens</h2>
+<h2><s><span class="secno">§11</span></s> Opens</h2>
 <ul>
   <li><b>Open 2 — each type's container roster.</b> Which named containers each
       entity type declares (a unit's statuses among them). Settles per type as
@@ -637,7 +637,7 @@ spells and abilities are superseded by this document.</p>
       which concrete kinds exist per family settles as content demands
       them.</li>
   <li><b>The geometry class's name</b> (§3) — pending ruling.</li>
-  <li><b>The allegiance fact's form</b> — allegiance is a birth fact (III); the
+  <li><b>The allegiance fact's form</b> — allegiance is a birth fact <s>(III)</s>; the
       form of the fact, and thereby the read that fetches the holder's side (the
       pay mutator's recipient, §5), is pending ruling.</li>
   <li><b>Out of frame — previewing occasion-reading
@@ -647,7 +647,7 @@ spells and abilities are superseded by this document.</p>
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-27.
+  <b>Signature:</b> <s>signed off — Enrra, 2026-08-27.</s> <ins>Pending revision — the III retirement pass, 2026-08-27.</ins>
 </div>
 
 </div>
