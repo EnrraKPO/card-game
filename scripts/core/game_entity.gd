@@ -4,7 +4,7 @@ extends RefCounted
 # The root of the entity hierarchy (Core System Design §1). Every GameEntity holds effects,
 # bears stats, holds a container map declaring `contained` (§2), bears a back-reference to
 # the world it lives in, and bears its allegiance — the Side it belongs to, stamped at
-# construction as a birth fact and never rewritten (AMENDMENTS.html A4).
+# construction as a birth fact and never rewritten (Core §1).
 #
 # All up/back-references (world, allegiance, housing) are weak: the ownership tree —
 # world → Game → containers → members — holds the strong references, so entities die with
@@ -51,7 +51,7 @@ func _init(p_allegiance: Side = null) -> void:
 var world: World:
 	get: return _world_ref.get_ref() if _world_ref != null else null
 
-# The allegiance fact (A4): the Side this entity belongs to. A birth fact — stamped at
+# The allegiance fact (Core §1): the Side this entity belongs to. A birth fact — stamped at
 # construction, never rewritten. Null states the entity belongs to no side (the Game).
 var allegiance: Side:
 	get: return _allegiance_ref.get_ref() if _allegiance_ref != null else null

@@ -282,7 +282,7 @@ func _ready() -> void:
 
 
 # Which half a unit fights for, as the palette index the colours above are keyed by:
-# 0 = the player's, 1 = the enemy's. Allegiance is the birth fact (A4); the palette
+# 0 = the player's, 1 = the enemy's. Allegiance is the birth fact (Core §1); the palette
 # derives it here at the seam.
 func _owner_of(unit: Unit) -> int:
 	return 0 if world != null and unit.allegiance == world.player_side() else 1

@@ -6,7 +6,7 @@ extends GameEntity
 # container; a unit is fielded in a slot when it is a member of that container (§2).
 #
 # A slot's side is the side owning the `board` container that houses it (§1) — the
-# BoardManager births every slot housed on its side, so the allegiance birth fact (A4)
+# BoardManager births every slot housed on its side, so the allegiance birth fact (Core §1)
 # and that read name the same Side, always.
 
 var _row: int = -1
