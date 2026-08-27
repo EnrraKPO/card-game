@@ -1,7 +1,7 @@
 class_name IsAllyCondition
 extends EntityCondition
 
-# `is_ally` (A8): no members. The subject's allegiance (A4) compared to the holder's —
+# `is_ally` (Kind Rosters §1): no members. The subject's allegiance (A4) compared to the holder's —
 # true when both are stated and the same. An entity of no side (the Game) is nobody's
 # ally.
 

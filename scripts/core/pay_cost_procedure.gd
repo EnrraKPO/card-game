@@ -1,7 +1,7 @@
 class_name PayCostProcedure
 extends EngineProcedure
 
-# Commits the cost (Mutation System Design §7): mana down on the target side, tap spent
+# Commits the cost (Kind Rosters §4): mana down on the target side, tap spent
 # on the source — and produces the engaged event, play_engaged for the play,
 # ability_used for an ability use, the ability's name carried forward as NameEventData
 # role `ability` (Core §7). The engaged event's source is the asked entity, the request

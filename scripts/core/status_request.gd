@@ -2,7 +2,7 @@ class_name StatusRequest
 extends EngineRequest
 
 # Asks the StatusProcedure: grant the target `stacks` of the status `status_id` — minted
-# and inserted when the target does not carry it, stacks added when it does (Mutation §7).
+# and inserted when the target does not carry it, stacks added when it does (Kind Rosters §4).
 
 var status_id: StringName = &""
 var stacks: int = 0

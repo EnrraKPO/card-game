@@ -2,7 +2,7 @@ class_name DamageRequest
 extends EngineRequest
 
 # Asks the DamageProcedure: deal the amount to the target — shield absorbs first,
-# remainder to health (Mutation §6, §7).
+# remainder to health (Kind Rosters §4).
 
 var amount: int = 0
 

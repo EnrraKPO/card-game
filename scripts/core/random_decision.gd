@@ -1,7 +1,7 @@
 class_name RandomDecision
 extends Decision
 
-# Random (Core §4): elects one candidate uniformly. The roll is an unknown — it settles
+# Random (Kind Rosters §2): elects one candidate uniformly. The roll is an unknown — it settles
 # at engagement, drawn from the world's seeded rng; resolve answers the eligible field,
 # undecided.
 

@@ -1,7 +1,7 @@
 class_name StatMutationProcedure
 extends EngineProcedure
 
-# Applies the delta to the target's stat (Mutation System Design §7). Serves stat
+# Applies the delta to the target's stat (Kind Rosters §4). Serves stat
 # changes, mana refill, exhaustion. The committed value is bounded by the fact's
 # arithmetic in the WriteAuthority; the authority's fact events (died among them) travel
 # back by return.

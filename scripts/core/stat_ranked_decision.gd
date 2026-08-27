@@ -1,7 +1,7 @@
 class_name StatRankedDecision
 extends Decision
 
-# Stat-ranked (Core §4): ranks the candidates by a stat, electing the single highest or
+# Stat-ranked (Kind Rosters §2): ranks the candidates by a stat, electing the single highest or
 # lowest bearer. Deterministic — ties break to the earliest candidate in the narrowed
 # field's order (B22). A candidate not bearing the stat cannot be ranked and falls out.
 

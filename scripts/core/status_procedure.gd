@@ -1,7 +1,7 @@
 class_name StatusProcedure
 extends EngineProcedure
 
-# Resolves a status grant (Mutation System Design §7): a target not carrying the status
+# Resolves a status grant (Kind Rosters §4): a target not carrying the status
 # has the object minted and inserted into its `contained`; a target already carrying it
 # has the stacks added. The carried check reads the target's `contained` for a Status of
 # the id, by checked downcast (Core §9).

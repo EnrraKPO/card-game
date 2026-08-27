@@ -1,7 +1,7 @@
 class_name DamageMutator
 extends Mutator
 
-# `damage` (Mutation §4): authored {"damage": {"amount": int}}. Concludes in a
+# `damage` (Kind Rosters §3): authored {"damage": {"amount": int}}. Concludes in a
 # DamageRequest on the recipient.
 
 var amount: int = 0

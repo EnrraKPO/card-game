@@ -2,8 +2,8 @@ class_name PayCostRequest
 extends EngineRequest
 
 # Asks the PayCostProcedure: commit the cost — mana down on the target side, tap spent
-# on the source — and produce the engaged event (Mutation §7). The engaged event's name
-# derives from the occasion (play → play_engaged, use_ability → ability_used, Core §10);
+# on the source — and produce the engaged event (Kind Rosters §4). The engaged event's name
+# derives from the occasion (play → play_engaged, use_ability → ability_used, Core §7);
 # requests are self-sufficient, so the issuing mutator performs that derivation and the
 # request carries the result: `engaged_name`, with the asked ability's name in `ability`
 # (empty for a play). The elected targets are appended by the delivery, not carried here

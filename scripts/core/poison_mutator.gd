@@ -1,7 +1,7 @@
 class_name PoisonMutator
 extends Mutator
 
-# `poison` (roster growth, B36): the Poison status's periodic ask — damages the recipient
+# `poison` (Kind Rosters §3): the Poison status's periodic ask — damages the recipient
 # per the holder's stacks, the damage carrying the poison kind (CONTENT_DICTIONARY's
 # demand: "damages the unit carrying it, per its stacks; the damage carries the poison
 # kind"). The plain damage mutator's authored amount is fixed; the stacks are a fact of

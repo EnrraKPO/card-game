@@ -1,7 +1,7 @@
 class_name HousesMeCondition
 extends EntityCondition
 
-# `houses_me` (A8): no members. True when the subject owns the container housing the
+# `houses_me` (Kind Rosters §1): no members. True when the subject owns the container housing the
 # holder — a status's read of the unit carrying it.
 
 

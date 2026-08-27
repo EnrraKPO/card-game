@@ -1,7 +1,7 @@
 class_name StatMutationRequest
 extends EngineRequest
 
-# Asks the StatMutationProcedure: apply the delta to the target's stat (Mutation §6, §7).
+# Asks the StatMutationProcedure: apply the delta to the target's stat (Kind Rosters §4).
 
 var stat: StringName = &""
 var delta: int = 0

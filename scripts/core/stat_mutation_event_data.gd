@@ -1,7 +1,7 @@
 class_name StatMutationEventData
 extends EventData
 
-# Carries stat and delta (Core System Design §8) — the fact of a stat having moved.
+# Carries stat and delta (Kind Rosters §5) — the fact of a stat having moved.
 
 var stat: StringName = &""
 var delta: int = 0

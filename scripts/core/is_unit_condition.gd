@@ -1,7 +1,7 @@
 class_name IsUnitCondition
 extends EntityCondition
 
-# `is_unit` (A8): no members; a type check.
+# `is_unit` (Kind Rosters §1): no members; a type check.
 
 
 func _answer(_plate: Plate, subject: GameEntity) -> bool:

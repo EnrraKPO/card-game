@@ -1,7 +1,7 @@
 class_name StatusMutator
 extends Mutator
 
-# `status` (Mutation §4): authored {"status": {"id": StringName, "stacks": int}}.
+# `status` (Kind Rosters §3): authored {"status": {"id": StringName, "stacks": int}}.
 # Concludes in a StatusRequest on the recipient.
 
 var id: StringName = &""

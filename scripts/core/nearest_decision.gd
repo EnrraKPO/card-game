@@ -1,7 +1,7 @@
 class_name NearestDecision
 extends Decision
 
-# Nearest (Core §4): ranks by the symmetric distance (Core §3) from the holder's
+# Nearest (Kind Rosters §2): ranks by the symmetric distance (Core §3) from the holder's
 # standing, electing the single nearest candidate. Deterministic — the election is the
 # resolution. A candidate standing nowhere cannot be ranked and falls out; a holder
 # standing nowhere reaches nobody. Ties break by the candidate's address in reading

@@ -1,11 +1,11 @@
 class_name PayMutator
 extends Mutator
 
-# `pay` (Mutation §4): machinery only — never authored; unique. Runs once per delivery,
+# `pay` (Kind Rosters §3): machinery only — never authored; unique. Runs once per delivery,
 # before the walk; it appoints its own target from the plate: the holder's side, whose
 # mana pays (Core §5, A4). The produced event's name derives from the occasion —
 # `play` engages as `play_engaged`, `use_ability` as `ability_used` with the asked
-# ability's name carried forward (Core §10, §7).
+# ability's name carried forward (Core §7).
 #
 # The amounts: a play's mana is the holder's cost stat, read at issuance (discounts are
 # ordinary stat mutations); an ability's cost is authored on the ability and fixed here

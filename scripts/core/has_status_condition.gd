@@ -1,7 +1,7 @@
 class_name HasStatusCondition
 extends EntityCondition
 
-# `has_status` (Core §9): one member, status_id. True when the subject's `contained`
+# `has_status` (Kind Rosters §1): one member, status_id. True when the subject's `contained`
 # holds a Status of that id, read by checked downcast.
 
 var status_id: StringName = &""

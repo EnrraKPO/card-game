@@ -1,7 +1,7 @@
 class_name DamageProcedure
 extends EngineProcedure
 
-# Resolves damage: shield absorbs first, remainder to health (Mutation System Design §7).
+# Resolves damage: shield absorbs first, remainder to health (Kind Rosters §4).
 # Applied by the strike procedure inside a connecting strike — same body, same events,
 # the context request's provenance carried whole; a burn's damage would carry the burn
 # kind the same way.

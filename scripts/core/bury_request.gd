@@ -1,7 +1,7 @@
 class_name BuryRequest
 extends EngineRequest
 
-# Asks the BuryProcedure (Core §6; Mutation §7): the target is the buried entity —
+# Asks the BuryProcedure (Core §6; Kind Rosters §4): the target is the buried entity —
 # the entity being moved is the target, so the request routes to its specific-purpose
 # procedure.
 

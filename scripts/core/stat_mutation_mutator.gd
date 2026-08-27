@@ -1,7 +1,7 @@
 class_name StatMutationMutator
 extends Mutator
 
-# `stat_mutation` (Mutation §4): authored {"stat_mutation": {"stat": StringName,
+# `stat_mutation` (Kind Rosters §3): authored {"stat_mutation": {"stat": StringName,
 # "delta": int}}. Concludes in a StatMutationRequest on the recipient.
 
 var stat: StringName = &""

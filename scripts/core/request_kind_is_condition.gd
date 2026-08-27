@@ -1,9 +1,9 @@
 class_name RequestKindIsCondition
 extends EventDataCondition
 
-# `request_kind_is` (Core §9): one member, name. True when the occasion's stamped
-# RequestEventData carries a request whose mutator_kind is the name. The kind of the §9
-# example; deeper request-reading enters when content asks.
+# `request_kind_is` (Kind Rosters §1): one member, name. True when the occasion's stamped
+# RequestEventData carries a request whose mutator_kind is the name. The kind of Core
+# §9's example; deeper request-reading enters when content asks.
 
 var name: StringName = &""
 

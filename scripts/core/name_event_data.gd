@@ -1,7 +1,7 @@
 class_name NameEventData
 extends EventData
 
-# A named fact (Core System Design §8): role — what the name means to the happening
+# A named fact (Kind Rosters §5): role — what the name means to the happening
 # (`ability` among them, `origin` and `destination` for a move's
 # stamped housings, §2) — and the name itself.
 

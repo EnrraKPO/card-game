@@ -1,7 +1,7 @@
 class_name BuryProcedure
 extends EngineProcedure
 
-# Resolves a burial (Core §6; Mutation System Design §7): places the target in its
+# Resolves a burial (Core §6; Kind Rosters §4): places the target in its
 # side's graveyard. The move happening happens, so this procedure applies the
 # MoveProcedure with the parameters it computed and the request already in its hand
 # (§7's applied entrance).

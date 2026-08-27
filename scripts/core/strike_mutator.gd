@@ -1,7 +1,7 @@
 class_name StrikeMutator
 extends Mutator
 
-# `strike` (Mutation §4): no parameters. Asks that the recipient be struck — the striker
+# `strike` (Kind Rosters §3): no parameters. Asks that the recipient be struck — the striker
 # is the holder. Concludes in a StrikeRequest.
 
 
