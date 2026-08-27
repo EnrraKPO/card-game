@@ -17,8 +17,8 @@ extends Node
 # when DevFlags.placeholder_vfx is off (F8) — so undesigned effects can be silenced at will
 # while judging real content. Designed looks always play.
 #
-# Combat's board choreography (retired with the demoted layer: reticle-leads-hit ordering, simultaneous bursts,
-# projectile damage deferral) intentionally stays where it is — that's sequencing, not looks.
+# Combat's board choreography (reticle-leads-hit ordering, simultaneous bursts,
+# projectile damage deferral) intentionally stays outside this library — that's sequencing, not looks.
 # Its LOOKS, though, resolve through here: the combat_* entries carry renderer "custom" and
 # a board presenter registers its designed effect classes on them at setup — one library, one dispatch.
 

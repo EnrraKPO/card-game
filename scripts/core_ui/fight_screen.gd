@@ -181,16 +181,16 @@ var _animator: CombatAnimator = null
 # The salvaged turn-order strip in the halves gutter (see TurnOrderStrip).
 var _turn_strip: TurnOrderStrip = null
 
-# ── The strip's board-side seams (salvaged surfaces, re-homed from the old CombatBoard) ─
+# ── The strip's board-side seams ────────────────────────────────────────────────────────
 
 # The standing fight screen — the authority board cards ask for the turn-order
-# declarations (the old CombatContext.current shape; cards guard the null).
+# declarations (a static current handle; cards guard the null).
 static var current: FightScreen = null
 
 
 # Which half a unit fights for, as the strip's palette index: 0 = the player's,
-# 1 = the enemy's. Allegiance is the birth fact (A4); the old owner int died with
-# CardInstance, so the palette derives it here at the seam.
+# 1 = the enemy's. Allegiance is the birth fact (A4); the palette derives it here at
+# the seam.
 func owner_of(unit: Unit) -> int:
 	return 0 if world != null and unit.allegiance == world.player_side() else 1
 
@@ -1719,9 +1719,8 @@ func _build_action_column() -> Control:
 	col.custom_minimum_size.x = 200.0 if compact else 192.0
 	col.add_theme_constant_override("separation", 10)
 
-	# EnemyIntel's seat — the widget was exterminated with the demoted layer; until its
-	# own recovery pass, the frame hosts the working readouts (round, enemy mana, state,
-	# and the cue log).
+	# The intel seat — until an enemy-intel widget lands, the frame hosts the working
+	# readouts (round, enemy mana, state, and the cue log).
 	var seat := Panel.new()
 	seat.custom_minimum_size.y = 150.0
 	var track := StyleBoxFlat.new()

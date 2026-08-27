@@ -46,8 +46,7 @@ const EDGE := 12.0
 
 # The card the panel is FOR — set the instant the hover moves, not when the panel finishes opening.
 # That is the whole point: through the open delay this already names the right card, so there is
-# never a window where "whose panel is this" has no answer. It was the absence of exactly that
-# window's answer that the old ownership guard tried and failed to paper over.
+# never a window where "whose panel is this" has no answer.
 static var _for_card: CardUI = null
 # The live panel, held statically rather than owned by a card: the card may be freed (a unit dying
 # under the cursor) while its panel is still on screen.

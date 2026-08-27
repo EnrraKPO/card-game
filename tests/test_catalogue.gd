@@ -2,9 +2,9 @@ extends TestCase
 
 # The catalogue conversion (AMENDMENTS A7: "the existing catalogue converts at the
 # parity migration"): every loaded CardData maps to an A7 envelope, registers, and
-# builds — kind, birth facts (building, king, elements), and stats carried true. The
-# old files' dead effect/ability reference strings do not convert (their definitions
-# died at the A11 swap); the stubbed real-content fight assembles and passes Genesis.
+# builds — kind, birth facts (building, king, elements), and stats carried true.
+# Effect/ability reference strings do not convert — no definitions stand behind
+# them; the stubbed real-content fight assembles and passes Genesis.
 
 
 func suite_name() -> String:

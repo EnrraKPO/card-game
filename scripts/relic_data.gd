@@ -2,8 +2,8 @@ class_name RelicData
 extends RefCounted
 
 # A relic is a run-long item — a run-scope effect container (TARGETING_DESIGN.md §1), the
-# counterpart to a profile Upgrade node (see UpgradeNode). What a relic DOES was razed with
-# the effect layer (2026-08-11) and re-authors in the new schema when the rebuild reaches
+# counterpart to a profile Upgrade node (see UpgradeNode). What a relic DOES is authored
+# in the core's schema as content reaches
 # this container (each relic's description is its brief). Held on RunData (run.relics, by
 # id), acquired through the unified ItemKind/Grant layer, and discardable at will.
 # Data-driven from data/relics/*.json.

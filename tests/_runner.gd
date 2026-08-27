@@ -7,20 +7,12 @@ extends Node
 # Exits 0 when green, 1 on any failure (CI-able). To add a suite: create tests/test_<area>.gd
 # extending TestCase (override suite_name() + run()) and list it in SUITES below.
 #
-# Run this after ANY change to the resolution layer (statuses today — the single writer and
-# its mutation form were nuked 2026-08-13 as cursed, and nothing has replaced them yet).
+# Run this after ANY change to the resolution layer.
 
 # THE TEST DOCTRINE (user ruling, 2026-08-11): only tests that validate SYSTEMS may exist,
-# and only tests that validate systems that won't change may pass. Tests enforcing dead
-# machinery or content boundaries are banished, and everything red is gone: the demolition
-# quarantine table died with the throwaway code it was guarding (the rebuild's requirements
-# live in TARGETING_DESIGN.md; each rebuild phase ships its own native suite as it lands).
-# Green here means green — any failure is real breakage.
+# and only tests that validate systems that won't change may pass. Green here means
+# green — any failure is real breakage.
 const SUITES: Array = [
-	# (Suites covering the demoted combat layer retired with their subjects at the
-	# A11 swap, 2026-08-23: test_locations, test_statuses, test_combat_world,
-	# test_presenter, test_cascade, test_target_resolvers, test_enemy_engine,
-	# test_decision_table, test_enemy_personality.)
 	preload("res://tests/test_economy.gd"),
 	preload("res://tests/test_forge_costs.gd"),
 	preload("res://tests/test_encounter_pool.gd"),

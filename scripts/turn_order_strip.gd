@@ -282,14 +282,14 @@ func _ready() -> void:
 
 
 # Which half a unit fights for, as the palette index the colours above are keyed by:
-# 0 = the player's, 1 = the enemy's. Allegiance is the birth fact (A4); the old owner int
-# died with CardInstance, so the palette derives it here at the seam.
+# 0 = the player's, 1 = the enemy's. Allegiance is the birth fact (A4); the palette
+# derives it here at the seam.
 func _owner_of(unit: Unit) -> int:
 	return 0 if world != null and unit.allegiance == world.player_side() else 1
 
 
 # A unit is SPENT when its tapped stat stands raised — the same fact the untapped baked
-# condition reads (Combat Frame §6); attack_exhausted died with CardInstance.
+# condition reads (Combat Frame §6).
 func _spent(unit: Unit) -> bool:
 	return unit.get_stat(&"tapped") > 0.0
 

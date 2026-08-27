@@ -27,8 +27,8 @@ var icon: String = "✦"
 var row: int = 0
 var col: int = 0
 var requires: Array[String] = []
-# (The carried `effects` array was deleted 2026-08-11 with the effect layer; what a node
-# grants is re-authored in the new schema when the rebuild reaches this container.)
+# (What a node grants is authored in the core's schema when content reaches this
+# container.)
 
 
 static func from_dict(d: Dictionary) -> UpgradeNode:

@@ -21,10 +21,6 @@ extends Node
 # widgets that are their own subject (a forge chip). Whoever handles the gesture declares it; that
 # is recording game state, not addressing a view.
 #
-# (The ability sub-pick — a nested "the pick's picked ability" level for aiming from the
-# inspect tray — was deleted 2026-08-11: its production callers died with the ability
-# costume, and by ruling nothing lives on test life-support. The rebuilt activation
-# gesture (TARGETING_DESIGN.md §7) declares its own selection surface.)
 
 # Fired only on a REAL change (including to null). A re-check cue for the pull-presentation
 # derivers, never a verdict — see CardUI.derive_presentation, which also self-polls.

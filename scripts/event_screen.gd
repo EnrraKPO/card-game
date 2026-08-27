@@ -156,9 +156,8 @@ func _apply_upgrade() -> void:
 	# the upgrade sound), plus the spent gold sliding off the counter.
 	Vfx.play("card_upgrade_shine", entry.ui)
 	Vfx.play("gold_spend_slide", _gold_lbl, {"text": "-%d" % _cost})
-	# INERT (2026-08-13 ruling): the permanent deck-card bump rode the nuked write form. The
-	# gold is spent and the shine plays; the stat does not move until the sanctioned form
-	# exists. DeckCard.bump is the storage writer it went through.
+	# INERT (2026-08-13 ruling): the gold is spent and the shine plays; the stat does not
+	# move until a sanctioned write form exists (DeckCard.bump is the storage writer).
 	# Each training doubles the price of the next one within this visit.
 	_cost *= 2
 	GameData.save_run()

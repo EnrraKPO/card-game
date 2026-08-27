@@ -7,9 +7,8 @@ extends RefCounted
 # a new tunable number is one row here (no new code anywhere else).
 #
 # This is the global, run/match-state side of the attribute model. CARD stats (attack /
-# health / cost) are deliberately NOT here: those bases live per-card in CardData and resolve
-# through the demoted per-instance attribute holder. The same
-# modifier system fed both sides; the card half retired with the demoted layer.
+# health / cost) are deliberately NOT here: those bases live per-card in CardData, and in
+# a fight they resolve through the core's stat road.
 
 const DEFAULTS := {
 	# Combat economy

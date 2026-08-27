@@ -68,10 +68,9 @@ const TRAITS: Array = [
 ]
 
 
-# The stock weight of every criterion. The scoring engine that read these retired with
-# the demoted layer (A11); the numbers survive HERE as the personality data's own
-# defaults — the encounter authoring stays intact, and the rebuilt commander re-reads
-# them at the parity pass.
+# The stock weight of every criterion — the personality data's own defaults. The
+# encounter authoring stands on them, and the rebuilt commander re-reads them at the
+# parity pass.
 static func stock_weights() -> Dictionary:
 	return {
 		"total_value": 1.0,   # the reference scale

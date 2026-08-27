@@ -947,9 +947,8 @@ const TURN_LINE_W := 7          # heavy, like the strip's own panels
 const PLATE_ALPHA := 0.5
 
 
-# Which half this view's unit fights for, as the strip's palette index — the seam where
-# the old owner int died with CardInstance (allegiance is the birth fact, asked of the
-# standing fight screen).
+# Which half this view's unit fights for, as the strip's palette index — allegiance is
+# the birth fact, asked of the standing fight screen.
 func _owner_id() -> int:
 	# `is`, not `as` — the deck screens' views carry a String token here (see
 	# derive_presentation).

@@ -2,16 +2,15 @@ class_name CardCatalogue
 extends RefCounted
 
 # The catalogue → envelope conversion (AMENDMENTS A7: "the existing catalogue converts
-# at the parity migration"). CardData stays the authority on the old authored schema —
+# at the parity migration"). CardData stays the authority on the authored schema —
 # its load already applies the derivations (spell kind, derived stats for stat-less
 # composition cards, the `enabled` kill-switch) — and this maps each loaded card into
 # the A7 envelope the ContentLibrary registers.
 #
-# What does not convert: the old files' `effects` and `abilities` entries. They are
-# reference strings ("nearest_attack", "heal") into definitions exterminated at the A11
-# swap — there is nothing behind them to convert. Effect-bearing content returns as
-# authored waves through the CONTENT_DICTIONARY gate; until then the catalogue's units
-# fight on the machinery main action alone.
+# What does not convert: the `effects` and `abilities` entries — reference strings
+# ("nearest_attack", "heal") with no definitions behind them. Effect-bearing content
+# enters as authored waves through the CONTENT_DICTIONARY gate; until then the
+# catalogue's units fight on the machinery main action alone.
 #
 # Stats: a unit's envelope seeds cost/attack/health/speed from the authored numbers,
 # max_health = the authored health, and shield only where authored — a spell bears only

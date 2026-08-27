@@ -1,7 +1,7 @@
 class_name BoardGlyphs
 extends RefCounted
 
-# The board-slot state icons (the demoted board UI's; re-enter at parity). SVG placeholder art with a PNG-override hook:
+# The board-slot state icons (re-enter at parity). SVG placeholder art with a PNG-override hook:
 # drop a <id>.png next to the <id>.svg in assets/board/ and the game uses the PNG instead — the
 # exact convention AttentionBadge uses for its marks (AttentionBadge._art_for). One resolver, cached.
 

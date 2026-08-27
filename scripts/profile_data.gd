@@ -84,8 +84,7 @@ static func create_default() -> ProfileData:
 			p.selected_deck_id = deck.id
 	# Starting resources are data-driven (data/economy.json via EconomyConfig, authored in
 	# the Tool's 🎛 Tuning ▸ 💰 Economy): the shipping `initial` bag, or the `debug` bag
-	# while its dev override is enabled (the old TEMP Lab/Forge seed lives on as the
-	# debug-bag default).
+	# while its dev override is enabled.
 	p.materials.add_many(EconomyConfig.starting_materials())
 	p.upgrade_points = EconomyConfig.starting_upgrade_points()
 	return p

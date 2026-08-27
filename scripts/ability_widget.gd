@@ -5,12 +5,9 @@ extends CardUI
 # its own procedurally-drawn frame so it reads "ability", not "card". Real frame art can
 # replace the procedural panels later without touching behavior.
 #
-# ACTIVATION REMOVED (effect-cleanse demolition): this widget is purely informational — the
-# cast wiring, usability derivation, and the armed-autocast toggle (brackets, arming input,
-# quick-cast drag) all died with the ability spell-costume. The rebuilt ActivatedEffect
-# (TARGETING_DESIGN.md §7) owns invocation; presentation then re-derives usability from the
-# one usability rule, never from
-# state pushed at build time.
+# This widget is purely informational — it wires no cast, no usability derivation, no
+# autocast toggle. When activation presentation returns, usability re-derives from the one
+# usability rule, never from state pushed at build time.
 
 # Procedural frame palette — deliberately not the card frames' gold/parchment: a cool dark
 # slab with an arcane violet edge, so an ability is instantly tellable from a card.

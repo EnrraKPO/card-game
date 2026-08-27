@@ -872,9 +872,9 @@ func set_card(card: CardUI) -> void:
 	card.size = size
 	# Becoming a board occupant sheds hand-bound presentation (play-me glow / dim / selection
 	# tint) — hand states are re-derived by the Hand for cards IN the hand; a card that left
-	# can't truthfully wear them, and nobody else is positioned to clear them. Guarded: the
-	# A11 swap stripped CardUI's combat-era surface; the call re-arms when the hand's salvage
-	# atom restores it.
+	# can't truthfully wear them, and nobody else is positioned to clear them. Guarded:
+	# CardUI grows this surface back at the hand's salvage atom; until then the guard
+	# skips.
 	if card.has_method(&"shed_hand_state"):
 		card.shed_hand_state()
 	# CardUI._gui_input calls accept_event() on every click release (long-press/tooltip

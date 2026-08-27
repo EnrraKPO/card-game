@@ -39,11 +39,8 @@ var description: String:
 		_desc_override = value
 var mana: int = 0
 var tap: bool = true
-# (The `autocast` flag, the `material` delivery key, and the carried `effects` array were
-# deleted 2026-08-11 with the effect layer: their mechanisms are razed and nothing may
-# exist on round-trip life-support. The rebuilt ActivatedEffect (TARGETING_DESIGN.md §7)
-# is the runtime body abilities have been missing; what an ability DOES is re-authored in
-# the new schema when the rebuild reaches this container.)
+# (What an ability DOES is authored in the core's schema when the parity migration
+# reaches this container; this class carries the Tool-side authored facts alone.)
 
 var _display: CardData = null
 
@@ -102,9 +99,8 @@ static func all() -> Array:
 
 # FALLBACK synthesis for a rook building whose material delivery no one has authored (e.g.
 # a forge-derived elemental rook): registers a cost-and-text shell so the building still
-# PRESENTS its delivery ability. What it DOES is razed with the effect layer — the
-# material-merge semantics become an authored payload species in the new schema (the
-# deliver_material NEED recorded at the hook burn), and this synthesis then authors it
+# PRESENTS its delivery ability. What it DOES enters as an authored payload species in
+# the core's schema, and this synthesis then authors it
 # natively. Authoring the id in data/abilities/ replaces the fallback either way.
 static func material_ability(elems: Array, chess: Array) -> AbilityData:
 	var key := CardData.composition_key(elems, chess)

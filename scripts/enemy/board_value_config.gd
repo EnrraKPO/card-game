@@ -45,9 +45,8 @@ static func _defaults() -> Dictionary:
 		},
 		"ability_default": 2.0,     # any activated ability, unless priced by id below
 		"ability_values": {},       # per-ability-id overrides, e.g. {"heal": 3.0}
-		# (triggered_default / live_default — the per-effect-category prices — died with
-		# the effect layer, 2026-08-11; the rebuilt structures re-enter category pricing
-		# with their own keys.)
+		# (Per-effect-category prices re-enter with the rebuilt structures, under their
+		# own keys.)
 		# ── the valuation pass (retired) ──
 		# THE persistence dial, 0..1: how much a unit's likelihood of dying this turn
 		# discounts its raw worth (value = raw × lerp(1, persistence, this)). 0 = a dying
@@ -138,7 +137,7 @@ static func ability_value(id: String) -> float:
 	return float(_config()["ability_default"])
 
 
-# ── The valuation pass's own knobs (retired with the scorer) ───────────────────────────
+# ── The valuation pass's own knobs (unread until the parity commander) ─────────────────
 
 # The persistence dial, clamped to its meaningful range (see _defaults).
 static func persistence_weight() -> float:

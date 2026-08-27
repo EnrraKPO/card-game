@@ -4,10 +4,9 @@ extends Control
 # The drag preview for every card drag: a clearly-distinct GHOST copy that follows the cursor
 # while the real card stays fully visible in its slot/hand.
 #
-# CONTEXT-SENSITIVITY REMOVED (effect-cleanse demolition): the armed-autocast ghost — the
-# ability view swapped in over valid cast targets, red-shaded elsewhere — died with the
-# ability costume. When quick-cast returns on the rebuilt ActivatedEffect, the ghost presents
-# what the drop would DO again, driven by the same zone-report machinery kept below.
+# When quick-cast returns, the ghost presents what the drop would DO — an ability view
+# swapped in over valid cast targets, red-shaded elsewhere — driven by the zone-report
+# machinery below.
 #
 # Hover feed: drop zones report a verdict (plus themselves) from _can_drop_data through the
 # static `current` handle. _can_drop_data only fires on mouse MOTION, so a report can't be

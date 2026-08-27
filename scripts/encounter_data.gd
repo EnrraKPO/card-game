@@ -29,7 +29,7 @@ var personality: EnemyPersonality = null
 
 var outcome: Outcome = Outcome.PENDING
 
-# A practice launch (the gym retired with the demoted layer): the fight plays out exactly like the real thing,
+# A practice launch: the fight plays out exactly like the real thing,
 # but its ENDING writes nothing — no rewards, no king-damage carry, no map advance, no save,
 # no run end on defeat — and navigation returns to the gym instead of the map/reward flow.
 var practice: bool = false

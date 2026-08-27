@@ -306,8 +306,7 @@ static func build_stat_guide(data: CardData, s := 1.0, descriptions_shown := tru
 	vbox.add_child(_stat_row(CardUI.BADGE_SPEED, data.speed, STAT_NUM_COLOR,
 		SPEED_COLOR, "speed", s, false))
 
-	# NUKED (2026-08-13 ruling): the crit/dodge footnote explained rules that went with the
-	# cursed channel. Speed keeps its badge; nothing elaborates on it until the rules return.
+	# Speed keeps its badge; no footnote elaborates it (a designed stat guide is future work).
 	return vbox
 
 
@@ -366,7 +365,6 @@ static func stat_tips(_data: CardData) -> Dictionary:
 	}
 	var tips := {}
 	for k: String in ["health", "shield", "attack", "speed"]:
-		# (Speed's crit/dodge elaboration was nuked with those rules — 2026-08-13 ruling.)
 		var body := Loc.t("statguide." + k)
 		tips[k] = {"title": Loc.t("term." + k), "color": colors[k], "body": body}
 	return tips
@@ -402,11 +400,6 @@ static func _stat_badge(tex: Texture2D, value: int, num_color: Color, s := 1.0) 
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(lbl)
 	return box
-
-
-# NUKED (2026-08-13 ruling): _crit_dodge_note, _rule_line and _fmt existed only to spell
-# out the dodge/crit rules to the player. Those rules gated on the cursed channel and went
-# with it; the explanation has nothing left to explain.
 
 
 # One ability line: the small widget (built exactly like the tray's tokens) beside the

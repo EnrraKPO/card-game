@@ -27,8 +27,7 @@ enum Role { NONE, DESTINATION, TARGET_VALID, TARGET_INVALID }
 class Action:
 	extends RefCounted
 
-	# CAST/CAST_SLOT/AUTOCAST retired with the demolished cast gestures; the rebuilt
-	# resolver-conducted actions re-add the kinds they need.
+	# One kind today; rebuilt resolver-conducted actions add the kinds they need.
 	enum Kind { UNIT }
 
 	var kind: int = Kind.UNIT
@@ -91,9 +90,6 @@ func begin(action: Action) -> void:
 		prev.on_end.call()
 	# Aiming IS picking — declared here, where every gesture begins, rather than by each caster.
 	# Idempotent: a gesture begun on what the player had already picked changes nothing at all.
-	# (The ability sub-pick branch — aiming a tray token picks the ability OF its holder, via
-	# Selection.select_ability — retired with the costume; it returns with the rebuilt
-	# activation gesture.)
 	if action != null and action.modal and action.source != null:
 		Selection.select(action.source.card_data)
 	changed.emit(_action)
@@ -111,8 +107,7 @@ func end_action(only: Action = null) -> void:
 	if prev.on_end.is_valid():
 		prev.on_end.call()
 	# The aim's pick ends with the aim. Guarded so a pick that already moved on (the aim
-	# resolved into a new selection) is left be. (The ability-level unpick retired with the
-	# costume, alongside the sub-pick in begin.)
+	# resolved into a new selection) is left be.
 	if prev.modal and prev.source != null and prev.source.card_data != null:
 		if Selection.holds(prev.source.card_data):
 			Selection.clear()

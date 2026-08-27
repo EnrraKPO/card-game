@@ -114,9 +114,8 @@ var EFFECT_SCRIPTS := {
 	"combat_source_glint":    VFXEffectSourceGlint,
 	"combat_target_mark":     VFXEffectTargetMark,
 	"combat_miss":            VFXEffectMiss,
-	# (combat_dodge / combat_crit renderers were nuked with those rules pre-swap; the core
-	# re-grew dodge and crit — their cues fall back to combat_miss / the damage read until
-	# looks are authored. Journaled.)
+	# (Dodge and crit carry no renderers of their own — their cues fall back to
+	# combat_miss / the damage read until looks are authored. Journaled.)
 }
 
 

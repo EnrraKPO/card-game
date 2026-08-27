@@ -5,9 +5,8 @@ extends RefCounted
 # containers (owned profile upgrades, run relics) contribute, with owner attribution so
 # presentation can cue the contributing container (glint the right relic chip).
 #
-# RAZED to the shell (targeting-cleanup, 2026-08-11): the old Effect cargo and its kind
-# routing were deleted with the effect layer, and the stripped content contributes nothing
-# to collect. The class survives because its ROLE does — run-scope containers hold the
+# A shell today: the run's containers contribute nothing to collect yet. The class
+# stands because its ROLE does — run-scope containers hold the
 # rebuilt structures (TARGETING_DESIGN.md §1: relics/upgrades are plain holders; §5: their
 # allegiance anchor is the player). NEEDS, for the rebuild:
 #   · collection from owned upgrade nodes + run relics into one set (from_profile/for_run

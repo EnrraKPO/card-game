@@ -29,9 +29,8 @@ var description: String:
 		return s if s != "" else _desc_override
 	set(value):
 		_desc_override = value
-# (The carried `effects` array was deleted 2026-08-11 with the effect layer; what a card
-# does is re-authored in the new schema when the rebuild reaches this container — each
-# card's `description` is its re-authoring brief.)
+# (What a card does is authored in the core's schema as the parity migration reaches
+# this container — each card's `description` is its authoring brief.)
 # Where this card's art lives (resolved at build time — see build_from_dict). Kept as a path
 # rather than a texture so the library can be built without touching the disk: eagerly load()ing
 # every card's art cost ~800 texture decodes at boot for a fight that shows a couple of dozen.
@@ -56,9 +55,8 @@ var chess_pieces: Array[String] = []
 # doesn't swing (pacifists are authorable). effects_src holds the authored form verbatim
 # (named ids as Strings, inline effects as Dictionaries) — it is what to_dict emits.
 # (target_policy is DELETED: the policy lives inside the referenced effect's resolver.)
-# The authored form, verbatim: String ids | Dictionary inline effects. The demoted
-# effect-object layer is gone; the catalogue keeps its schema raw until the parity
-# migration authors it into the new core's envelope (plan §3).
+# The authored form, verbatim: String ids | Dictionary inline effects. The catalogue
+# keeps its schema raw until the parity migration authors it into the core's envelope.
 var effects_src: Array = []   # String ids | Dictionary inline effects
 # Enemy-only fodder cards (tribes the CPU fights with). Kept out of every player-facing
 # pool — reward offers and shop stock (random_non_kings). They carry no element/chess
