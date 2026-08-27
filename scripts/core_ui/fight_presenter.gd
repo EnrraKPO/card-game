@@ -1,10 +1,10 @@
 class_name FightPresenter
 extends PresentationOutlet
 
-# The live world's presenter behind the presentation outlet (Mutation §10, §11 + A12) —
+# The live world's presenter behind the presentation outlet (Mutation §10, §11) —
 # the strike presentation's reference shape (docs/planning/RULINGS.html R13): everything
 # arrives through the outlet's stream, the presenter builds one VFXEvent per cue and hands
-# it to the salvaged VFXPlayer, and the flow beats — carrying the acting holder per A12 —
+# it to the salvaged VFXPlayer, and the flow beats — carrying the acting holder (§11) —
 # play the cause→effect read the old combat had: the source's approach (lunge / bolt /
 # glint) leads, the recipients wear the target marks, the held procedure cues burst at the
 # contact, and the attacker withdraws under the victim's suffering.
@@ -54,11 +54,11 @@ func unpause() -> void:
 # The windup: the cause half leads (the old choreography, keyed by the effect's authored
 # windup name — glint flares the source, bolt flies source→victim, lunge sends the ghost
 # in), and every recipient wears the tinted target reticle that leads its hit.
-func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity]) -> void:
+func windup(visual: StringName, holder: GameEntity, recipients: Array[GameEntity]) -> void:
 	# The acting fact for the turn-order strip's gold entry (see FightScreen.acting):
 	# an AUTHORED windup names its actor's moment; machinery's unnamed beats name none.
-	if visual != &"" and source is Unit:
-		_screen.acting = source as Unit
+	if visual != &"" and holder is Unit:
+		_screen.acting = holder as Unit
 	_screen.refresh()
 	# Marks lead only AUTHORED windups: every delivery beats through here — the round
 	# machinery included (untap's recipients are the whole board) — and an unnamed windup
@@ -66,10 +66,10 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 	if visual != &"":
 		for recipient: GameEntity in recipients:
 			_screen.play_beat_mark(recipient)
-	# The source resolves through the one surface lookup (R14) — the stand-in override
+	# The holder resolves through the one surface lookup (R14) — the stand-in override
 	# outranks — so a holder that stands on screen as something other than a card (a
 	# status's pip, a relic's chip) gets its announce too.
-	var surface: Control = _screen.surface_of(source)
+	var surface: Control = _screen.surface_of(holder)
 	if surface == null:
 		# The old yank guard: a choreography whose actor has no surface on screen SKIPS
 		# its show outright — the delivery still resolves; rules never depend on the
@@ -154,7 +154,7 @@ func _lunge(source_ui: CardUI, target_ui: CardUI) -> void:
 # included (the untap rule's recipients are the whole board, and shaking them read as a
 # board-wide vibration at the turn boundary); the shake belongs to the DAMAGE moment, on
 # the struck card, where the old solution kept it (see FightScreen.play_cue).
-func contact(_visual: StringName, _source: GameEntity,
+func contact(_visual: StringName, _holder: GameEntity,
 		_recipients: Array[GameEntity]) -> void:
 	_screen.refresh()
 	if _held.is_empty():
@@ -180,7 +180,7 @@ func _burst_one(held: Array, remaining: Array) -> void:
 # The conclusion: the attacker withdraws — the retreat STARTS and the flow moves on under
 # it (the old rule: standing around waiting for the victim to finish reacting is what made
 # a strike read as a stall); the ghost frees and the original returns at the glide's end.
-func conclude(_visual: StringName, _source: GameEntity) -> void:
+func conclude(_visual: StringName, _holder: GameEntity) -> void:
 	# The actor's moment closes with its conclusion — only its own (an overlapping later
 	# windup has already taken the fact, and must not be cleared by the earlier retreat).
 	if _screen.acting != null and _screen.acting == _source:

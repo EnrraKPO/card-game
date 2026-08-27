@@ -25,25 +25,25 @@ func unpause() -> void:
 	pass
 
 
-# ── The conductor's flow beats (Mutation §11, source per A12) ─────────────────────────
+# ── The conductor's flow beats (Mutation §11) ─────────────────────────────────────────
 # Unlike the procedures' fire-and-forget cue above, every flow beat is AWAITED: the flow
 # proceeds when presentation greenlights it, and any VFX determines the span of its
 # block. Coroutines by contract; the deaf base greenlights on the spot. Each beat carries
-# the acting holder (AMENDMENTS.html A12) so the presenter can play the cause half of a
+# the acting holder (Mutation §11) so the presenter can play the cause half of a
 # happening — the source's glint, the lunge, the bolt from actor to victim.
 
-func windup(_visual: StringName, _source: GameEntity,
+func windup(_visual: StringName, _holder: GameEntity,
 		_recipients: Array[GameEntity]) -> void:
 	@warning_ignore("redundant_await")
 	await null
 
 
-func contact(_visual: StringName, _source: GameEntity,
+func contact(_visual: StringName, _holder: GameEntity,
 		_recipients: Array[GameEntity]) -> void:
 	@warning_ignore("redundant_await")
 	await null
 
 
-func conclude(_visual: StringName, _source: GameEntity) -> void:
+func conclude(_visual: StringName, _holder: GameEntity) -> void:
 	@warning_ignore("redundant_await")
 	await null

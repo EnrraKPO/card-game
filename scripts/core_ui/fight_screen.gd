@@ -203,7 +203,7 @@ func _derive_cards() -> void:
 			(ui as CardUI).derive_presentation()
 
 # The unit whose moment is being resolved RIGHT NOW — the strip's gold entry. Derived from
-# the A12 beat stream: the presenter records the acting holder at each AUTHORED windup and
+# the §11 beat stream: the presenter records the acting holder at each AUTHORED windup and
 # clears it at that source's conclusion (the machinery's unnamed beats — untap and its
 # round-opening kin — name no actor and light nothing). The old CombatWorld.acting was the
 # cascade's own pointer; the beats are where that fact reaches presentation now.
