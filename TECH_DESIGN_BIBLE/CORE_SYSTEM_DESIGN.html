@@ -262,11 +262,9 @@ inputs are the plate — occasion and holder (§9), world reached through the
 holder — plus each candidate as the typed subject.</p>
 
 <p><b>Structure:</b> conditions, then decision. Conditions narrow the world to
-eligible candidates; the decision picks among them. <s>Decision mechanisms:
-nearest, random, stat-ranked, hand-pick, the occasion's target.
-Hand-pick's decision consults the player.</s> <ins>A decision may consult the
+eligible candidates; the decision picks among them. A decision may consult the
 player (for example, hand-pick); the roster of decision kinds is the Kind
-Rosters document's.</ins></p>
+Rosters document's.</p>
 
 <p><b>Two phases:</b></p>
 <ul>
@@ -415,15 +413,9 @@ its name. Same structure, separate instances.</p>
 </ul>
 
 <p><b>EventData</b> is a typed class family: one class per shape of fact.
-<s><code>StatMutationEventData</code> carries stat and delta;
-
-<code>NameEventData</code> carries a named fact: <b>role</b>
-(<code>StringName</code> — what the name means to the happening;
-<code>ability</code> among them) and <b>name</b>
-(<code>StringName</code>). <code>RequestEventData</code> carries the request
-at hand.</s> <ins>For example, <code>NameEventData</code> carries a named
+For example, <code>NameEventData</code> carries a named
 fact: role — what the name means to the happening — and name. The complete
-roster of shapes is the Kind Rosters document's.</ins> A fact of an existing
+roster of shapes is the Kind Rosters document's. A fact of an existing
 shape with a different purpose reuses the class — purpose is a name .</p>
 
 <p><b>Accretion.</b> Each layer of the road appends the components it knows: every
@@ -533,13 +525,12 @@ existential claim universal: "all enemies are wounded" is authored "not: any
 }</pre>
 <p>Route tokens: <code>source</code>, <code>holder</code>, <code>world</code>,
 <code>target</code>. Defaults for absent members: policy
-<code>all</code>, negate false, an absent list empty (holds vacuously). <s>Kinds
-shown beyond the roster below are illustrative.</s> <ins>The kinds shown are
-examples; the complete roster is the Kind Rosters document's.</ins></p>
+<code>all</code>, negate false, an absent list empty (holds vacuously). The kinds shown are
+examples; the complete roster is the Kind Rosters document's.</p>
 
 <h3>Authoring a kind</h3>
 <p>Content  selects a kind by id and fills the kind's
-declared typed members<ins> — an example</ins>:</p>
+declared typed members — an example:</p>
 <pre>{ "kind": "stat_compare", "stat": "strength", "op": "gt", "value": 5 }</pre>
 <p>A check no kind supports is a new class in the family its subject dictates,
 plus one row in the kind table. The combination vocabulary is exactly: the two
@@ -552,28 +543,8 @@ inverts the answer where the member is set. Over an absent component the
 inverted answer is true.</p>
 
 <h3>The roster</h3>
-<s><p> The kinds designed at this
-writing — the minimal set, growing as content demands:</p>
-<ul>
-  <li><code>is_holder</code> — EntityCondition, no members. True when the
-      subject is the plate's holder. Under route <code>source</code> it is the
-      discriminating condition of every play and every ability (§5–§7); the
-      source fetch is the route's work.</li>
-  <li><code>has_status</code> — EntityCondition, one member
-      <code>status_id: StringName</code>. True when the subject's
-      <code>contained</code> holds a Status of that id, read by checked
-      downcast.</li>
-  <li><code>request_kind_is</code> — EventDataCondition, one member
-      <code>name: StringName</code>. True when the event's stamped
-      <code>RequestEventData</code> carries a request whose
-      <code>mutator_kind</code> is the name. Deeper request-reading enters
-      when content asks.</li>
-</ul>
-<p>The baked conditions — affordability and holder-in-hand on the play effect
-(§5), affordability on the use effect (§7) — are machinery.
-</p></s>
-<p><ins>The roster of condition kinds, machinery conditions included, is the
-Kind Rosters document's.</ins></p>
+<p>The roster of condition kinds, machinery conditions included, is the
+Kind Rosters document's.</p>
 
 <h3>Stats in conditions</h3>
 <p>A stat's identity is its id, a <code>StringName</code>. Every entity type
@@ -592,7 +563,7 @@ mirror walk.  Every authored member parses into its
 real type — a stat name becomes a stat id or the parse refuses.</p>
 
 <div class="signoff">
-  <b>Signature:</b> <s>signed off — Enrra, 2026-08-27.</s> <ins>Pending revision.</ins>
+  <b>Signature:</b> signed off — Enrra, 2026-08-27.
 </div>
 
 </div>

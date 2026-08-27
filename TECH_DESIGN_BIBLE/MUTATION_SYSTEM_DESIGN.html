@@ -285,8 +285,8 @@ conductor. One delivery of a payload is the
 unit of issuance and the scope of the holster (§9).</p>
 <p><b>The authored form</b> is a <code>"payload"</code> array on the effect. Each
 entry names one mutator: a string where the mutator takes no authored parameters
-(<ins>for example</ins> <code>"strike"</code>), an object naming the mutator with its typed parameters where
-it does (<ins>for example</ins> <code>{"stat_mutation": {"stat": "speed", "delta": 3}}</code>). The parser
+(for example <code>"strike"</code>), an object naming the mutator with its typed parameters where
+it does (for example <code>{"stat_mutation": {"stat": "speed", "delta": 3}}</code>). The parser
 refuses strangers.</p>
 
 <h2><span class="secno">§4</span> The mutator</h2>
@@ -296,8 +296,8 @@ issues requests.</b> One ask is one request, one mutation, one provenance — th
 mutator's kind.</p>
 <ul>
   <li><b>The kind.</b> Every mutator carries a <b>kind</b>: a
-      <code>StringName</code>, its name in <s>the roster below</s> <ins>the
-      Kind Rosters document</ins>. An authored
+      <code>StringName</code>, its name in the
+      Kind Rosters document. An authored
       mutator's kind is its authored name (§3); machinery-only mutators are
       named the same way, their names just never appear in markup. The kind is
       the provenance: everything that carries provenance carries this string,
@@ -331,24 +331,11 @@ mutator's kind.</p>
 <h3>The roster</h3>
 <p>A mutator exists for each way the game asks for change. Content names an
 effect's payload mutators; machinery's effects carry mutators constructed in
-code. <s>The build-one roster:</s> <ins>The complete roster is the Kind
-Rosters document's.</ins></p>
-<s><table>
-  <tr><th>Mutator</th><th>Authored form</th><th>Concludes in</th></tr>
-  <tr><td>strike</td><td><code>"strike"</code> — no parameters</td><td>StrikeRequest</td></tr>
-  <tr><td>stat mutation</td><td><code>{"stat_mutation": {"stat": StringName, "delta": int}}</code></td><td>StatMutationRequest</td></tr>
-  <tr><td>damage</td><td><code>{"damage": {"amount": int}}</code></td><td>DamageRequest</td></tr>
-  <tr><td>status</td><td><code>{"status": {"id": StringName, "stacks": int}}</code></td><td>StatusRequest</td></tr>
-  <tr><td>draw</td><td><code>{"draw": {"count": int}}</code></td><td>DrawRequest</td></tr>
-  <tr><td>bury</td><td>machinery only — never authored</td><td>BuryRequest</td></tr>
-  <tr><td>pay</td><td>machinery only — never authored; unique</td><td>PayCostRequest</td></tr>
-  <tr><td>PlacementMutator</td><td>machinery only — never authored (Core §6)</td><td>MoveRequest</td></tr>
-  <tr><td>MoveUnitMutator</td><td>machinery only — never authored;
-      the Move ability (Core §7)</td><td>MoveRequest</td></tr>
-</table></s>
+code. The complete roster is the Kind
+Rosters document's.</p>
 <p>Every roster parameter is required and typed: an authored entry states every
-parameter of its mutator, and an entry omitting one fails parse — <ins>for
-example,</ins> a draw of
+parameter of its mutator, and an entry omitting one fails parse — for
+example, a draw of
 one is authored <code>{"draw": {"count": 1}}</code>, a single grant
 <code>"stacks": 1</code>. Identifiers are <code>StringName</code>, quantities
 <code>int</code>.</p>
@@ -374,7 +361,7 @@ mutation; this object is the asking — <b>minting a request is the act of askin
 and only mutators mint. It is a dumb data record: a base class carrying the context
 bundle common to every request, and one subclass per procedure, named by the
 happening it asks for, carrying that procedure's parameters as typed members.
-<ins>The base and, as examples, three subclasses:</ins></p>
+The base and, as examples, three subclasses:</p>
 <pre>class_name EngineRequest          # the base: the context bundle
     var mutator_kind: StringName  # the manner of the asking — the kind IS the provenance
     var source: GameEntity        # the holder it came from
@@ -443,42 +430,9 @@ by the happening it resolves, and its request pairs with it by that name.</p>
   <li><b>Every decision lives in a procedure; a primitive never decides.</b> A
       procedure may hold much law, little, or none.</li>
 </ul>
-<s><table>
-  <tr><th>Procedure</th><th>Request shape</th><th>Resolution</th></tr>
-  <tr><td><b>StatMutationProcedure</b></td><td>target · stat · delta</td>
-      <td>Applies the delta. Serves stat changes, mana refill, exhaustion.</td></tr>
-  <tr><td><b>StrikeProcedure</b></td><td>target (striker = the source)</td>
-      <td>Dodge, crit, amount read from the striker's attack; a connecting strike
-      applies damage. The mechanics below.</td></tr>
-  <tr><td><b>DamageProcedure</b></td><td>target · amount</td>
-      <td>Shield absorbs first, remainder to health.</td></tr>
-  <tr><td><b>StatusProcedure</b></td><td>target · status_id · stacks</td>
-      <td>A target not carrying the status has the object minted and inserted into
-      its <code>contained</code>; a target already carrying it has the stacks
-      added.</td></tr>
-  <tr><td><b>MoveProcedure</b></td><td>target (the destination owner) · cargo · container
-      name</td>
-      <td>Removes the cargo from
-      its housing, inserts it into the target's named container. Placement,
-      movement. As T2 records it: at this scope no arrival event
-      exists.</td></tr>
-  <tr><td><b>DrawProcedure</b></td><td>target (the drawn
-      card)</td>
-      <td>Moves the target from its deck to its side's hand.</td></tr>
-  <tr><td><b>BuryProcedure</b></td><td>target (the buried
-      entity)</td>
-      <td>Places the target in its side's graveyard.</td></tr>
-  <tr><td><b>PayCostProcedure</b></td><td>target (the paying side) · mana · tap</td>
-      <td>Commits the cost — mana down on the target side, tap spent on the source —
-      and produces the engaged event — <code>play_engaged</code> for the play,
-      <code>ability_used</code> for an ability use, the ability's name carried
-      forward (Core §7).</td></tr>
-</table>
-<p>The roster covers every write the game performs today; a happening it does not
-yet speak enters by the rule above — one new procedure and its request.</p></s>
-<p><ins>The complete roster of procedures and their requests is the Kind
+<p>The complete roster of procedures and their requests is the Kind
 Rosters document's; a happening the engine does not yet speak enters by the
-rule above — one new procedure and its request.</ins></p>
+rule above — one new procedure and its request.</p>
 
 <h3>The strike mechanics</h3>
 <p><b>The chance formula, shared by dodge and crit:</b> chance = base + own Speed ×
@@ -654,7 +608,7 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> <s>signed off — Enrra, 2026-08-27.</s> <ins>Pending revision.</ins>
+  <b>Signature:</b> signed off — Enrra, 2026-08-27.
 </div>
 
 </div>
