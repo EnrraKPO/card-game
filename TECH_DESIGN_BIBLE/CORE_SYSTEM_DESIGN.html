@@ -119,7 +119,7 @@ conditions. The write machinery these run on is the Mutation System Design.</p>
 <ul>
   <li><code>GameEntity</code> is the root. Every GameEntity holds effects, bears
       stats, holds a container map (§2) declaring <code>contained</code>,
-      <ins>bears the allegiance (below),</ins> and
+      bears the allegiance (below), and
       bears a back-reference to the world it lives in.</li>
   <li>Extending <code>GameEntity</code> directly: <code>Game</code> (bears the
       base rules and their stats), <code>Side</code> (declares the
@@ -140,13 +140,13 @@ its container <code>relics</code>. Every other entity is reached through the
 containers already stated: a Side's zones and board, a slot's
 <code>slotted_unit</code>, an entity's <code>contained</code>.</p>
 
-<p><ins><b>Allegiance.</b> Every entity bears a member referencing the
+<p><b>Allegiance.</b> Every entity bears a member referencing the
 <code>Side</code> it belongs to, stamped at construction as a birth fact and
 never rewritten. The read "the holder's side" — the pay mutator's recipient
 among its users — returns this member. World copies remap it under the
 established reference discipline. Allegiance is identity, not position:
 housing may place an entity anywhere; whose it is does not move with
-it (§3).</ins></p>
+it (§3).</p>
 
 <p>Each type embeds fixed machinery; content authors only the fields those effects
 declare authored (§5, §6):</p>
@@ -572,7 +572,7 @@ mirror walk.  Every authored member parses into its
 real type — a stat name becomes a stat id or the parse refuses.</p>
 
 <div class="signoff">
-  <b>Signature:</b> <s>signed off — Enrra, 2026-08-27.</s> <ins>Pending revision.</ins>
+  <b>Signature:</b> signed off — Enrra, 2026-08-27.
 </div>
 
 </div>
