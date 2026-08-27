@@ -176,8 +176,8 @@ as it declares its stat ids. <code>GameEntity</code> declares
 <code>sides</code>; a Side additionally declares <code>deck</code>,
 <code>hand</code>, <code>graveyard</code>, <code>board</code> (§3), and
 <code>relics</code>; a Slot declares <code>slotted_unit</code>. Parse
-refuses a container name the authored subject type does not declare. Which
-names each remaining type declares is Open 2.</p>
+refuses a container name the authored subject type does not declare. <s>Which
+names each remaining type declares is Open 2.</s></p>
 
 <p><b>Occupancy.</b> A unit is fielded in a slot when it is a member of that
 slot's <code>slotted_unit</code> container.  Current content fields one unit per slot; the mechanics support any
@@ -234,9 +234,9 @@ slots.</p>
 </ul>
 
 <h3>The geometry class</h3>
-<p>A class of pure static functions — stateless; coordinates
-and the halves' facing relation in, coordinates out. Its name is pending ruling
-(Opens). All mirroring arithmetic between the two halves lives in this class
+<p><ins><code>BoardGeometry</code> —</ins> a class of pure static functions — stateless; coordinates
+and the halves' facing relation in, coordinates out. <s>Its name is pending ruling
+(Opens).</s> All mirroring arithmetic between the two halves lives in this class
 alone. Members:</p>
 <ul>
   <li><b>Symmetric distance</b> — two coordinates in.</li>
@@ -545,7 +545,7 @@ inverted answer is true.</p>
 
 <h3>The roster</h3>
 <p> The kinds designed at this
-writing — the minimal set, growing under Open 8:</p>
+writing — the minimal set, growing <s>under Open 8</s> <ins>as content demands</ins>:</p>
 <ul>
   <li><code>is_holder</code> — EntityCondition, no members. True when the
       subject is the plate's holder. Under route <code>source</code> it is the
@@ -581,8 +581,8 @@ markup, refusing unknown keys and type mismatches loudly; serialization is the
 mirror walk.  Every authored member parses into its
 real type — a stat name becomes a stat id or the parse refuses.</p>
 
-<h2>Opens</h2>
-<ul>
+<h2 class="scratch">Opens</h2>
+<ul class="scratch">
   <li><b>Open 2 — each type's container roster.</b> Which named containers each
       entity type declares (a unit's statuses among them). Settles per type as
       its content is written.</li>
@@ -603,7 +603,7 @@ real type — a stat name becomes a stat id or the parse refuses.</p>
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-27.
+  <b>Signature:</b> <s>signed off — Enrra, 2026-08-27.</s> <ins>Pending revision — the Opens deletion, 2026-08-27.</ins>
 </div>
 
 </div>
