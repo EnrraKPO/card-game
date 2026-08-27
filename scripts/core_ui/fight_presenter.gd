@@ -180,10 +180,10 @@ func _burst_one(held: Array, remaining: Array) -> void:
 # The conclusion: the attacker withdraws — the retreat STARTS and the flow moves on under
 # it (the old rule: standing around waiting for the victim to finish reacting is what made
 # a strike read as a stall); the ghost frees and the original returns at the glide's end.
-func conclude(_visual: StringName, _holder: GameEntity) -> void:
+func conclude(_visual: StringName, holder: GameEntity) -> void:
 	# The actor's moment closes with its conclusion — only its own (an overlapping later
 	# windup has already taken the fact, and must not be cleared by the earlier retreat).
-	if _screen.acting != null and _screen.acting == _source:
+	if _screen.acting != null and _screen.acting == holder:
 		_screen.acting = null
 	# The only hold here is the retreat's own handoff — a conclusion without a show in
 	# flight spends no time at all.
