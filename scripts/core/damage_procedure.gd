@@ -7,7 +7,7 @@ extends EngineProcedure
 # kind the same way.
 #
 # The damaged event: source the request's source — the holder of the effect that minted
-# the request (A15) — target the damaged entity in the core (Core §8), the request at hand
+# the request — target the damaged entity in the core (Core §8), the request at hand
 # stamped as RequestEventData, the committed writes riding as
 # StatMutationEventData; the authority's died follows it in return order.
 

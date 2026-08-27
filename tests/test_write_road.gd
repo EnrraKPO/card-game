@@ -57,7 +57,7 @@ func _test_died() -> void:
 	var events: Array[Event] = MutationEngine.submit(ask)
 	check_eq(events.size(), 1, "health reaching zero produces one event")
 	check(events[0].name == &"died" and events[0].source == killer,
-			"died, source the request's source (A15)")
+			"died, source the request's source (Core §8)")
 	var stamps: Array[EventData] = events[0].components_of(RequestEventData)
 	check(stamps.size() == 1 and (stamps[0] as RequestEventData).request == ask
 			and (stamps[0] as RequestEventData).request.mutator_kind == &"poison",
@@ -79,7 +79,7 @@ func _test_damage() -> void:
 			"shield absorbs first")
 	check_eq(absorbed.size(), 1, "an absorbed hit returns the damaged event alone")
 	check_eq(absorbed[0].name, &"damaged", "the damaged event names the happening")
-	check(absorbed[0].source == dealer, "damaged, source the request's source (A15)")
+	check(absorbed[0].source == dealer, "damaged, source the request's source (Core §8)")
 	var absorbed_stamps: Array[EventData] = absorbed[0].components_of(RequestEventData)
 	check(absorbed_stamps.size() == 1
 			and (absorbed_stamps[0] as RequestEventData).request == ask,
@@ -125,7 +125,7 @@ func _test_strike_dodge() -> void:
 	var events: Array[Event] = MutationEngine.submit(StrikeRequest.new(&"strike", striker, defender))
 	check_eq(defender.get_stat(&"health"), 10.0, "a dodge ends the strike — no damage")
 	check(events.size() == 1 and events[0].name == &"dodged" and events[0].source == striker,
-			"the dodged event, source the request's source (A15)")
+			"the dodged event, source the request's source (Core §8)")
 	check(events[0].target == defender,
 			"dodged carries the dodger as its native target")
 

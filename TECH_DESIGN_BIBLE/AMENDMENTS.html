@@ -84,7 +84,8 @@
     border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
     margin-top: 3rem; background: var(--surface);
   }
-  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); opacity: 0.55; }
+  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); background: var(--warn-soft); color: var(--warn); border-radius: 3px; padding: 0.05em 0.3em; }
+  ins { text-decoration: none; background: var(--accent); color: var(--ground); border-radius: 3px; padding: 0.05em 0.3em; font-weight: 600; }
   ins { text-decoration: none; background: var(--accent); color: var(--ground); border-radius: 3px; padding: 0.05em 0.3em; font-weight: 600; }
 </style>
 
@@ -100,12 +101,14 @@
 
 <p>Rulings issued after the bible's signature, recorded here as ruling text of
 equal force. Each names the section it lands on; transfer into that section may
-follow. A ruling enters this document only by Enrra's word.</p>
+follow. A ruling enters this document only by Enrra's word. <ins>Each
+amendment carries its own signature.</ins></p>
 
 <div class="ruling">
   <div class="head">A1 — The geometry class is named <code>BoardGeometry</code>.</div>
   <p>Ruled by Enrra, 2026-08-23. Closes the naming open of Core §11; lands on
   Core §3.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -114,6 +117,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   <p>The enemy's king (the captain) dying is the win condition. Ruled by Enrra,
   2026-08-23. New ground — no prior section states it; it lands with the fight
   frame's document when that is authored.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -124,6 +128,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   to obtain the target slots and fire the event — the old system carries the
   desired functionality. Ruled by Enrra, 2026-08-23. Lands on Core §7 and the
   placement mutator's row (Mutation §4).</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -135,6 +140,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   this member. World copies remap it under the established reference
   discipline. Ruled by Enrra, 2026-08-23. Closes the allegiance open of Core
   §11; lands on Core §3 and §5.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -143,6 +149,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   the first combat span after it is fielded — fielded during a round's command
   span, it acts in that same round's combat span. Ruled by Enrra, 2026-08-23.
   Lands with the fight frame's document, beside A2.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -159,6 +166,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   resolver's resolve phase, run at interactive idle for the previews (Core §4).
   Ruled by Enrra, 2026-08-23. Lands on Core §1's Unit machinery and with the
   fight frame's document.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -175,6 +183,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   parity migration. Approved conditionally by Enrra, 2026-08-23 — <b>the
   ruling's detail is delegated to the contractor's judgment</b>; deviations of
   detail within this envelope are lawful, its outer shape is ruled.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -196,6 +205,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   statuses ride <code>contained</code> (Mutation §7); the open stays open for
   future content. Ruled by Enrra, 2026-08-23. Lands on Core §9's roster and
   §2.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -203,6 +213,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   <p>Machinery appoints the Move ability on every unit at construction —
   conditionally: buildings do not receive it. Ruled by Enrra, 2026-08-23.
   Completes A3; lands on Core §7.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -212,6 +223,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   iteration is allowed — while the work iterates, UI features may be
   non-functional, partially functional, or broken. Ruled by Enrra,
   2026-08-23.</p>
+  <p><ins><b>Signature:</b> signed off — Enrra, 2026-08-23.</ins></p>
 </div>
 
 <div class="ruling">
@@ -257,7 +269,7 @@ follow. A ruling enters this document only by Enrra's word.</p>
   <p><b>Signature:</b> signed off — Enrra, 2026-08-25.</p>
 </div>
 
-<div class="ruling">
+<div class="ruling scratch">
   <div class="head">A15 — The source is mechanical.</div>
   <p>An entity-fired event carries the firing entity as source. A mutation's
   fact events carry the request's source — the holder of the effect that
@@ -268,9 +280,9 @@ follow. A ruling enters this document only by Enrra's word.</p>
 </div>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-27, covering A1–A10.
+  <s><b>Signature:</b> signed off — Enrra, 2026-08-27, covering A1–A10.
   A ruling recorded after this signature enters with its own dated signature
-  line.
+  line.</s> <ins>Pending revision.</ins>
 </div>
 
 <h2><span class="secno">T</span>Temporary scope decisions</h2>
