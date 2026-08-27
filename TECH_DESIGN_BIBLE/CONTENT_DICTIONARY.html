@@ -107,7 +107,7 @@ plan; a piece turns "approved" on Enrra's word.</p>
     <td>Poison</td><td>Status</td>
     <td>At its holder's moment, damages the unit carrying it, per its stacks;
         the damage carries the poison kind.</td>
-    <td><code>houses_me</code> (A8); the <code>act</code> event (Combat Frame
+    <td><code>houses_me</code> (Kind Rosters §1); the <code>act</code> event (Combat Frame
         §6, signed); stacks as a stat on the status; the <code>poison</code>
         mutator — damage per the holder's stacks, carrying the poison kind
         (roster growth, BRIEFS.html B36: the fixed-amount damage mutator
@@ -117,14 +117,14 @@ plan; a piece turns "approved" on Enrra's word.</p>
   <tr>
     <td>Fireball</td><td>Spell</td>
     <td>Damages a hand-picked enemy unit; buried by its play.</td>
-    <td><code>is_enemy</code>, <code>is_unit</code> (A8); damage mutator; spell
+    <td><code>is_enemy</code>, <code>is_unit</code> (Kind Rosters §1); damage mutator; spell
         burial (Core §6).</td>
     <td>proposed</td>
   </tr>
   <tr>
     <td>Hourglass</td><td>Relic</td>
     <td>When the player fields a unit, draw a card.</td>
-    <td><code>fielded</code> event (Core §2); <code>is_ally</code> (A8); draw
+    <td><code>fielded</code> event (Core §2); <code>is_ally</code> (Kind Rosters §1); draw
         mutator; <code>is_side</code> — the draw's recipient narrowed to the
         holder's Side (roster growth, BRIEFS.html B36).</td>
     <td>proposed</td>
@@ -150,7 +150,7 @@ assets reused. Same rule: authorable only with every demand ruled.</p>
     <td>The <code>damaged</code> event carrying the attacker as source (Core §8)
         and the victim as native target; the stamped request read by
         <code>request_kind_is</code> strike (Core §9);
-        <code>is_ally</code>, <code>is_unit</code> (A8);
+        <code>is_ally</code>, <code>is_unit</code> (Kind Rosters §1);
         <code>occasions_target</code> decision; status mutator; the Relic
         holder road (entity, <code>relics</code> container, Genesis seat).</td>
     <td>approved (Enrra, 2026-08-26 — authoring ordered)</td>

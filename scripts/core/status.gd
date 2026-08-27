@@ -2,12 +2,12 @@ class_name Status
 extends GameEntity
 
 # A Status (Core System Design §1): a plain GameEntity housed in its holder's `contained`
-# container (AMENDMENTS.html A8 — no container is added beyond the declared for the
-# slice's types). Minted and inserted by the StatusProcedure; a holder already carrying it
-# has `stacks` added instead (Mutation §7). `stacks` is a stat on the status.
+# container (Core §2 — no container beyond the declared). Minted and inserted by the
+# StatusProcedure; a holder already carrying it
+# has `stacks` added instead (Kind Rosters §4). `stacks` is a stat on the status.
 #
 # `status_id` is the status's kind identity — what `has_status` reads by checked downcast
-# (Core §9) and what the StatusProcedure matches when deciding mint-or-stack.
+# (Kind Rosters §1) and what the StatusProcedure matches when deciding mint-or-stack.
 
 var status_id: StringName = &""
 
