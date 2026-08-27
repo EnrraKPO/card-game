@@ -99,7 +99,7 @@ func _test_round_flow() -> void:
 	check_eq(player_king.get_stat(&"health"), 18.0, "the untap rule freed the second round's acts")
 
 
-# The shield recovery rule (Combat Frame §4, A13): the opening raises a fielded unit's
+# The shield recovery rule (Combat Frame §4): the opening raises a fielded unit's
 # shield to its authored value — a raise, never a drain.
 func _test_shield_recovery() -> void:
 	var world := World.new(24)

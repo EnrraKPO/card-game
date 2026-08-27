@@ -8,7 +8,7 @@ extends GameEntity
 #
 # The base rules (Combat Frame §4): ordinary effects triggered on `round_started`,
 # running in their declared order — the round count, the untap, the ramp, the refill,
-# the draw, the shield recovery (A13). Each is stateless machinery, constructed once and
+# the draw, the shield recovery. Each is stateless machinery, constructed once and
 # shared across every Game and every simulated world (the Mutation §4 lifecycle).
 #
 # The stats: `round`; the frame's seeds (starting mana capacity 1, ramp 1, turn draw 1,
@@ -79,7 +79,7 @@ static func _rules() -> Array[Effect]:
 	_base_rules.append(Effect.new(_on_round_started(), _each_side(), draw_payload))
 
 	# 6. The shield recovery rule — raises every fielded unit's shield to its authored
-	# value (A13).
+	# value.
 	var shielded: Array[EntityCondition] = []
 	shielded.append(IsUnitCondition.new())
 	shielded.append(BakedConditions.Fielded.new())

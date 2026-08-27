@@ -1,6 +1,6 @@
 extends Node
 
-# Dev probe: the slice fight under the shield recovery rule (A13) — test_slice's
+# Dev probe: the slice fight under the shield recovery rule (Combat Frame §4) — test_slice's
 # scripted rounds replayed without its checks, then auto-combat, watching both
 # boards round by round.
 
