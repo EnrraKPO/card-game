@@ -112,15 +112,6 @@ amendment carries its own signature.</p>
 </div>
 
 <div class="ruling">
-  <div class="head">A2 — The win condition: killing the enemy's king ends the
-  fight in victory.</div>
-  <p>The enemy's king (the captain) dying is the win condition. Ruled by Enrra,
-  2026-08-23. New ground — no prior section states it; it lands with the fight
-  frame's document when that is authored.</p>
-  <p><b>Signature:</b> signed off — Enrra, 2026-08-23.</p>
-</div>
-
-<div class="ruling">
   <div class="head">A3 — The Move ability: free, asked by the existing moving
   UI.</div>
   <p>Moving costs nothing in this version. The <code>use_ability</code> ask for
@@ -140,32 +131,6 @@ amendment carries its own signature.</p>
   this member. World copies remap it under the established reference
   discipline. Ruled by Enrra, 2026-08-23. Closes the allegiance open of Core
   §11; lands on Core §3 and §5.</p>
-  <p><b>Signature:</b> signed off — Enrra, 2026-08-23.</p>
-</div>
-
-<div class="ruling">
-  <div class="head">A5 — Command order, and when a fielded unit first acts.</div>
-  <p>Within a round, the enemy commands first, then the player. A unit acts in
-  the first combat span after it is fielded — fielded during a round's command
-  span, it acts in that same round's combat span. Ruled by Enrra, 2026-08-23.
-  Lands with the fight frame's document, beside A2.</p>
-  <p><b>Signature:</b> signed off — Enrra, 2026-08-23.</p>
-</div>
-
-<div class="ruling">
-  <div class="head">A6 — The main action and the target poll.</div>
-  <p>The combat span's clock fires the ask event <code>act</code> at each
-  fielded unit in speed order. The main action is fixed Unit machinery with the
-  standard effect structure: trigger — event <code>act</code>, the
-  route-<code>source</code> + <code>is_holder</code> entry, and the baked
-  condition that the unit is untapped (not exhausted); targeting — the attack
-  resolver, deciding by BoardGeometry's attack-preference comparator, electing
-  one enemy unit; payload — the strike mutator. Acting has no cost: no pay
-  mutator, no engaged pair — the action triggers directly on the ask, and the
-  strike procedure's events are the happening record. The target poll is this
-  resolver's resolve phase, run at interactive idle for the previews (Core §4).
-  Ruled by Enrra, 2026-08-23. Lands on Core §1's Unit machinery and with the
-  fight frame's document.</p>
   <p><b>Signature:</b> signed off — Enrra, 2026-08-23.</p>
 </div>
 
