@@ -1,0 +1,300 @@
+<meta charset="utf-8">
+<title>Entity Types and Behaviors</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-family: Cambria, Georgia, "Times New Roman", serif; font-size: 1.3rem; margin: 2.4rem 0 0.6rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--warn); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  pre { background: var(--code-bg); border-radius: 4px; padding: 0.7rem 1rem; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  .ins-block {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0; padding: 0.2rem 1rem; margin: 0.8rem 0;
+  }
+  .commentary {
+    font-style: italic;
+    background: #F5E9B8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .commentary { background: #4A4020; }
+  }
+  :root[data-theme="dark"] .commentary { background: #4A4020; }
+  .signature {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 4px;
+    padding: 0.8rem 1.2rem; margin-top: 2.4rem; font-size: 0.92rem;
+  }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Tech Design Bible · draft</span>
+<h1>Entity Types and Behaviors</h1>
+<div class="ribbon">
+  <span class="status-chip">Signed draft</span>
+  <span>Opened: <b>2026-08-27</b></span>
+  <span>Signed draft: <b>2026-08-30</b></span>
+  <span>Initiative: <b>next refactor</b></span>
+</div>
+
+<p>SIGNED DRAFT (Enrra, 2026-08-30). This document rules entity behavior
+moving forward. Edits land by the revision procedure — proposed visibly,
+landed on Enrra's word — without the per-edit push ceremony; the document is
+not yet legally binding, and nothing coded stands on it until signature.
+Yellow-marked commentary grounds the iteration and is deleted at
+consolidation into signed law. The transferred A9 ruling below carries its
+own signature.</p>
+
+<h2><span class="secno"></span>Intent (draft)</h2>
+
+<p>The game's entity types carry embedded behaviors — effects the machinery
+bakes into an entity at construction rather than content authoring: a card's
+play, a unit's main action, its burial, its Move appointment, a spell's
+burial, the Game's base rules. All of them stand on the one effect substrate,
+but each is appointed by its own hand-rolled construction pattern, and no
+document states, per type, which behaviors the type bears.</p>
+
+<p>This document's purpose: govern the embedded behaviors of entities under
+one system. When developed, it states per entity type the behaviors machinery
+embeds, and appoints the one mechanism by which an embedded behavior is
+declared, built, shared, and conditionally granted — replacing the scattered
+per-class construction patterns with an appointed logistics. A9's landing
+depends on it: the Move appointment consolidates into this system.</p>
+
+<h2><span class="secno"></span>The entity types</h2>
+
+<ul>
+  <li><code>GameEntity</code> — the base of every entity: stats, containers,
+      housing, allegiance, effects, abilities.</li>
+  <li><code>Game</code> — the one rule-bearing entity; houses the two Sides;
+      bears the base rules and their stats.</li>
+  <li><code>Side</code> — a fighting party; declares <code>deck</code>,
+      <code>hand</code>, <code>graveyard</code>, <code>board</code>,
+      <code>relics</code>; its allegiance is itself.</li>
+  <li><code>Slot</code> — one board cell; the ground layer's entity.</li>
+  <li><code>Card</code> — the base of the two playable kinds; bears the play
+      effect and the payability query.</li>
+  <li><code>Unit</code> — a Card kind; bears the main action, its burial, the
+      placement baked into its play, and the Move appointment (buildings
+      excepted).</li>
+  <li><code>Spell</code> — a Card kind; bears its own burial, spent by its
+      play.</li>
+  <li><code>Status</code> — a condition entity housed in its holder's
+      containment; identity <code>status_id</code>, magnitude
+      <code>stacks</code>.</li>
+  <li><code>Relic</code> — a side-held effect holder, housed in the side's
+      <code>relics</code> container.</li>
+</ul>
+
+<h2><span class="secno"></span>Behaviors — named effects</h2>
+
+<p>A <b>behavior</b> is an effect defined once, under a name, in the
+behavior registry. <span class="commentary">The registry's home is
+unappointed — data file, document seat, and loading road await ruling.</span>
+A card obtains a behavior by its name. Machinery embedding and content reuse
+are one mechanism: an entity type's embedded behaviors are named behaviors
+appended at construction, and a card definition appends the same way.</p>
+
+<p><b>Definition.</b> A behavior's definition is the effect's authored
+markup with slot tags standing where inputs land. Each slot tag carries its
+default value; a bare invocation is complete, and every supplied input is an
+override. The named slots are the behavior's <b>input contract</b>. An input
+is markup, spliced at its slot's position by the expansion; the expanded
+effect parses as any effect.</p>
+
+<p><b>The slot tag is an object.</b> It stands at a value position of the
+markup and bears the tag marker; the expansion recognizes a slot by the
+marker alone. The slot's name is read only by the fill lookup — its own
+namespace — so a name shared with a markup property key collides with
+nothing: keys are found at key positions, slots by their marker at value
+positions. <span class="commentary">Working syntax, marker spelled
+<code>@</code>: <code>{"@": "targeting", "default": ...}</code> — awaiting
+minting.</span></p>
+
+<p><b>Invocation.</b> The <code>effects</code> array of a definition holds
+either a fully authored effect, or an invocation: an object bearing the
+<code>behavior</code> key naming the definition, every other key an
+input.</p>
+
+<pre><code>{"behavior": "bury"}
+{"behavior": "strike", "decision": "nearest"}
+{"behavior": "play", "targeting": {...}, "payload": [...]}</code></pre>
+
+<p><b>Nesting.</b> A slot's value — supplied or defaulted — may itself be an
+invocation. The baker expands invocations until the markup is plain effect
+text, then parses it. A name revisited within one expansion is refused
+loudly.</p>
+
+<p><b>The bake.</b> Appending bakes a copy of the expanded definition at
+that moment. Entities build fresh from content at each fight's genesis, so a
+changed definition reaches every subsequent build.
+<span class="commentary">Baked-copy over live-linking is ruled: the benefit
+of linking is narrow — behaviors changing at runtime are unexpected —
+and linking stays available as a later initiative.</span></p>
+
+<p><b>Ownership.</b> Every entity owns its baked instance. The instance is
+immutable and holds only its definition; the plate supplies the holder per
+consultation, and world copies carry the instance untouched.
+<span class="commentary">Per-entity ownership over a sharing cache is ruled:
+sharing buys memory nobody needs against real keying machinery, and it is
+what made reference identity ambiguous. Owner-blindness is kept for the
+world copies: an owning back-reference would force effect deep-copies and
+remaps at every preview declaration.</span></p>
+
+<p><b>Abilities.</b> The shared ability functionality is held in a behavior;
+a concrete ability is that behavior extended through its inputs.</p>
+
+<p><b>Generality.</b> Any effect can be defined as a behavior and shared
+among cards by name plus inputs — parameterization is open to all content,
+beyond the machinery-appended set.</p>
+
+<h2><span class="secno"></span>Activation — the ActivatedTrigger</h2>
+
+<p>An effect is triggered on its holder's command through a second trigger
+kind: the <b>ActivatedTrigger</b>. Appointing a behavior's trigger kind as
+activated grants the command capability in the same act as appending the
+behavior. The firer is the effect's holder.</p>
+
+<p><b>The event, outbound.</b> The ActivatedTrigger holds an appointed
+event — the one it fires. On command it mints the ask event, carrying itself
+by reference in a new named EventData type minted for this purpose alone
+<span class="commentary">(working label:
+<code>ActivationEventData</code>)</span>. Equality is reference identity;
+one trigger per effect and one instance per entity make the reference single
+out exactly one consultee in the world.</p>
+
+<p><b>The fired event drives the payment flow.</b> The ask event exists
+because the commanded road needs it: the payment request is issued, the
+affordability conditions validate, a valid target is picked, and then the
+substantive effect proceeds — all controlled by the existing event flow.</p>
+
+<p><b>Engagement.</b> The ask fires through the cascade like any event: the
+walk builds the plate at the holder, and bystanders react to the event's
+name. The ActivatedTrigger's proc test is one condition — <i>the event
+carries me</i> — standing where the listening trigger's event-name
+comparison stands. Its further conditions validate the state of the world,
+affordability among them. <span class="commentary">Carrying the reference
+and carrying an id produce the same mechanism; the reference is chosen
+because effects hold no identifier scheme, and equality is reference
+identity everywhere — the ruled position for entities, followed.</span>
+<span class="commentary">Pending ratification: for bystanders
+discriminating which behavior fired, the behavior's name rides the ask and
+engaged events as event data.</span></p>
+
+<p><b>The command questions.</b> Two questions serve command, posed by the
+entity walking its own effects:</p>
+
+<ul>
+  <li><i>Do you activate?</i> — a fixed fact of the effect, deciding
+      whether a command surface exists for it: the abilities tray builds
+      from the yeses.</li>
+  <li><i>Are you activatable now?</i> — a live, side-effect-free read of
+      the world, deciding whether that surface is interactable at this
+      time.</li>
+</ul>
+
+<p>Effects are sealed: the effect answers both questions itself, casting its
+own trigger; the answer alone crosses the seal.</p>
+
+<p><b>Fire.</b> The commander addresses the effect — activatable-now, then
+fire — and the effect mints its own ask. The event name stays inside the
+effect.</p>
+
+<p><b>The whole mechanism.</b> The ActivatedTrigger is all of it: the two
+questions, the firing, and the carrying-me condition.</p>
+
+<p><span class="commentary">Peripheral, unaddressed: play and Move
+special-cased as autocast — commanded without surfacing in the abilities
+tray — with ability autocast built on the same rails. The main action stays
+a listening trigger: <code>act</code> is fired at the unit by the clock, not
+commanded by the holder.</span></p>
+
+<h2><span class="secno"></span>Move's appointment (ruling, transferred from A9)</h2>
+
+<p>Moving costs nothing in this version. The <code>use_ability</code> ask for
+Move is fired by the moving UI already in place; that UI is adapted as needed
+to obtain the target slots and fire the event. (Transferred from A3 on
+Enrra's word, 2026-08-27.) Machinery appoints the Move ability on every unit
+at construction — conditionally: buildings do not receive it. Ruled by Enrra,
+2026-08-23.</p>
+
+<p><b>Provenance:</b> transferred whole from Bible Amendments A9 on Enrra's
+word, 2026-08-27; A9's landing designation (Core §7) is superseded by this
+seat. This section is ruling text, unlike the rest of the draft; the transfer
+takes force with the A9 revision's approval.</p>
+
+<p><b>Signature:</b> signed off — Enrra, 2026-08-27 (carried from A9).</p>
+
+<div class="signature">
+  <b>Signature:</b> signed draft — Enrra, 2026-08-30; not yet legally
+  binding, pending development into signed law. The transferred A9 section
+  above carries its own signature.
+</div>
+
+</div>
