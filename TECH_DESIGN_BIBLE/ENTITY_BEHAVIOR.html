@@ -74,6 +74,7 @@
   li { margin: 0.4rem 0; }
   pre { background: var(--code-bg); border-radius: 4px; padding: 0.7rem 1rem; overflow-x: auto; }
   pre code { background: none; padding: 0; }
+  ins { text-decoration: none; background: var(--accent-soft); }
   .ins-block {
     background: var(--accent-soft); border-left: 3px solid var(--accent);
     border-radius: 0 4px 4px 0; padding: 0.2rem 1rem; margin: 0.8rem 0;
@@ -81,6 +82,10 @@
   .commentary {
     font-style: italic;
     background: #F5E9B8;
+  }
+  .correction {
+    background: var(--warn-soft);
+    box-shadow: inset 0 -2px 0 var(--warn);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .commentary { background: #4A4020; }
@@ -127,22 +132,114 @@ declared, built, shared, and conditionally granted — replacing the scattered
 per-class construction patterns with an appointed logistics. A9's landing
 depends on it: the Move appointment consolidates into this system.</p>
 
+<h2><span class="secno"></span>Entity anatomy</h2>
+
+<p><span class="commentary">Authored 2026-08-31, replacing the carried Core
+quotes. The audit's relocations: occupancy, the board-position read, and the
+Game's plain-member housing land in the types section; the world definition,
+the ownership topology, and the legal-target ruling stand in the follow-up
+inventory; Core §2's move-stamping and mover-addressing paragraphs are
+write-system scope and stay out of this document.</span></p>
+
+<p>An entity is a bearer of facts and rules. Every entity extends the one
+root, <code>GameEntity</code>, and bears the members stated here: stats,
+containers, allegiance, effects, and the world back-reference. The concrete
+types are instances of this anatomy; what each type declares is the next
+section's statement.</p>
+
+<h3>Stats</h3>
+
+<p>A stat is a numeric fact of its bearer. Its identity is its id, a
+StringName. An entity holds its stats in one map, id → value; a value is a
+float. Each entity type declares its stat ids in two lists — public mutable,
+and read-only — and an entity bears exactly its type's declared ids from
+construction. Reads and writes are generic, by id.</p>
+
+<p>Validation runs twice: parse refuses an id the authored subject type does
+not declare; execution refuses at the concrete bearer — an unborne id, or a
+write to a read-only stat. A stat's value changes only through the write
+road (Mutation §8).</p>
+
+<h3>Containers and housing</h3>
+
+<p>A container is an ordered holding of entities. One Container class serves
+every use; its members: <code>owner</code> (GameEntity), <code>name</code>
+(StringName), and <code>members</code> (ordered Array[GameEntity]). It
+accepts any GameEntity; membership legality is enforced by the procedures
+that write it.</p>
+
+<p>An entity holds its containers in one map, name → Container — the same
+model as stats: identified by StringName, declared per type, accessed
+generically. The two reads: fetch by name and enumerate. Each entity type
+declares the container names it bears; GameEntity declares
+<code>contained</code>, so every entity bears it. Parse refuses a container
+name the authored subject type does not declare. The container's
+<code>name</code> member duplicates its map key; the membership primitives
+maintain both.</p>
+
+<p><b>Housing.</b> At any moment an entity is a member of exactly one
+container, or of none. Every housed entity holds a back-reference to the
+container housing it. The membership primitives — insert and remove
+(Mutation §8) — are the only writers of container members, and they maintain
+the back-reference on every write. A move is one procedure performing
+remove-from-housing then insert-at-destination.</p>
+
+<h3>Allegiance</h3>
+
+<p>Every entity bears a member referencing the Side it belongs to, stamped
+at construction as a birth fact and never rewritten. Allegiance is identity,
+not position: housing may place an entity anywhere; whose it is does not
+move with it. The read "the holder's side" returns this member.</p>
+
+<h3>Effects</h3>
+
+<p>Every entity holds effects — the rules it adds to the game. The effect
+itself — trigger, targeting, payload, lifecycle — is stated in its own
+section. <span class="commentary">That section enters at migration
+pass 2.</span></p>
+
+<h3>The world relation</h3>
+
+<p>Every entity bears a back-reference to the world it lives in; the world's
+definition is Core §1's. Simulation copies the world whole, and a copy
+carries every entity: each entity reference — both ends of every housing
+relation, the allegiance, the world back-reference — is remapped to the
+copy under the established weak-reference discipline.</p>
+
 <h2><span class="secno"></span>The entity types</h2>
+
+<div class="ins-block">
+<p>Extending GameEntity directly: <code>Game</code>, <code>Side</code>,
+<code>Relic</code>, <code>Status</code>, <code>Slot</code>, and
+<code>Card</code>. <code>Card</code> has two kinds: <code>Unit</code> and
+<code>Spell</code>, each extending Card.</p>
+
+<p>Each type embeds fixed machinery; content authors only the fields those
+effects declare authored (<span class="correction">Core §5, §6</span>).</p>
+</div>
 
 <ul>
   <li><code>GameEntity</code> — the base of every entity: stats, containers,
-      housing, allegiance, effects, abilities.</li>
+      housing, allegiance, effects<s>, abilities</s><span class="correction">
+      (command capability is derived by question — Activation)</span>.</li>
   <li><code>Game</code> — the one rule-bearing entity; houses the two Sides;
       bears the base rules and their stats.</li>
   <li><code>Side</code> — a fighting party; declares <code>deck</code>,
       <code>hand</code>, <code>graveyard</code>, <code>board</code>,
-      <code>relics</code>; its allegiance is itself.</li>
-  <li><code>Slot</code> — one board cell; the ground layer's entity.</li>
+      <code>relics</code>; <ins>mana is a stat on it;</ins> its allegiance
+      is itself.</li>
+  <li><code>Slot</code> — one board cell; the ground layer's entity;
+      <ins>declares <code>slotted_unit</code>. A Slot's coordinate — row and
+      column within its half — is set at construction and never changes. A
+      slot's side is the side owning the board container that houses it
+      (<span class="correction">Core §3</span>).</ins></li>
   <li><code>Card</code> — the base of the two playable kinds; bears the play
-      effect and the payability query.</li>
-  <li><code>Unit</code> — a Card kind; bears the main action, its burial, the
-      placement baked into its play, and the Move appointment (buildings
-      excepted).</li>
+      effect <s>and the payability query</s><span class="correction">
+      (payability is the play behavior's activatable-now answer —
+      Activation)</span>.</li>
+  <li><code>Unit</code> — a Card kind; bears the main action, <ins>the
+      target poll,</ins> its burial, the placement baked into its play, and
+      the Move appointment (buildings excepted).</li>
   <li><code>Spell</code> — a Card kind; bears its own burial, spent by its
       play.</li>
   <li><code>Status</code> — a condition entity housed in its holder's
@@ -290,6 +387,74 @@ seat. This section is ruling text, unlike the rest of the draft; the transfer
 takes force with the A9 revision's approval.</p>
 
 <p><b>Signature:</b> signed off — Enrra, 2026-08-27 (carried from A9).</p>
+
+<h2><span class="secno"></span>Migration plan</h2>
+
+<p><span class="commentary">Working scaffolding, deleted at consolidation
+into signed law. The remaining entity-scope statements enter step by step,
+one section per pass, in this order. Modes: verbatim — source sentences
+carried exactly; adapted — verbatim base with ruled-design conforming edits;
+new — authored fresh, no source exists.</span></p>
+
+<ul>
+  <li><span class="commentary"><b>1. Entity anatomy.</b> Core §1 (hierarchy,
+      ownership chain, per-type machinery, slot coordinate, legal-target
+      statement) verbatim — adapted at the payability query and the ability
+      roster; Core §2 (containers and housing) verbatim, its move-stamping
+      and mover-addressing paragraphs staying in Core as quoted machinery;
+      Core §9's stat declaration lists and twice-run validation verbatim;
+      the stats holding model (one map, id → float, borne as declared) new —
+      no source states it.</span></li>
+  <li><span class="commentary"><b>2. The effect.</b> Mutation §2 (rules,
+      audience, implied fielded condition) and §3 (the payload's authored
+      form) verbatim; the lifecycle adapted — the sources' shared-instance
+      wording yields to the ruled per-entity bake.</span></li>
+  <li><span class="commentary"><b>3. The listening trigger.</b> Core §9's
+      trigger structure, routes, entries, and authored form verbatim,
+      seated beside the landed ActivatedTrigger.</span></li>
+  <li><span class="commentary"><b>4. The target resolver.</b> Core §4
+      verbatim — phases, elections, AutoResolver, the carried
+      target.</span></li>
+  <li><span class="commentary"><b>5. Conditions.</b> Core §9 verbatim —
+      predicate, seats, families, negation, authoring, parse.</span></li>
+  <li><span class="commentary"><b>6. The embedded behaviors of the
+      types.</b> Core §5 (play) adapted — the trigger becomes the
+      ActivatedTrigger firing <code>play</code>, conditions and payload
+      carried; Core §6 (placement, the two burials) verbatim; Combat Frame
+      §6 (main action) verbatim; Core §7 (abilities) adapted heaviest — the
+      expansion and pay road carry, the name-discrimination apparatus is
+      replaced by reference discrimination.</span></li>
+</ul>
+
+<p><span class="commentary">Collisions with signed text this migration
+creates — future amendments at the trim pass, flagged so nothing lands
+unseen: Core §7's discrimination apparatus; Core §1's payability query;
+the shared-instance lifecycle lines (Core §9, Mutation §4); Kind Rosters'
+name_is row and the pay mutator's engaged-name derivation.</span></p>
+
+<h2><span class="secno"></span>Follow-up inventory</h2>
+
+<p><span class="commentary">Working scaffolding, deleted at consolidation
+into signed law. Pieces identified during review as requiring treatment at a
+later pass, so none is lost unseen.</span></p>
+
+<ul>
+  <li><span class="commentary"><b>The world's definition.</b> Its only
+      signed seat is Core §1; the anatomy's carried copy serves no ask here
+      and leaves. When the entity statements are cleansed from Core, the
+      definition is not entity scope and must survive there — kept in place
+      or reseated by ruling, never cleansed with the entity text.
+      (Identified 2026-08-31.)</span></li>
+  <li><span class="commentary"><b>"The world holds the Game as a plain
+      member."</b> Sole seat: Core §1's Ownership paragraph. The paragraph's
+      remaining topology is restated by the per-type container declarations;
+      this fact is stated nowhere else and must be reseated by ruling before
+      the Core cleanse. (Identified 2026-08-31.)</span></li>
+  <li><span class="commentary"><b>"Any GameEntity is a legal target."</b>
+      Sole seat: Core §1. It rules the resolver's candidate universe — Core
+      §4's scope — and must be reseated by ruling (§4 the natural seat)
+      before the Core cleanse. (Identified 2026-08-31.)</span></li>
+</ul>
 
 <div class="signature">
   <b>Signature:</b> signed draft — Enrra, 2026-08-30; not yet legally
