@@ -1,0 +1,736 @@
+<meta charset="utf-8">
+<title>Entity Redesign Scratchpad</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.1rem; margin: 1.6rem 0 0.5rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--warn); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  pre {
+    overflow-x: auto; background: var(--code-bg); border-radius: 3px;
+    padding: 0.6rem 0.8rem; margin: 0.8rem 0;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.82rem; line-height: 1.5;
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .commentary { font-style: italic; background: #F5E9B8; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .commentary { background: #4A4020; }
+  }
+  :root[data-theme="dark"] .commentary { background: #4A4020; }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; vertical-align: top; }
+  th { background: var(--surface); font-weight: 600; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Working document · not canonical</span>
+<h1>Entity Redesign Scratchpad</h1>
+<div class="ribbon">
+  <span class="status-chip">Scratchpad</span>
+  <span>Opened: <b>2026-09-01</b></span>
+  <span>Feeds: <b>ENTITY_BEHAVIOR.html</b></span>
+</div>
+
+<p>The working surface of the entity-behavior redesign initiative. Nothing here
+is ruling text and nothing coded stands on it; worked-out pieces integrate into
+ENTITY_BEHAVIOR.html by its revision procedure, and this document is deleted
+when the initiative lands. The stance and the opens below carry from the
+draft's scaffolding sections as the starting state.</p>
+
+<h2>The stance</h2>
+
+<ul>
+  <li><b>One authoring road for every effect.</b> Every effect — base rule,
+      main action, burial, play — is authored in the one markup and built by
+      the one bake. No code mints a specific effect: code supplies vocabulary
+      (the kinds), markup composes effects.</li>
+  <li><b>The machinery category dissolves.</b> Every kind bears an authored
+      form; the rosters' machinery flag disappears. Kinds remain code classes,
+      as authorable kinds always were.</li>
+  <li><b>Every entity is authored.</b> The Game is an authored entity like a
+      card or relic — stats and effects in an envelope, its base rules
+      editable there. Side and Slot take the same shape when they bear
+      authored content.</li>
+  <li><b>The entity template.</b> One fixed place defines the entity
+      types: per kind — stats (both lists), containers, and the kind's
+      appointed effects. The template is architectural, not content: it
+      changes only alongside the document, by revision. Code binds purpose
+      by kind through seams: genesis initializes the <code>game</code> kind
+      as the core entity, the clock walks <code>unit</code> kinds.</li>
+  <li><b>One entity class.</b> The concrete class hierarchy collapses: one
+      GameEntity class, kind as data. Static type guarantees at code seams
+      become runtime refusals under the standing loud-refusal discipline.</li>
+  <li><b>No kind inheritance.</b> Kinds do not derive. Cardness is a borne
+      fact: an entity bearing <code>cost</code> is a card. Unit and spell
+      each author their own play and burial.</li>
+</ul>
+
+<h2>The opens</h2>
+
+<ul>
+  <li><b>The existence boundary.</b> What genesis builds versus what markup
+      states: which entities exist — one Game, two Sides, the board's slots
+      and coordinates — is topology, not authored content; the boundary needs
+      its statement.</li>
+  <li><b>The kind-purpose seams.</b> The mechanism binding code purpose to a
+      kind is unstated: what the seam is, where it lives, what it
+      refuses.</li>
+  <li><b>The activation flow's ordering.</b> The Activation section's
+      payment-flow sentence lists payment before validation and targeting;
+      the signed conductor's run (Mutation §11) engages targeting first,
+      payment inside the delivery. Whether the sentence states a flow or only
+      its parts needs ruling.</li>
+  <li><b>The registry's home.</b> Data file, document seat, and loading road
+      await ruling.</li>
+  <li><b>Bystander discrimination.</b> Pending ratification: how a bystander
+      tells which behavior fired.</li>
+  <li><b>The fight-end effect.</b> The clock's fight-end decision (Combat
+      Frame §7) redesigns into an authored effect; the fact "the fight is
+      over" needs its carrier and its mutation.</li>
+  <li><b>The building exemptions' carriers.</b> "Buildings never dodge"
+      (Mutation §7) and Move's building exception read building-ness in
+      code; each read needs its authored carrier under the redesign.</li>
+  <li><b>The conditional appointment mechanism.</b> Move's appointment
+      excludes buildings; how a template-appointed effect is conditionally
+      withheld — a bake condition or an authored gate — needs ruling.</li>
+  <li><b>The king's carrier.</b> The win-condition king fact versus the
+      <code>king</code> chess component: whether they are one fact, and
+      what carries the win-condition fact if not.</li>
+  <li><b>Composition's per-kind legality.</b> Whether the template states
+      which kinds may author <code>composition</code>, or the key is lawful
+      anywhere and inert off-card.</li>
+  <li><b>The slot coordinate's seat.</b> A slot's row and column are
+      neither a stat, a tag, nor composition; their seat under the new
+      shape belongs to the existence-boundary ruling.</li>
+</ul>
+
+<h2>The document outline</h2>
+
+<p>The structure of the redesigned entity document. Each section is
+authored alone, whole, and lands on Enrra's word.</p>
+
+<ol>
+  <li><b>The entity</b> — the anatomy: a bearer of facts and rules; stats,
+      containers, ownership, effects, the world relation, the definition
+      reference.</li>
+  <li><b>The kind and the template</b> — every entity is of a kind; the
+      template states, per kind, what every entity of that kind bears at
+      construction.</li>
+  <li><b>The definition</b> — the authored object of one entity: kind, id,
+      display name, stat values, composition, tags, effects.</li>
+  <li><b>The bake</b> — construction: entry looked up by kind, definition
+      validated against it, effects appended kind-first, the entity keeping
+      its definition readable.</li>
+  <li><b>Tags</b> — the open vocabulary.</li>
+  <li><b>Composition</b> — the component array: shape, caps, identity, the
+      index, the read, immutability.</li>
+  <li><b>The effect</b> — the substrate: trigger, targeting, payload; the
+      Trigger and the ActivationTrigger; conditions; the resolver.</li>
+  <li><b>Behaviors</b> — effects defined once under a name; the registry;
+      slots and invocation.</li>
+  <li><b>The kinds</b> — the seven concrete entries: per kind its stats,
+      containers, appointed effects; cardness; Move's transferred ruling
+      seated with <code>unit</code>.</li>
+</ol>
+
+<h2>Worked pieces</h2>
+
+<h3>1. The entity</h3>
+
+<p>The world is made of entities — the Game, the two sides, the board's
+slots, the units and spells, the statuses, the relics. One class carries
+them all; entities differ by their kind (§2) and by what their definition
+authors (§3). An entity bears facts — its stats, its containers, its
+owner — and rules — its effects (§7) — and two references: the world it
+lives in, and the definition it was built from.</p>
+
+<p><b>Stats.</b> A stat is a numeric fact of its bearer. Its identity is
+its id, a StringName; an entity holds its stats in one map, id → value; a
+value is a float. An entity bears exactly the stat ids its kind's
+template entry states (§2), from construction. Reads and writes are
+generic, by id. Validation runs twice: parse refuses an id the kind's
+entry does not state; execution refuses at the bearer — an unborne id, or
+a write to a read-only stat. A stat's value changes only through the
+write road (Mutation §8).</p>
+
+<p><b>Containers.</b> A container is an ordered holding of entities — a
+deck, a hand, a slot's seat. One Container class serves every use; its
+members: <code>owner</code>, <code>name</code>, <code>members</code>. An
+entity holds its containers in one map, name → Container, bearing exactly
+the container names its kind's entry states; every kind bears
+<code>contained</code>. A container accepts any entity; which entities
+lawfully enter is the law of the procedures that write it, and the
+membership primitives (Mutation §8) are the only writers of its
+members.</p>
+
+<p><b>Housing.</b> At any moment an entity is a member of exactly one
+container, or of none. Every housed entity holds a back-reference to the
+container housing it; the membership primitives maintain it on every
+write. A move is one procedure performing remove-from-housing then
+insert-at-destination.</p>
+
+<p><b>Ownership.</b> Every entity bears its owner: one of three
+identities — <code>player</code>, <code>opponent</code>,
+<code>game</code> — stamped at construction as a birth fact and never
+rewritten.</p>
+
+<p><span class="commentary">Review — one read is unarticulated: the
+<b>owner's side</b>. No side owns an entity — the owner is the identity,
+and a Side bears its owner value like any entity. Machinery must still
+reach the Side entity itself (the pay road's mana, burial's graveyard),
+and the road is the side bearing the entity's own owner value. The read
+needs its statement.</span></p>
+
+<p><b>Effects.</b> Every entity holds effects — the rules it adds to the
+game (§7), obtained at the bake (§4).</p>
+
+<p><b>The world reference.</b> Every entity bears a reference to the
+world it lives in. Simulation copies the world whole; every entity
+reference in the copy — housing's both ends, the world reference — is
+remapped under the established weak-reference discipline. Ownership is a
+value and copies as it is.</p>
+
+<p><b>The definition reference.</b> Every entity holds a reference to the
+definition it was built from, readable and never written. Definition
+facts — composition (§6), tags (§5) — answer through it; no definition
+fact is entity state.</p>
+
+<h3>2. The kind and the template</h3>
+
+<p>There are seven kinds of entities: <code>game</code>,
+<code>side</code>, <code>slot</code>, <code>unit</code>,
+<code>spell</code>, <code>status</code>, <code>relic</code>.</p>
+
+<p>The entity template states, per kind, what every entity of that kind
+bears at construction — one entry per kind: the public mutable stat ids,
+the read-only stat ids, the container names, and the appointed effects —
+effects every entity of the kind receives at the bake (§4). The concrete
+entries are §9's.</p>
+
+<p><span class="commentary">Review — "the entity template" is spent from
+the void, the same failure the section opened with. The need comes
+first: kinds differ in what their entities bear, and those lists must be
+stated somewhere; then the template is introduced as that place, and the
+entry's contents follow on prepared ground.</span></p>
+
+<p>The template is one contract file, parsed by both runtimes — the game
+and the authoring Tool. Each runtime holds one typed wrapper loading the
+file at startup; an unknown key, a wrong type, or an unknown kind is
+refused loudly at load. Every consumer reads through its runtime's
+wrapper; no copy of any list exists outside the file.</p>
+
+<p>The template is not content. It changes only alongside this document,
+by revision.</p>
+
+<p><span class="commentary">The contract file's path and format await
+appointment.</span></p>
+
+<h3>3. The definition</h3>
+
+<p>A definition is the authored form of an entity — a card, a relic, a
+status, the Game. Every entity of the definition is baked from it (§4).
+Content authors entities only through definitions. The catalogue is the
+loaded set of every definition.</p>
+
+<p>A definition's members: <code>kind</code> — one of §2's seven;
+<code>id</code> — a StringName, unique across the catalogue; the display
+name; <code>stats</code> — id → value, each id one the kind's entry
+states; <code>composition</code> (§6); <code>tags</code> (§5);
+<code>effects</code> — effect markup (§7) and behavior invocations
+(§8).</p>
+
+<p>The catalogue loads before any fight exists, and every definition is
+validated at load by the one generic driver: an unknown key, a wrong
+type, or a stat id the kind's entry does not state is refused loudly. A
+content defect surfaces at load, never mid-fight.</p>
+
+<p>A definition is immutable at runtime. Every entity built from it holds
+it readable (§1); a changed definition reaches every subsequent
+build.</p>
+
+<p><span class="commentary">Review — the definition's required and
+optional members are nowhere stated as one fact; the absence rules are
+scattered (§4's stat default, §5's empty tags, §6's absent composition).
+One statement of the definition's shape — which keys may be absent and
+what absence means — belongs here.</span></p>
+
+<h3>4. The bake</h3>
+
+<p>The bake builds one entity from its definition. An entity comes into
+existence only through the bake. Its inputs: the definition, the owner
+(§1), and the world the entity enters.</p>
+
+<p>The bake, in order:</p>
+
+<ol>
+  <li>The kind's template entry is fetched (§2). An unknown kind is
+      refused loudly.</li>
+  <li>The entity is minted bearing exactly the entry's stat ids and
+      container names; the definition's stat values seed the stat map.</li>
+  <li>The effects are baked: the entry's appointed effects first, the
+      definition's effects second. A behavior invocation is expanded to
+      plain effect markup before parsing (§8). Each baked effect instance
+      is owned by the entity and immutable.</li>
+  <li>The owner, the world reference, and the definition reference are
+      stamped.</li>
+</ol>
+
+<p>The bake's one seat is the <code>EntityBaker</code>: static, stateless,
+one function — <code>bake(definition, owner, world) → entity</code>. Its
+callers are two: genesis, building the world's starting entities; and a
+procedure resolving mid-play existence, which hands the baked entity to
+the mint primitive (Mutation §8). The baker builds; the primitive commits
+existence; the procedure decides.</p>
+
+<p><span class="commentary">The value of a declared stat id the definition
+does not state awaits ruling; zero is the working default.</span></p>
+
+<h3>5. Tags</h3>
+
+<p>A tag is a name a definition bears: the definition's <code>tags</code>
+member (§3), an array of StringNames, empty unless authored.</p>
+
+<p>The vocabulary is open. Content mints tags freely; no roster,
+declaration, or template entry governs them. A tag nothing reads is inert
+and lawful.</p>
+
+<p>Conditions read tags through the entity's definition reference (§1).
+The condition kind <code>has_tag</code> — member <code>tag</code> — is
+true when the subject entity's definition bears the tag. No code seam
+consumes a tag.</p>
+
+<h3>6. Composition</h3>
+
+<p>A component is one of twelve ids: the six elements —
+<code>fire</code>, <code>water</code>, <code>air</code>,
+<code>earth</code>, <code>darkness</code>, <code>light</code> — and the
+six chess pieces — <code>pawn</code>, <code>knight</code>,
+<code>bishop</code>, <code>rook</code>, <code>queen</code>,
+<code>king</code>. The vocabulary is closed and lives in the contract
+file (§2).</p>
+
+<p>Composition is what a card is made of: the definition's
+<code>composition</code> member (§3), one array of component ids.
+Duplicates are legal; order carries nothing. The caps — at most two
+elements and at most two chess pieces — are validated at catalogue
+load.</p>
+
+<p><b>Composition is identity.</b> One composition identifies at most one
+definition. The composition key is the array sorted and joined. The
+catalogue load builds the composition index — key → definition — in one
+pass; a second definition claiming a claimed key is refused loudly.
+Minting by composition is one index fetch.</p>
+
+<p><b>The read.</b> Conditions read composition through the entity's
+definition reference (§1). The condition kind <code>has_component</code> —
+members <code>component</code> and <code>count</code> — is true when the
+subject entity's definition composition contains the component at least
+count times.</p>
+
+<p><span class="commentary">Review — the ruling that only cards bear
+composition is unstated in this section; the open covers only the
+enforcement mechanism (template-stated or inert off-card), not the fact
+itself.</span></p>
+
+<p><b>Immutability.</b> Composition is a definition fact, not entity
+state. No mutation reaches it (T1). An effect that changes a unit's
+composition changes its identity: it is a transformation — a new entity
+baked from the new composition's definition, replacing the old in its
+housing — and enters as its own procedure when content demands it.</p>
+
+<p><span class="commentary">The derivation of a card from an unclaimed
+composition key — the forge's formula — is deck-layer scope; its statement
+seat awaits appointment.</span></p>
+
+<h3>7. The effect</h3>
+
+<p>An effect is a rule of the game. Everything a card, a relic, a status,
+or the Game itself does, it does through its effects. An effect has three
+parts, each answering one question and holding no flow: the trigger —
+when does this rule act; the targeting — whom does it act on; the
+payload — what does it do to them.</p>
+
+<p><b>The one road.</b> An effect acts only when its trigger holds on a
+fired event. Nothing invokes an effect directly. Effects are sealed: no
+consumer reads into an effect; only the trigger's answer crosses the
+seal. An effect is created, altered, or engaged only by authoring (§3),
+the bake (§4), and the trigger; any other mechanism touching an effect is
+illegal unless a signed document rules it.</p>
+
+<p><b>The audience.</b> Every event is offered to every effect in the
+world — held in the deck, the hand, the graveyard, or on the board alike.
+An effect acts wherever its trigger holds: it carries exactly its
+authored conditions.</p>
+
+<p><b>Conditions.</b> A condition is one question, answered true or
+false. Two kinds of question exist, and they are the two condition
+families:</p>
+
+<ul>
+  <li>A question about the happening itself — <i>was this damage caused
+      by poison?</i> Its subject is the event. The family is
+      <code>EventDataCondition</code>.</li>
+  <li>A question about an entity — <i>is this entity my holder? is it a
+      wounded enemy?</i> Its subject is one entity. The family is
+      <code>EntityCondition</code>.</li>
+</ul>
+
+<p>A condition's question may refer to the happening and to the asker:
+<i>is the damaged entity my holder? was this damage caused by poison?</i>
+So beside its subject, every condition receives the same two facts: the
+<b>occasion</b> — the event that fired — and the <b>holder</b> — the
+entity whose effect is asking. This pair is the <b>plate</b>.</p>
+
+<ul>
+  <li><b><code>negate</code></b> — every condition bears it, false unless
+      authored. The kind asks its question in its natural sense;
+      <code>negate</code> takes the opposite answer.</li>
+  <li><b>Absence</b> — an occasion does not carry every component. A
+      question asked of a component the occasion does not carry answers
+      false; negated, true.</li>
+</ul>
+
+<p>The roster of condition kinds is the Kind Rosters document's.</p>
+
+<p><b>The trigger.</b> When an event fires, each effect's trigger answers
+one thing: does my effect engage on this? Yes only when three tests pass
+together:</p>
+
+<ol>
+  <li>the event bears the name the trigger names — its <b>event</b>
+      member;</li>
+  <li>every question about the happening holds — the trigger's
+      EventDataConditions;</li>
+  <li>every question about entities holds — clustered as follows.</li>
+</ol>
+
+<p>An EntityCondition tests one entity, so the trigger must state which.
+Conditions about the same entity are clustered together, and the cluster
+names a <b>route</b> — where that entity comes from. The routes are four:
+<code>source</code> — the occasion's source; <code>target</code> — the
+occasion's target; <code>holder</code> — the effect's own holder;
+<code>world</code> — every entity that exists. A route like
+<code>world</code> yields many entities: the cluster holds when at least
+one of them passes all its conditions — with its <code>negate</code> set,
+when none does. In markup and in code the cluster is the <b>entity
+entry</b>.</p>
+
+<p>The EventDataConditions and the entity entries each form one list, and
+each list bears a policy — <code>all</code> or <code>any</code> — over
+its members; an empty list holds.</p>
+
+<p><b>ActivationTrigger.</b> <code>Trigger</code> is the class of
+everything stated above. <code>ActivationTrigger</code> extends it —
+everything above stands and functions in it — and adds being
+commandable:</p>
+
+<ul>
+  <li><b>The fire.</b> On its holder's command, the trigger mints and
+      fires the ask event itself: named by its own event member, carrying
+      the trigger by reference as an ActivationEventData component. The
+      event travels the cascade like any event; bystanders react to its
+      name.</li>
+  <li><b>The carries-me test.</b> Many triggers may name the same event;
+      the commanded one must recognize its own ask. An added axial test:
+      the trigger holds only when the occasion carries it. Equality is
+      reference identity — one trigger per effect and one effect instance
+      per entity make the reference single out exactly one consultee in
+      the world.</li>
+  <li><b>The command questions.</b> A commander learns what it can
+      command by asking each effect two questions, which the effect
+      answers by casting its own trigger: <i>do you activate?</i> — a
+      fixed fact of the effect, deciding whether a command surface exists
+      at all; <i>are you activatable now?</i> — a live, side-effect-free
+      read of the world, affordability among its conditions. The
+      commander addresses the effect — activatable-now, then fire; the
+      event's name never leaves the effect.</li>
+</ul>
+
+<p><b>The targeting.</b> The target resolver elects whom the payload
+lands on. Its structure: conditions narrow every entity in the world to
+the eligible; a <b>decision</b> picks among them. The roster of decision
+kinds is the Kind Rosters document's. It runs in two phases:
+<b>resolve</b> — side-effect-free, run by any reader at any moment: the
+previews, the greyout; and <b>engage</b> — committing, in the live flow:
+rolls draw from the world's seeded rng, the picker picks, and engagement
+delivers the payload. An empty election ends the delivery. A declined
+pick yields an empty election; for a commanded ask it ends the ask whole,
+unpaid. An effect authored without a targeting block falls back to the
+AutoResolver, fixed at construction: the target carried in context, the
+Game where none is found.</p>
+
+<p><span class="commentary">Review — this paragraph carries five rules
+in one block: the two phases, the empty election, the declined pick, and
+the AutoResolver. Each deserves its own statement; the block hides
+them.</span></p>
+
+<p><b>The payload.</b> The payload is the list of mutators the effect
+delivers to its elected recipients; one delivery is the unit of issuance
+and the scope of the holster (Mutation §9). Its authored form is a
+<code>"payload"</code> array: an entry is a bare mutator name where the
+mutator takes no authored parameters, an object naming the mutator with
+its typed parameters where it does. Every parameter is required; the
+parser refuses strangers.</p>
+
+<p><b>The presentation names.</b> An effect bears two: the windup and the
+contact — the cues the conductor speaks around the delivery
+(Mutation §11). Both are authored; an absent name cues nothing.</p>
+
+<p><b>The authored form.</b> The effect markup is one object of five
+keys: <code>trigger</code>, <code>targeting</code>, <code>payload</code>,
+<code>windup</code>, <code>contact</code>. The trigger is required;
+targeting absent falls back to the AutoResolver; payload absent delivers
+nothing. Parse is the one generic driver: strangers and type mismatches
+refused loudly.</p>
+
+<p><b>Lifecycle.</b> An effect instance is built by the bake and owned by
+its entity (§4). It is immutable and holds only its definition; every
+situational fact arrives on the plate at consultation. World copies carry
+the instance untouched.</p>
+
+<p><span class="commentary">Review — three terms enter this section
+ungrounded and unpointed: <b>mutator</b> (the payload's list),
+<b>the cascade</b> (the fire's travel), <b>the commander</b> (the
+command questions). Each is another document's concept; at minimum the
+first use carries its pointer (Mutation §4, Mutation §12, Combat Frame
+§5).</span></p>
+
+<p><span class="commentary">Minted, unruled: no opposite condition kinds
+are authored — <code>negate</code> is the only negative form. Pending
+ratification, carried from the draft: for bystanders discriminating which
+behavior fired, the behavior's name rides the ask and engaged events as
+event data. The ActivationTrigger's authored form — how a trigger
+declares itself activated in markup — awaits minting with §8's registry
+syntax.</span></p>
+
+<h3>8. Behaviors</h3>
+
+<p>A behavior is an effect defined once, under a name, in the behavior
+registry. A definition obtains a behavior by invoking its name in its
+<code>effects</code> member (§3), and the template's appointed effects
+invoke the same way (§2): appointment and content reuse are one
+mechanism.</p>
+
+<p><span class="commentary">Review — the registry never receives its own
+definition, the counterpart of §3's catalogue sentence: the loaded set of
+every behavior definition. Its validation moment — whether a behavior
+definition is validated at load like a catalogue definition, and what of
+it can be validated before expansion — is likewise unstated.</span></p>
+
+<p><b>The definition.</b> A behavior's definition is effect markup (§7)
+with slot tags standing where inputs land. Each slot tag carries its
+default value: a bare invocation is complete, and every supplied input is
+an override. The named slots are the behavior's <b>input contract</b>. An
+input is markup, spliced at its slot's position by the expansion; the
+expanded effect parses as any effect.</p>
+
+<p><b>The slot tag.</b> A slot tag is an object standing at a value
+position of the markup, bearing the tag marker; the expansion recognizes
+a slot by the marker alone. The slot's name is read only by the fill
+lookup — its own namespace — so a name shared with a markup property key
+collides with nothing: keys are found at key positions, slots by their
+marker at value positions.</p>
+
+<p><b>Invocation.</b> An entry of an <code>effects</code> array is either
+a fully authored effect (§7) or an invocation: an object bearing the
+<code>behavior</code> key naming the definition, every other key an input
+filling the slot of that name. A key naming no slot is a stranger,
+refused loudly.</p>
+
+<pre><code>{"behavior": "bury"}
+{"behavior": "strike", "decision": "nearest"}
+{"behavior": "play", "targeting": {...}, "payload": [...]}</code></pre>
+
+<p><b>Expansion.</b> The baker expands invocations until the markup is
+plain effect text, then parses it (§4). A slot's value — supplied or
+defaulted — may itself be an invocation; a name revisited within one
+expansion is refused loudly. The expansion runs at each bake, so a
+changed behavior definition reaches every subsequent bake (§3).</p>
+
+<p><b>Abilities.</b> The shared ability functionality is held in a
+behavior; a concrete ability is that behavior extended through its
+inputs.</p>
+
+<p><span class="commentary">Review — "the shared ability functionality"
+is named but not stated: what the ability behavior holds (the activated
+trigger, the pay road, the cost as an input) is neither developed here
+nor explicitly deferred. The statement supersedes Core §7's expansion
+machinery and should say so.</span></p>
+
+<p><b>Generality.</b> Any effect can be defined as a behavior and shared
+by name plus inputs; parameterization is open to all content, beyond the
+template-appointed set.</p>
+
+<p><span class="commentary">Mints, awaiting ruling: the slot-tag marker's
+working syntax — <code>{"@": "targeting", "default": ...}</code>, carried
+from the draft; the ActivationTrigger's authored form — working syntax,
+the trigger object bearing <code>"activated": true</code> (§7's deferral
+lands here). The registry's home — data file, document seat, loading
+road — stands in the opens.</span></p>
+
+<h3>9. The kinds</h3>
+
+<p>The seven template entries. Every stat below is public mutable; every
+read-only list is empty at this scope. Every kind bears
+<code>contained</code> (§1); the containers column lists what an entry
+adds. The entries are the template's content (§2): they change only
+alongside this document, by revision.</p>
+
+<table>
+  <tr><th>Kind</th><th>Stats</th><th>Containers</th><th>Appointed effects</th></tr>
+  <tr><td><code>game</code></td>
+      <td><code>round</code>; the frame numbers —
+          <code>starting_mana_capacity</code>, <code>mana_ramp</code>,
+          <code>turn_draw</code>, <code>opening_hand_size</code>; the
+          strike numbers — <code>dodge_base</code>,
+          <code>dodge_speed_rating</code>,
+          <code>dodge_difference_rating</code>, <code>dodge_cap</code>,
+          <code>crit_base</code>, <code>crit_speed_rating</code>,
+          <code>crit_difference_rating</code>, <code>crit_cap</code>,
+          <code>crit_multiplier</code>, <code>crit_multiplier_cap</code></td>
+      <td><code>sides</code></td>
+      <td>the six base rules: round count, untap, ramp, refill, draw,
+          shield recovery (Combat Frame §4)</td></tr>
+  <tr><td><code>side</code></td>
+      <td><code>mana</code>, <code>mana_capacity</code></td>
+      <td><code>deck</code>, <code>hand</code>, <code>graveyard</code>,
+          <code>board</code>, <code>relics</code></td>
+      <td>—</td></tr>
+  <tr><td><code>slot</code></td>
+      <td>—</td>
+      <td><code>slotted_unit</code></td>
+      <td>—</td></tr>
+  <tr><td><code>unit</code></td>
+      <td><code>cost</code>, <code>attack</code>, <code>health</code>,
+          <code>max_health</code>, <code>speed</code>,
+          <code>shield</code>, <code>tapped</code></td>
+      <td>—</td>
+      <td>the play, the main action (Combat Frame §6), the burial, Move
+          (buildings excepted)</td></tr>
+  <tr><td><code>spell</code></td>
+      <td><code>cost</code></td>
+      <td>—</td>
+      <td>the play, the burial</td></tr>
+  <tr><td><code>status</code></td>
+      <td><code>stacks</code></td>
+      <td>—</td>
+      <td>—</td></tr>
+  <tr><td><code>relic</code></td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td></tr>
+</table>
+
+<p><b>Cardness.</b> A kind whose entry states <code>cost</code> is a
+card: <code>unit</code> and <code>spell</code>. Each authors its own play
+and burial; the two share no appointed effect.</p>
+
+<p><b>The Game.</b> One authored definition of the <code>game</code> kind
+exists, carrying the stat values — the frame numbers of Combat Frame §4
+and the strike numbers of Mutation §7. The base rules are
+template-appointed; their bodies are authored forms of the effects Combat
+Frame §4 states, built by the bake like every effect.</p>
+
+<p><span class="commentary">Review — the appointed effects' bodies have
+no stated seat: under the one road the play, the burials, the main
+action, and the base rules become authored definitions, and where their
+authored forms live is unappointed — their present statements (Core
+§5–§6, Combat Frame §4/§6) are scheduled for the cleanse or stay as
+design while the markup lives elsewhere. The seat needs
+appointment.</span></p>
+
+<p><b>Move, seated (transferred ruling).</b> Moving costs nothing in this
+version; the Move ask is fired by the moving UI in place, adapted as
+needed to obtain the target slots and fire the event. Every unit receives
+the Move appointment — buildings excepted. (Transferred from A9 through
+Entity Behavior; signed — Enrra, 2026-08-27.)</p>
+
+<p><span class="commentary">Review — the kinds' characteristic housings
+are stated nowhere in this document: a status housed in its holder's
+<code>contained</code>, a relic in its side's <code>relics</code>, a
+unit fielded in a slot's <code>slotted_unit</code>. Whether their seat is
+this section or the write-system's procedures needs appointment.</span></p>
+
+<p><span class="commentary">The stat and container rosters restate the
+current declarations whole. Mints, awaiting ruling: the base-rule
+behavior names; a status's identity read — the definition's id serving
+where <code>status_id</code> served, <code>has_status</code> becoming a
+definition-id comparison, landing with the conditions material beside
+the is_ally/is_enemy ownership rewrite. Standing in the opens, each
+touching this section when ruled: the fight-end effect, the building
+exemptions' carriers, the conditional withholding of Move, the king's
+carrier, composition's per-kind legality, the slot coordinate's
+seat.</span></p>
+
+
+</div>
