@@ -152,9 +152,8 @@ unruled. Opens close the document.</p>
       Tool. Each runtime holds one typed wrapper that loads it at startup
       and refuses loudly: an unknown key, a wrong type, an unknown kind.
       <span class="ns">No list in it is copied anywhere else.</span></li>
-  <li>Code that serves one kind — genesis building the <code>game</code>
-      entity, the clock walking <code>unit</code> entities — refuses any
-      other kind, loudly.</li>
+  <li>Code that serves one kind — the clock walking <code>unit</code>
+      entities — refuses any other kind, loudly.</li>
   <li>The seven entries are §12.</li>
 </ul>
 
@@ -166,7 +165,13 @@ unruled. Opens close the document.</p>
       StringName unique among all definitions; its display name; its
       <code>stats</code>, values for ids its kind's entry lists; its
       <code>tags</code> (§7); its <code>composition</code> (§8); its
-      <code>effects</code> (§9, §10).</li>
+      <code>effects</code> (§9, §10); its <code>contents</code>, the
+      entities housed in its containers at construction (§11).</li>
+  <li><code>kind</code> and <code>id</code> are required. Every other
+      member is optional and defaults to empty.</li>
+  <li>A definition may carry input tags (§10) where a value varies per
+      bake. An invocation of the definition fills them; the bake takes the
+      invocation (§11).</li>
   <li>The catalogue is every definition, loaded before any fight.</li>
   <li>Loading validates every definition against the template through the
       one generic parse driver (Core §9). An unknown key, a wrong type, or
@@ -211,6 +216,10 @@ unruled. Opens close the document.</p>
 <ul>
   <li>A container is an ordered holding of entities: a deck, a hand, a
       graveyard, a slot's <code>slotted_unit</code>.</li>
+  <li>A slot holds no coordinate. Where a slot is on the grid follows from
+      its index in its side's <code>board</code> container, and
+      BoardGeometry maps index to grid position for every spatial
+      computation and for the screen layout alike.</li>
   <li>One Container class serves every use: <code>owner</code>, the entity
       holding it; <code>name</code>; <code>members</code>, an ordered
       array of entities.</li>
@@ -232,8 +241,8 @@ unruled. Opens close the document.</p>
       at construction, never rewritten.</li>
   <li>Ownership is identity, not position. Housing places an entity
       anywhere; its owner does not move with it.</li>
-  <li>A side entity bears an owner value like any entity. The Side entity
-      for an owner value is an open read.</li>
+  <li>A side entity bears an owner value like any entity. An entity's side
+      is the side entity bearing the same owner value.</li>
   <li>Allies share an owner value; enemies differ. The conditions
       <code>is_ally</code> and <code>is_enemy</code> read this.</li>
 </ul>
@@ -416,8 +425,9 @@ unruled. Opens close the document.</p>
   <li>Behaviors are content: authored in the Tool, loaded with the
       catalogue before any fight, and fetched by name at expansion.</li>
   <li>A behavior is an effect written once with holes in it. An input tag
-      is one hole: a place in the markup where the invoker's value goes
-      instead of a fixed value. <span class="mint">mint</span> the term
+      is one hole: a place in markup where the invoker's value goes
+      instead of a fixed value. Input tags serve behaviors and entity
+      definitions alike (§3). <span class="mint">mint</span> the term
       input tag. <span class="commentary">Renamed from the draft's "slot
       tag": slot is a kind.</span></li>
   <li>An input tag is an object at a value position, bearing the marker,
@@ -452,19 +462,45 @@ unruled. Opens close the document.</p>
 <ul>
   <li>The bake builds one entity from one definition, for one owner, into
       one world. It is the only road to existence.</li>
+  <li>The bake takes an invocation: the definition's id and its inputs.
+      The expansion (§10) fills the definition's input tags before
+      construction; a definition with no inputs is invoked bare.</li>
   <li>In order: fetch the kind's template entry, refusing an unknown kind;
       mint the entity bearing exactly the entry's stat ids and container
-      names, seeded from the definition's values; bake the effects — the
-      entry's appointed effects first, then the definition's — expanding
-      each invocation and parsing each into an instance owned by the
-      entity; stamp the owner, the world reference, and the definition
-      reference.</li>
+      names, seeded from the definition's values; stamp the owner, the
+      world reference, and the definition reference; bake the contents;
+      bake the effects — the entry's appointed effects first, then the
+      definition's — expanding each invocation and parsing each into an
+      instance owned by the entity.</li>
+  <li><span class="mint">mint</span> <code>contents</code>: a definition
+      states, per container its kind bears, the entities housed there at
+      construction — a list of definitions, each a catalogue id or an
+      inline definition. Baking the contents bakes each listed child and
+      inserts it into the named container.</li>
+  <li><span class="mint">mint</span> A child's owner is its parent's, unless
+      the child's definition states its own.</li>
+  <li>The catalogue's one game definition (§12) lists its two sides under
+      <code>sides</code>. The player side's <code>deck</code> contents is an
+      input tag, filled with the run's card ids. The enemy side is an input
+      tag filled with a side definition's id: an encounter is an authored
+      side definition, its captain and roster under its <code>board</code>
+      and <code>deck</code> contents.</li>
+  <li>A fight starts as one invocation of the game definition — the
+      player's deck and the encounter as its inputs — handed to the bake
+      in a fresh world. That one bake builds every starting entity; then
+      the first event fires.</li>
+  <li>The fight's caller supplies the input values only: the card ids and
+      the encounter's id. The fight's start composes the invocation from
+      them; the caller handles no definition.</li>
   <li>The seat is <code>EntityBaker</code>: static, stateless,
       <code>bake(definition, owner, world) → entity</code>.</li>
-  <li>Two callers. Genesis (Combat Frame §8) bakes the fight's starting
-      entities. A write-system procedure resolving mid-play existence bakes
-      and hands the entity to the mint primitive (Mutation §8). The baker
-      builds, the primitive commits existence, the procedure decides.</li>
+  <li>The bake's other caller is a write-system procedure resolving
+      mid-play existence, which bakes and hands the entity to the mint
+      primitive (Mutation §8). The baker builds, the primitive commits
+      existence, the procedure decides.</li>
+  <li>The shuffle and the opening hand are base rules of the Game,
+      triggered by the first event; the starting mana is a stat value of
+      the side definition.</li>
 </ul>
 
 <h2>12. The kinds</h2>
@@ -502,8 +538,8 @@ containers column lists what the entry adds.</p>
           <code>max_health</code>, <code>speed</code>,
           <code>shield</code>, <code>tapped</code></td>
       <td>—</td>
-      <td>the play, the main action (Combat Frame §6), the burial, Move
-          (buildings excepted)</td></tr>
+      <td>the play, the main action (Combat Frame §6), the burial,
+          Move</td></tr>
   <tr><td><code>spell</code></td>
       <td><code>cost</code></td>
       <td>—</td>
@@ -534,38 +570,36 @@ containers column lists what the entry adds.</p>
       <code>graveyard</code>; the sides in the Game's <code>sides</code>;
       the slots in their side's <code>board</code>. Whether this document
       or the write system seats these statements is an open.</li>
+  <li>The fight's ending is a base rule of the Game: trigger
+      <code>died</code>; two <code>world</code> entries under policy
+      <code>any</code>, each negated — a fielded unit bearing the
+      <code>king</code> component owned by the player; the same owned by
+      the opponent. It holds when either side has no fielded king, and its
+      payload writes the ending. The outcome is a read at the ending: the
+      player has a fielded king, victory; otherwise defeat.</li>
+  <li>The king of the win condition is the <code>king</code> component.</li>
+  <li><span class="mint">mint</span> Roster growth for it: an
+      EntityCondition reading the subject's owner value, member
+      <code>owner</code>; and <code>fielded</code>, as already ruled.</li>
   <li>Move (ruling transferred from A9, signed — Enrra, 2026-08-27): moving
       costs nothing in this version; the Move ask is fired by the moving UI
       in place, adapted as needed to obtain the target slots and fire the
       event; every unit receives the Move appointment, buildings
       excepted.</li>
+  <li>The building exception is Move's own gate: its trigger carries a
+      <code>holder</code> entry with <code>has_component</code> rook,
+      negated. Move is appointed to every unit and never engages on a
+      building.</li>
 </ul>
 
 <h2>Opens</h2>
 <ul>
-  <li><b>The owner's side.</b> The read from an owner value to the Side
-      entity bearing it — the pay road's mana, burial's graveyard.</li>
-  <li><b>The definition's shape.</b> Which members may be absent, and what
-      absence means.</li>
-  <li><b>The existence boundary.</b> Which entities exist by topology — one
-      Game, two Sides, the slots and their coordinates — versus by authored
-      content; the slot coordinate's seat belongs here.</li>
   <li><b>The kind-purpose seams.</b> What a seam is, where it lives, what it
       refuses.</li>
   <li><b>The appointed effects' bodies' seat.</b> Where the authored forms
       of the play, the burials, the main action, and the base rules
       live.</li>
   <li><b>The housings' seat.</b></li>
-  <li><b>The fight-end effect.</b> The clock's fight-end decision (Combat
-      Frame §7) as an authored effect; the carrier of "the fight is over"
-      and its mutation.</li>
-  <li><b>The building exemptions' carriers.</b> "Buildings never dodge"
-      (Mutation §7) and Move's building exception, with no code seam
-      reading building-ness.</li>
-  <li><b>The conditional appointment mechanism.</b> How an appointed effect
-      is withheld from some entities of the kind.</li>
-  <li><b>The king's carrier.</b> The win-condition king fact versus the
-      <code>king</code> component.</li>
   <li><b>Composition's per-kind legality.</b> Template-stated, or lawful
       anywhere and inert off-card.</li>
   <li><b>The forge's seat.</b> The derivation of a card from an unclaimed
