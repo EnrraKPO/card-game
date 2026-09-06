@@ -86,7 +86,6 @@
     :root:not([data-theme="light"]) .commentary { background: #4A4020; }
   }
   :root[data-theme="dark"] .commentary { background: #4A4020; }
-  .mint { background: #F5E9B8; color: #5A4A10; border-radius: 2px; padding: 0.05em 0.4em; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
   th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; vertical-align: top; }
   th { background: var(--surface); font-weight: 600; }
@@ -108,8 +107,7 @@ ENTITY_BEHAVIOR.html by its revision procedure, and this document is deleted
 when the initiative lands.</p>
 
 <p>Form: statements. Each statement is one fact. A term is stated before it
-is used. A <span class="mint">mint</span> marks a statement proposed here,
-unruled.</p>
+is used.</p>
 
 <h2>1. What the system is</h2>
 <ul>
@@ -199,7 +197,7 @@ unruled.</p>
   <li>A stat changes through the write road (Mutation §8).</li>
   <li>The bearer refuses, loudly, a read or write of an id it does not
       bear.</li>
-  <li><span class="mint">mint</span> A listed id the definition gives no
+  <li>A listed id the definition gives no
       value seeds zero.</li>
 </ul>
 
@@ -358,7 +356,7 @@ unruled.</p>
       read of the world, affordability among its conditions.</li>
   <li>The commander (Combat Frame §5) asks activatable-now, then
       fires.</li>
-  <li><span class="mint">mint</span> Authored form: the trigger object
+  <li>Authored form: the trigger object
       bears <code>"activated": true</code>.</li>
 </ul>
 
@@ -412,12 +410,9 @@ unruled.</p>
   <li>A behavior is an effect written once with holes in it. An input tag
       is one hole: a place in markup where the invoker's value goes
       instead of a fixed value. Input tags serve behaviors and entity
-      definitions alike (§3). <span class="mint">mint</span> the term
-      input tag. <span class="commentary">Renamed from the draft's "slot
-      tag": slot is a kind.</span></li>
+      definitions alike (§3).</li>
   <li>An input tag is an object at a value position, bearing the marker,
-      the input's name, and a default. <span class="mint">mint</span>
-      Working syntax, marker <code>@</code>:
+      the input's name, and a default. Working syntax, marker <code>@</code>:
       <code>{"@": "targeting", "default": ...}</code>.</li>
   <li>The named inputs are the behavior's input contract. Every input has
       a default, so a bare invocation is complete.</li>
@@ -455,12 +450,12 @@ unruled.</p>
       bake the effects — the entry's appointed effects first, then the
       definition's — expanding each invocation and parsing each into an
       instance owned by the entity.</li>
-  <li><span class="mint">mint</span> <code>contents</code>: a definition
+  <li><code>contents</code>: a definition
       states, per container its kind bears, the entities housed there at
       construction — a list of definitions, each a catalogue id or an
       inline definition. Baking the contents bakes each listed child and
       inserts it into the named container.</li>
-  <li><span class="mint">mint</span> A child's owner is its parent's, unless
+  <li>A child's owner is its parent's, unless
       the child's definition states its own.</li>
   <li>The catalogue's one game definition (§12) lists its two sides under
       <code>sides</code>. The player side's <code>deck</code> contents is an
@@ -544,7 +539,7 @@ containers column lists what the entry adds.</p>
   <li>One definition of kind <code>game</code> exists, carrying the stat
       values. Its base rules are appointed; their bodies are authored forms
       of the effects Combat Frame §4 states.
-      <span class="mint">mint</span> Their behavior names are Combat
+      Their behavior names are Combat
       Frame §4's six names in snake case.</li>
   <li>Where each kind lives: a status in its holder's
       <code>contained</code>; a relic in its side's <code>relics</code>; a
@@ -560,7 +555,7 @@ containers column lists what the entry adds.</p>
       payload writes the ending. The outcome is a read at the ending: the
       player has a fielded king, victory; otherwise defeat.</li>
   <li>The king of the win condition is the <code>king</code> component.</li>
-  <li><span class="mint">mint</span> Roster growth for it: an
+  <li>Roster growth for it: an
       EntityCondition reading the subject's owner value, member
       <code>owner</code>; and <code>fielded</code>, as already ruled.</li>
   <li>Move (ruling transferred from A9, signed — Enrra, 2026-08-27): moving
