@@ -87,9 +87,6 @@
   }
   :root[data-theme="dark"] .commentary { background: #4A4020; }
   .mint { background: #F5E9B8; color: #5A4A10; border-radius: 2px; padding: 0.05em 0.4em; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
-  .ns { background: #F9D9A6; border-radius: 3px; padding: 0.05em 0.25em; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ns { background: #5C3E12; } }
-  :root[data-theme="dark"] .ns { background: #5C3E12; }
   table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
   th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; vertical-align: top; }
   th { background: var(--surface); font-weight: 600; }
@@ -119,7 +116,7 @@ unruled.</p>
   <li>A fight is a world of entities changing facts by rules.</li>
   <li>An entity is the unit of existence: a card on the board, a status on
       that card, the side that played it, the slot it stands on, the Game
-      that holds the sides. <span class="ns">Each is one entity.</span></li>
+      that holds the sides.</li>
   <li>A fact is a number an entity bears or a place an entity holds.</li>
   <li>A rule is an effect an entity bears. Every change of fact in a fight
       is an effect acting.</li>
@@ -127,8 +124,7 @@ unruled.</p>
       entity is. A definition says what one authored entity is. An entity is
       one live instance in one world, built from a definition by the
       bake.</li>
-  <li><span class="ns">Both the template and every definition are data. No code declares
-      what an entity bears or what it does.</span> Code supplies the vocabulary —
+  <li>Both the template and every definition are data. Code supplies the vocabulary —
       the condition kinds, the decision kinds, the mutator kinds — and
       data composes it.</li>
 </ul>
@@ -138,20 +134,17 @@ unruled.</p>
   <li>Every entity is of one kind: <code>game</code>, <code>side</code>,
       <code>slot</code>, <code>unit</code>, <code>spell</code>,
       <code>status</code>, <code>relic</code>.</li>
-  <li><span class="ns">A kind is not a class.</span> One class carries every entity; the kind is a
-      value on it. <span class="ns">Kinds do not inherit.</span></li>
+  <li>One class carries every entity; the kind is a value on it.</li>
   <li>What a kind bears is stated once, in the entity template: one entry
       per kind.</li>
   <li>An entry states three things. The stat ids every entity of the kind
       bears. The container names every entity of the kind bears. The
       effects every entity of the kind receives at construction — the
       appointed effects.</li>
-  <li><span class="ns">The template is architecture, not content.</span> It changes only with this
-      document, by revision.</li>
+  <li>The template changes only with this document, by revision.</li>
   <li>The template is one file read by both runtimes, the game and the
       Tool. Each runtime holds one typed wrapper that loads it at startup
-      and refuses loudly: an unknown key, a wrong type, an unknown kind.
-      <span class="ns">No list in it is copied anywhere else.</span></li>
+      and refuses loudly: an unknown key, a wrong type, an unknown kind.</li>
   <li>Code that serves one kind — the clock walking <code>unit</code>
       entities — refuses any other kind, loudly.</li>
   <li>The seven entries are §12.</li>
@@ -175,13 +168,11 @@ unruled.</p>
   <li>The catalogue is every definition, loaded before any fight.</li>
   <li>Loading validates every definition against the template through the
       one generic parse driver (Core §9). An unknown key, a wrong type, or
-      a stat id the kind's entry does not list is refused loudly. <span class="ns">Content
-      breaks at load, never mid-fight.</span></li>
+      a stat id the kind's entry does not list is refused loudly.</li>
   <li>A definition does not change while the game runs. A definition
       changed between runs reaches every entity built after the
       change.</li>
-  <li>Many entities are built from one definition: <span class="ns">every copy of a card in
-      every fight</span>.</li>
+  <li>Many entities are built from one definition.</li>
 </ul>
 
 <h2>4. The entity — what exists in a fight</h2>
@@ -255,10 +246,8 @@ unruled.</p>
       from it.</li>
   <li>Tags are entity state. An entity's tags change through the write road
       (Mutation §8); the write for it enters when content asks.</li>
-  <li>The vocabulary is open: content mints tags freely; <span class="ns">nothing declares
-      or governs them</span>. A tag nothing reads is inert and lawful.</li>
-  <li>No code seam reads a tag. <span class="ns">What code once read as a flag — king,
-      building — is redesigned into effects and authored carriers.</span></li>
+  <li>The vocabulary is open: content mints tags freely. A tag nothing reads is inert and lawful.</li>
+  <li>No code seam reads a tag.</li>
   <li>The condition <code>has_tag</code>, member <code>tag</code>: true when
       the subject entity bears the tag.</li>
 </ul>
@@ -300,10 +289,10 @@ unruled.</p>
       it acts; the targeting — on whom; the payload — what it does. Each
       part answers its question and holds no flow.</li>
   <li>An effect acts only when an event fires and its trigger holds on it.
-      <span class="ns">Nothing invokes an effect directly.</span></li>
+     </li>
   <li>Every fired event is offered to every effect in the world, wherever
       the effect's holder is housed. An effect carries exactly its authored
-      conditions; <span class="ns">there is no implied condition</span>. An author who wants an
+      conditions. An author who wants an
       effect silent off the board writes that gate.</li>
   <li>Effects are sealed: no code outside an effect reads into it. What
       crosses the seal is the trigger's answers. Any other mechanism that
@@ -328,8 +317,7 @@ unruled.</p>
   <li>A condition is of a kind, with typed members the author fills, every
       member required. The kinds are Kind Rosters §1.</li>
   <li>Every condition bears <code>negate</code>, false unless authored: the
-      kind asks in its natural sense, negate takes the opposite answer. <span class="ns">No
-      kind is authored as another's opposite.</span></li>
+      kind asks in its natural sense, negate takes the opposite answer.</li>
   <li>A question of a component the occasion does not carry answers false;
       negated, true.</li>
 </ul>
@@ -356,15 +344,14 @@ unruled.</p>
 <ul>
   <li>Some effects act on their holder's command: playing a card, using an
       ability. Their trigger is an <code>ActivationTrigger</code>, which
-      extends <code>Trigger</code>; <span class="ns">everything above stands in it</span>.</li>
+      extends <code>Trigger</code>.</li>
   <li>On command, the trigger itself mints and fires the ask event, named
       by its <code>event</code> member, carrying the trigger by reference
       in an EventData component. Working label for that component:
       <code>ActivationEventData</code>. The event travels the cascade
       (Mutation §12) like any event; bystanders react to its name.</li>
   <li>A fourth test: the trigger holds only when the occasion carries this
-      trigger, by reference identity. <span class="ns">One trigger per effect and one effect
-      instance per entity make the reference single out one consultee.</span></li>
+      trigger, by reference identity.</li>
   <li>The effect answers two questions from its own trigger. <i>Do you
       activate?</i> — a fixed fact; the command surface exists for the
       yeses. <i>Are you activatable now?</i> — a live, side-effect-free
@@ -418,9 +405,8 @@ unruled.</p>
 
 <h2>10. Behaviors — effects defined once</h2>
 <ul>
-  <li><span class="ns">The same effect recurs across content: every unit's burial, every
-      card's play, every strike.</span> A behavior is such an effect defined once,
-      under a name, and obtained by name.</li>
+  <li>A behavior is an effect defined once, under a name, and obtained by
+      name.</li>
   <li>Behaviors are content: authored in the Tool, loaded with the
       catalogue before any fight, and fetched by name at expansion.</li>
   <li>A behavior is an effect written once with holes in it. An input tag
@@ -444,8 +430,7 @@ unruled.</p>
   <li>The expansion replaces an invocation with the behavior's markup, each
       input tag replaced by the supplied value or its default, until the
       markup is plain effect markup. The expansion recognizes a tag by its
-      marker alone<span class="ns">, so an input's name never collides with a markup
-      key</span>.</li>
+      marker alone.</li>
   <li>An input's value may itself be an invocation. A behavior name
       revisited within one expansion is refused loudly.</li>
   <li>The expansion runs at the bake. A changed behavior definition reaches
@@ -453,8 +438,7 @@ unruled.</p>
   <li>A template entry's appointed effects and a definition's effects
       invoke behaviors the same way. Appointment by kind and reuse by
       content are one mechanism.</li>
-  <li>Any effect may be defined as a behavior. <span class="ns">Parameterization is open to
-      all content.</span></li>
+  <li>Any effect may be defined as a behavior.</li>
 </ul>
 
 <h2>11. The bake — from definition to entity</h2>
@@ -556,7 +540,7 @@ containers column lists what the entry adds.</p>
 <ul>
   <li>A card is an entity of a kind that lists <code>cost</code>:
       <code>unit</code> and <code>spell</code>. Each authors its own play
-      and burial; <span class="ns">they share no appointed effect</span>.</li>
+      and burial.</li>
   <li>One definition of kind <code>game</code> exists, carrying the stat
       values. Its base rules are appointed; their bodies are authored forms
       of the effects Combat Frame §4 states.
