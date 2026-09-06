@@ -86,10 +86,6 @@
     :root:not([data-theme="light"]) .commentary { background: #4A4020; }
   }
   :root[data-theme="dark"] .commentary { background: #4A4020; }
-  .fix { background: #CFE3F7; border-radius: 3px; padding: 0.05em 0.25em; }
-  li.fix, pre.fix { padding: 0.2rem 0.6rem; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fix { background: #1F3A55; } }
-  :root[data-theme="dark"] .fix { background: #1F3A55; }
   table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
   th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; vertical-align: top; }
   th { background: var(--surface); font-weight: 600; }
@@ -340,7 +336,7 @@ is used.</p>
       with a policy <code>all</code> or <code>any</code>. An empty list
       holds.</li>
   <li>The class is <code>Trigger</code>.</li>
-  <li class="fix">Authored form: the <code>trigger</code> object bears
+  <li>Authored form: the <code>trigger</code> object bears
       <code>event</code>; <code>eventdata_conditions</code>, a list with
       its <code>policy</code>; <code>entity_conditions</code>, a list of
       entries with its <code>policy</code>, each entry a
@@ -350,7 +346,7 @@ is used.</p>
       <code>all</code>, a negate is false, a list is empty and
       holds.</li>
 </ul>
-<pre class="fix">"trigger": {
+<pre>"trigger": {
   "event": "damaged",
   "eventdata_conditions": { "policy": "all", "conditions": [
     { "kind": "request_kind_is", "name": "poison" }
@@ -371,7 +367,7 @@ is used.</p>
       extends <code>Trigger</code>.</li>
   <li>On command, the trigger itself mints and fires the ask event, named
       by its <code>event</code> member, carrying the trigger by reference
-      in an EventData component<span class="fix">, the
+      in an EventData component<span>, the
       <code>ActivationEventData</code>, whose one member is the
       trigger</span>. The event travels the cascade
       (Mutation §12) like any event; bystanders react to its name.</li>
@@ -401,13 +397,13 @@ is used.</p>
   <li>Without authored targeting, the AutoResolver, fixed at construction:
       the recipient is the occasion's target, or the Game where the
       occasion carries none.</li>
-  <li class="fix">Authored form: the <code>targeting</code> object bears
+  <li>Authored form: the <code>targeting</code> object bears
       <code>decision</code>, the decision's kind with its members, and
       <code>conditions</code>, a list of EntityConditions over every
       entity in the world. Absent: the conditions list is empty and
       narrows nothing.</li>
 </ul>
-<pre class="fix">"targeting": {
+<pre>"targeting": {
   "decision": "hand_pick",
   "conditions": [ { "kind": "is_enemy" }, { "kind": "is_unit" } ]
 }</pre>
