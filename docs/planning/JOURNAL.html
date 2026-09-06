@@ -72,6 +72,12 @@
   }
   ul { padding-left: 1.2rem; }
   li { margin: 0.4rem 0; }
+  .pinned-warning {
+    border: 1px solid var(--warn); border-left: 4px solid var(--warn);
+    background: var(--warn-soft); border-radius: 4px;
+    padding: 0.8rem 1.2rem; margin: 1rem 0;
+  }
+  .pinned-warning .head { color: var(--warn); font-weight: 700; }
   table { border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
   th, td { border: 1px solid var(--line); padding: 0.3rem 0.7rem; text-align: left; }
   th { background: var(--surface); }
@@ -891,5 +897,54 @@ amendment tag; and A7's delegation clause (outer shape ruled, member-level
 detail the contractor's lawful judgment — B22/B29 stand on it) is standing
 law that must survive into whatever seat the envelope lands in. A7 stays a
 live amendment until this pass.</p>
+
+<h2>2026-08-27 — Amendment integration: the deferred three</h2>
+
+<p>The integration pass has resolved the amendments it could; three remain
+live in the Bible Amendments, each deferred by Enrra as needing further
+consideration before its landing. Their needs, on record for the next
+passes:</p>
+
+<ul>
+  <li><b>A7 — needs the content pass.</b> Already on record above (the
+      housekeeping entry, point c): the envelope's shape gets a stated home,
+      the format a plain name that is not an amendment tag, and the
+      delegation clause a surviving seat.</li>
+  <li><b>A9 — needs a design pass.</b> A9 states that machinery appoints the
+      Move ability on every unit at construction (buildings excepted), but
+      no design appoints the exact logistics of baking effects such as Move
+      into entities by type — where the appointment lives, how a type
+      declares its machinery-granted effects, and how the mechanism serves
+      the general class rather than Move alone. The pass appoints those
+      logistics; A9 lands after it.</li>
+  <li><b>A10 — needs a consolidation of UI rulings.</b> A10 places UI out of
+      the contract's scope with pre-nuke functionality as the one
+      requirement; the UI ground actually built since rides a body of
+      per-issue rulings (R4's overrule, R5–R14, the interaction batches).
+      Landing A10 requires consolidating those UI rulings into signed
+      standing law so the scope statement is no longer the only word on the
+      UI's obligations.</li>
+</ul>
+
+<h2>2026-08-30 — The commit seam stands unruled: pinned warning</h2>
+
+<div class="pinned-warning">
+  <p><span class="head">⚠ PINNED — the commit seam awaits redesign.</span>
+  The pre-gathered pick (interaction batch 1, f3e73ad): the place and move
+  gestures store the clicked slot in <code>_pending_destination</code> and
+  <code>pick_one</code> answers the core's next destination ask with it,
+  never opening the prompt. This diverges from the standard pattern — the
+  target resolver procs the UI selection when engaged — and stands on no
+  signed design: it landed as an R12 seam adaptation without the divergence
+  being surfaced for ruling.</p>
+  <p><b>Hazard:</b> <code>pick_one</code> answers <i>whichever</i> pick
+  arrives next with the stored slot. Play and Move are today's only
+  manual-pick roads, so the assumption holds; any future effect whose
+  resolver asks a manual pick during a commanded gesture collides with it
+  silently.</p>
+  <p><b>Disposition (Enrra, 2026-08-30):</b> redesign — no nuke. The code
+  stays as-is until the redesign; the entity-behavior initiative's packaging
+  of commanded asks (play, use_ability) is the natural seat for it.</p>
+</div>
 
 </div>
