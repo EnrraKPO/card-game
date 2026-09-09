@@ -59,61 +59,71 @@
     padding: 0.1rem 0.55rem; font-size: 0.72rem; font-weight: 600;
     letter-spacing: 0.08em; text-transform: uppercase; margin-left: 0.8rem;
   }
+  /* alignment review marks — against ENTITY_BEHAVIOR.html */
+  mark.conflict, .conflict { background: #F6B4AE; color: inherit; border-radius: 2px; padding: 0.02em 0.12em; }
+  mark.redundant, .redundant { background: #F9D48F; color: inherit; border-radius: 2px; padding: 0.02em 0.12em; }
+  mark .iter { font-size: 0.68em; vertical-align: super; font-weight: 700; margin-left: 0.15em; font-family: sans-serif; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) mark.conflict, :root:not([data-theme="light"]) .conflict { background: #7A2E28; }
+    :root:not([data-theme="light"]) mark.redundant, :root:not([data-theme="light"]) .redundant { background: #7A5A1E; }
+  }
+  :root[data-theme="dark"] mark.conflict, :root[data-theme="dark"] .conflict { background: #7A2E28; }
+  :root[data-theme="dark"] mark.redundant, :root[data-theme="dark"] .redundant { background: #7A5A1E; }
 </style>
 
 <div class="page">
 
-<span class="eyebrow">Canonical documentation</span>
+<span class="eyebrow"><mark class="conflict" title="EB ribbon: pending signature; EB scope claims rule over signed documents.">Canonical documentation<span class="iter">v8</span></mark></span>
 <h1>Tech Design Bible</h1>
 
-<p>The canonical documentation of the game's systems. A statement here is
+<p><mark class="conflict" title="EB ribbon: pending signature; EB scope: rules entity behavior over signed documents.">The canonical documentation of the game's systems.<span class="iter">v7</span></mark> <mark class="conflict" title="EB scope: this document rules entity behavior; where a signed document states otherwise, that statement is owed revision.">A statement here is
 ruling text: code conforms to it, and changes enter by amendment and
-signature.</p>
+signature.<span class="iter">v1</span></mark></p>
 
 <a class="entry" href="CORE_SYSTEM_DESIGN.html">
   <span class="chip">Signed 2026-08-27</span>
-  <h2>Core System Design</h2>
-  <p>The card system: entity types and their built-in effects, containers and
-  housing, the board and geometry, the target resolver, the play road,
-  abilities, the event structure, and conditions.</p>
+  <h2><mark class="redundant" title="EB ribbon: Reference names it.">Core System Design<span class="iter">v8</span></mark></h2>
+  <p><mark class="conflict" title="EB §1: the entity system; a card is one entity among the kinds.">The card system:<span class="iter">v2</span></mark> <mark class="redundant" title="EB scope: the entity system — the template, the entity, its containers, its effects.">entity types and their built-in effects, containers and
+  housing,</mark> <mark class="redundant" title="EB §6: a slot holds no coordinate; BoardGeometry maps index to grid position.">the board and geometry,<span class="iter">v1</span></mark> <mark class="redundant" title="EB §9 the targeting.">the target resolver,<span class="iter">v1</span></mark> <mark class="conflict" title="EB §12: each card kind authors its own play; EB §9 ActivationTrigger.">the play road,<span class="iter">v1</span></mark>
+  <mark class="conflict" title="EB §9: a commandable effect is an effect whose trigger is an ActivationTrigger; no ability mechanism.">abilities,</mark> <mark class="redundant" title="EB §9: source and target routes, components, ActivationEventData.">the event structure,<span class="iter">v2</span></mark> <mark class="redundant" title="EB §9 conditions.">and conditions.<span class="iter">v1</span></mark></p>
 </a>
 
 <a class="entry" href="MUTATION_SYSTEM_DESIGN.html">
-  <span class="chip">Signed 2026-08-27</span>
-  <h2>Mutation System Design</h2>
-  <p>The write system: the mutator, the request, the engine and its procedures,
-  the WriteAuthority, the conductor's run, the act and the holster, the
-  presentation pause, and the gather.</p>
+  <span class="chip">Signed 2026-09-09</span>
+  <h2><mark class="redundant" title="EB ribbon: Reference names it.">Mutation System Design<span class="iter">v8</span></mark></h2>
+  <p><mark class="redundant" title="EB §6, §9: EB names the write system and the ask.">The write system:<span class="iter">v6</span></mark> <mark class="redundant" title="EB §9 payload: a mutator is one ask for change.">the mutator,<span class="iter">v2</span></mark> <mark class="redundant" title="EB §9: a mutator is one ask for change.">the request,<span class="iter">v6</span></mark> <mark class="redundant" title="EB §6, §11: the write-system procedures decide; the membership primitives alone write members.">the engine and its procedures,<span class="iter">v3</span></mark>
+  <mark class="redundant" title="EB §5, §6: the write road; the membership primitives are the only writers of members.">the WriteAuthority,<span class="iter">v4</span></mark> <mark class="redundant" title="EB §9: the event travels the cascade (Mutation §12) like any event.">the effect's act,<span class="iter">v5</span></mark> <mark class="redundant" title="EB §9 payload: one delivery is the unit of issuance and the scope of the holster.">the delivery and the holster,<span class="iter">v2</span></mark> <mark class="redundant" title="EB §9 presentation names: the windup and the contact cue points.">the
+  presentation pause,<span class="iter">v3</span></mark> <mark class="redundant" title="EB §9: every fired event is offered to every effect in the world.">and the gather.<span class="iter">v4</span></mark></p>
 </a>
 
 <a class="entry" href="COMBAT_FRAME_DESIGN.html">
   <span class="chip">Signed 2026-08-27</span>
-  <h2>Combat Frame Design</h2>
-  <p>The frame of one fight: the clock, the round and its spans, the base
-  rules, the activation order, the tap fact, and the fight's ending.</p>
+  <h2><mark class="redundant" title="EB ribbon: Reference names it.">Combat Frame Design<span class="iter">v8</span></mark></h2>
+  <p><mark class="redundant" title="EB §1, §11: what a fight is and how it starts.">The frame of one fight:<span class="iter">v6</span></mark> <mark class="redundant" title="EB §2: the clock walking unit entities refuses any other kind.">the clock,<span class="iter">v3</span></mark> <mark class="redundant" title="EB §12: round is a game stat; round count is an appointed base rule.">the round and its spans,<span class="iter">v3</span></mark> <mark class="redundant" title="EB §12: the six base rules are the game kind's appointed effects; EB §11 adds the shuffle and the opening hand.">the base
+  rules,<span class="iter">v1</span></mark> <mark class="conflict" title="EB §9: activation names the command of an effect via the ActivationTrigger; EB §12: the clock-driven act is the main action.">the activation order,<span class="iter">v4</span></mark> <mark class="redundant" title="EB §12: tapped is a unit stat; untap is an appointed base rule.">the tap fact,<span class="iter">v2</span></mark> <mark class="redundant" title="EB §12: the fight's ending is a base rule of the Game.">and the fight's ending.<span class="iter">v1</span></mark></p>
 </a>
 
 <a class="entry" href="KIND_ROSTERS.html">
   <span class="chip">Signed 2026-08-27</span>
-  <h2>Kind Rosters</h2>
-  <p>The registry of concrete kinds populating the extensible families —
+  <h2><mark class="redundant" title="EB ribbon: Reference names it.">Kind Rosters<span class="iter">v8</span></mark></h2>
+  <p><mark class="conflict" title="EB §9 mints ActivationEventData; EB §12 grows the condition roster with owner and fielded.">The registry of concrete kinds populating the extensible families —
   conditions, resolver decisions, mutators, request/procedure pairs, EventData
-  shapes, and event names. The designs hold the mechanics; this holds the
-  population.</p>
+  shapes, and event names.<span class="iter">v2</span></mark> <mark class="conflict" title="EB §6, §7, §8, §9, §12 populate kinds themselves while deferring to Kind Rosters §1, §2.">The designs hold the mechanics; this holds the
+  population.<span class="iter">v1</span></mark></p>
 </a>
 
 <a class="entry" href="ENTITY_BEHAVIOR.html">
-  <span class="chip">Pending signature</span>
-  <h2>Entity Types and Behaviors</h2>
-  <p>The entity system: the template, the definition, the entity and its
-  facts, the effect and its trigger, behaviors, the bake, and the kinds.</p>
+  <span class="chip"><mark class="redundant" title="EB ribbon: the same status chip.">Pending signature<span class="iter">v7</span></mark></span>
+  <h2><mark class="redundant" title="EB title.">Entity Types and Behaviors<span class="iter">v8</span></mark></h2>
+  <p><mark class="redundant" title="EB scope line: near-verbatim restatement.">The entity system: the template, the definition, the entity and its
+  facts, the effect and its trigger, behaviors, the bake, and the kinds.<span class="iter">v5</span></mark></p>
 </a>
 
 <a class="entry" href="AMENDMENTS.html">
-  <span class="chip">A9 pending revision</span>
+  <span class="chip"><mark class="conflict" title="EB §12: Move, ruling transferred from A9, signed.">A9 pending revision<span class="iter">v7</span></mark></span>
   <h2>Bible Amendments</h2>
-  <p>Rulings issued after the signatures, recorded as ruling text of equal
-  force — each names the section it lands on.</p>
+  <p><mark class="conflict" title="EB scope: this document rules entity behavior; EB §12 transferred A9's Move ruling into itself.">Rulings issued after the signatures, recorded as ruling text of equal
+  force — each names the section it lands on.<span class="iter">v2</span></mark></p>
 </a>
 
 <a class="entry" href="LEGAL_DISCIPLINE.html">
@@ -126,15 +136,15 @@ signature.</p>
 <a class="entry" href="CONTRACT.html">
   <span class="chip">Contract</span>
   <h2>Contractual Obligations</h2>
-  <p>The goals, the binding rulings on how the documentation governs the work,
-  and the implementation plan.</p>
+  <p><mark class="conflict" title="EB scope: this document rules entity behavior; where a signed document states otherwise, that statement is owed revision.">The goals, the binding rulings on how the documentation governs the work,
+  and the implementation plan.<span class="iter">v4</span></mark></p>
 </a>
 
 <a class="entry" href="CONTENT_DICTIONARY.html">
-  <span class="chip">Living registry</span>
+  <span class="chip"><mark class="redundant" title="EB §3: the catalogue is every definition; a changed definition reaches entities built after.">Living registry<span class="iter">v8</span></mark></span>
   <h2>Content Dictionary</h2>
-  <p>The registry of approved content — per piece, the engineering it stands
-  on, so no mechanism enters through a card unseen.</p>
+  <p><mark class="redundant" title="EB §3, §10: the catalogue is every definition and every behavior, loaded before any fight.">The registry of approved content — per piece, the engineering it stands
+  on, so no mechanism enters through a card unseen.<span class="iter">v4</span></mark></p>
 </a>
 
 </div>
