@@ -101,6 +101,21 @@
   table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
   th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; }
   th { background: var(--surface); font-weight: 600; }
+  /* alignment review marks — against ENTITY_BEHAVIOR.html */
+  mark.conflict, .conflict { background: #F6B4AE; color: inherit; border-radius: 2px; padding: 0.02em 0.12em; }
+  mark.redundant, .redundant { background: #F9D48F; color: inherit; border-radius: 2px; padding: 0.02em 0.12em; }
+  .tag { font-size: 0.68em; vertical-align: super; font-weight: 700; margin-left: 0.15em; font-family: sans-serif; color: #fff; background: #2B6CB0; border-radius: 3px; padding: 0 0.3em; }
+  mark .iter { font-size: 0.68em; vertical-align: super; font-weight: 700; margin-left: 0.15em; font-family: sans-serif; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) mark.conflict, :root:not([data-theme="light"]) .conflict { background: #7A2E28; }
+    :root:not([data-theme="light"]) mark.redundant, :root:not([data-theme="light"]) .redundant { background: #7A5A1E; }
+  }
+  :root[data-theme="dark"] mark.conflict, :root[data-theme="dark"] .conflict { background: #7A2E28; }
+  :root[data-theme="dark"] mark.redundant, :root[data-theme="dark"] .redundant { background: #7A5A1E; }
+  .ins-block {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0; padding: 0.2rem 1rem; margin: 0.8rem 0;
+  }
 </style>
 
 <div class="page">
@@ -112,30 +127,30 @@
   <span>Authored: <b>2026-08-23</b></span>
   <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III, retired to record)</b></span>
-  <span>Reference: <b>CORE_SYSTEM_DESIGN.html — one system, two documents</b></span>
+  <span>Reference: <b>CORE_SYSTEM_DESIGN.html — <mark class="conflict" title="EB scope: a third document rules entity behavior.">one system, two documents</mark></b></span>
 </div>
 
 <p>Scope: the write machinery — how the game changes its facts. The mutator, the
-request, the engine and its procedures, the WriteAuthority, the conductor's run,
-the act and the holster, the presentation pause, and the gather. The entity
+request, the engine and its procedures, the WriteAuthority, <s>the conductor's run</s><ins>the effect's act</ins>,
+<s>the act</s><ins>the delivery</ins> and the holster, the presentation pause, <mark class="conflict" title="EB §9: every fired event is offered to every effect in the world.">and the gather.<span class="iter">v13</span></mark> <mark class="conflict" title="EB scope: the entity system — the entity, its containers, its effects, the trigger, the targeting — is Entity Types and Behaviors'.">The entity
 types, containers, the board, the target resolver, the play road, abilities, the
-event structure, and conditions are Core System.</p>
+event structure, and conditions are Core System.</mark></p>
 
 <h2><span class="secno">§1</span> The system at a glance</h2>
 <div class="chain">
-  an <b>event</b> fires &nbsp;→&nbsp; the cascade gathers the <b>roster</b> &nbsp;→&nbsp;
-  the <b>conductor</b> runs each effect &nbsp;→&nbsp; each <b>mutator</b> issues
+  an <b>event</b> fires &nbsp;→&nbsp; <mark class="redundant" title="EB §9: every fired event is offered to every effect in the world.">the cascade gathers the <b>roster</b><span class="iter">v10</span></mark> &nbsp;→&nbsp;
+  <s>the <b>conductor</b> runs each effect</s><ins>each <b>effect</b> whose trigger holds acts</ins> &nbsp;→&nbsp; each <b>mutator</b> issues
   &nbsp;→&nbsp; the <b>MutationEngine</b> dispatches &nbsp;→&nbsp; <b>procedures</b>
   resolve &nbsp;→&nbsp; the <b>WriteAuthority</b> commits &nbsp;→&nbsp; <b>events</b>
   return to the <b>holster</b> &nbsp;→&nbsp; the boundary fires them depth-first
 </div>
 <p>One effect firing, end to end:</p>
 <ol>
-  <li>An event fires. The cascade gathers every eligible effect into the <b>roster</b>
-      (§12) and runs it in order, one effect at a time, each through the
-      <b>EffectConductor</b>.</li>
-  <li>The conductor engages the effect's target resolution (Core §4), cues the
-      windup, pauses the presenter, and delivers the effect's <b>payload</b> —
+  <li><mark class="redundant" title="EB §9: every fired event is offered to every effect in the world.">An event fires. The cascade gathers every eligible effect into the <b>roster</b>
+      (§12)<span class="iter">v10</span></mark> <mark class="conflict" title="EB §9: every fired event is offered to every effect in the world; the bucket order is in conflict.">and runs it in order, one effect at a time<span class="iter">v8</span></mark>, <s>each through the
+      <b>EffectConductor</b></s><ins>each by its own act (§11), the presenter paused around each act (§10)</ins>.</li>
+  <li><s>The conductor engages the effect's</s><ins>The act engages the effect's own</ins> target resolution (Core §4), cues the
+      windup, <s>pauses the presenter, </s>and delivers <s>the effect's</s><ins>its</ins> <b>payload</b> —
       the unique mutators once, then every mutator per recipient — handing each
       issuance the <b>plate</b> of facts.</li>
   <li>Each mutator reasons over its plate and submits zero or more
@@ -144,15 +159,15 @@ event structure, and conditions are Core System.</p>
       The procedure resolves it into writes committed through the
       <b>WriteAuthority</b>, issues its presentation cues at commit (§10), and
       returns the mutation's events. Submission is synchronous.</li>
-  <li>Events travel back by return into the delivery's <b>holster</b>. The conductor
-      unpauses the presenter at the contact cue — the held cues play — cues the
-      conclusion, and returns. The cascade fires the holster's events at the act
+  <li>Events travel back by return into the delivery's <b>holster</b>. <s>The conductor</s><ins>The act</ins>
+      <s>unpauses the presenter at the contact cue — the held cues play — </s>cues the
+      conclusion, and returns <ins>its events to the cascade. The cascade unpauses the presenter; the held cues play</ins>. The cascade fires the holster's events at the act
       boundary, depth-first (§9).</li>
 </ol>
 
 <figure style="margin: 1.6rem 0;">
-<svg viewBox="0 0 740 600" role="img" style="max-width: 100%; height: auto; display: block;"
-     aria-label="Flow chart of one payload delivery: asks flow down from cascade to conductor to mutator to engine to procedure to WriteAuthority; a procedure may apply another procedure inside the same mutation; events travel back up by return into the holster, fired depth-first at the act boundary; procedures issue cues at commit to the world's presentation outlet, which the paused presenter holds until the contact cue.">
+<svg viewBox="0 0 740 600" role="img" data-review="M1, M2 reconciled: aria-label revised — conductor → the effect's act; the pause holds until the act returns" style="max-width: 100%; height: auto; display: block;"
+     aria-label="Flow chart of one payload delivery: asks flow down from cascade to each effect's act to mutator to engine to procedure to WriteAuthority; a procedure may apply another procedure inside the same mutation; events travel back up by return into the holster, fired depth-first at the act boundary; procedures issue cues at commit to the world's presentation outlet, which the paused presenter holds until the act returns.">
   <defs>
     <marker id="m-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
@@ -173,21 +188,21 @@ event structure, and conditions are Core System.</p>
   </g>
   <g text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">
     <text x="190" y="38">CombatCascade</text>
-    <text x="190" y="134">EffectConductor</text>
+    <text x="190" y="134"><tspan style="text-decoration:line-through;fill:#B3392B">EffectConductor</tspan> <tspan style="fill:#3D5A73;font-weight:600">the effect's act</tspan></text>
     <text x="190" y="230">Mutator</text>
     <text x="190" y="326">MutationEngine</text>
     <text x="190" y="422">EngineProcedure</text>
     <text x="190" y="534">WriteAuthority</text>
   </g>
   <g text-anchor="middle" font-size="11" fill="var(--ink-soft)">
-    <text x="190" y="56">fires events · gathers the roster · opens the delivery</text>
-    <text x="190" y="152">engages targets · plays the cues · pauses the presenter</text>
+    <text x="190" y="56"><tspan class="redundant" style="fill:#B8860B" data-title="EB §9: every fired event is offered to every effect in the world.">fires events · gathers the roster · opens the delivery</tspan><tspan class="iter" style="font-size:0.7em;font-weight:700" dy="-4">v10</tspan></text>
+    <text x="190" y="152">engages targets · plays the cues · <tspan style="text-decoration:line-through;fill:#B3392B">pauses the presenter</tspan></text>
     <text x="190" y="248">reasons over the plate · the only minter of requests</text>
     <text x="190" y="344">one decision: dispatch each request by its shape</text>
     <text x="190" y="440">resolves the happening into writes and events</text>
     <text x="190" y="456">may apply another procedure — same mutation</text>
     <text x="190" y="552">commits every change of fact</text>
-    <text x="190" y="568">the decision-free primitives · arithmetic in one place</text>
+    <text x="190" y="568"><tspan class="redundant" style="fill:#B8860B" data-title="EB §11: the primitive commits existence, the procedure decides.">the decision-free primitives</tspan> · arithmetic in one place<tspan class="iter" style="font-size:0.7em;font-weight:700" dy="-4">v19</tspan></text>
   </g>
 
   <g stroke="currentColor" stroke-width="1.4" fill="none">
@@ -199,7 +214,7 @@ event structure, and conditions are Core System.</p>
     <path d="M 40 424 C 12 424 12 452 38 452" marker-end="url(#m-ink)"/>
   </g>
   <g font-size="12" fill="currentColor">
-    <text x="127" y="96">runs the roster</text>
+    <text x="127" y="96"><tspan style="text-decoration:line-through;fill:#B3392B">runs the roster</tspan> <tspan style="fill:#3D5A73;font-weight:600">calls each act</tspan></text>
     <text x="127" y="192">a plate per issuance</text>
     <text x="127" y="288">submit(request)</text>
     <text x="127" y="384">the claimed shape</text>
@@ -233,8 +248,8 @@ event structure, and conditions are Core System.</p>
   </g>
   <g font-size="12" font-style="italic" fill="var(--ink-soft)">
     <text x="420" y="428" text-anchor="middle">cues at commit, fire-and-forget</text>
-    <text x="630" y="500">paused during delivery;</text>
-    <text x="630" y="516">plays at the contact cue</text>
+    <text x="630" y="500">paused <tspan style="text-decoration:line-through;fill:#B3392B">during delivery</tspan> <tspan style="fill:#3D5A73;font-weight:600">around each act</tspan>;</text>
+    <text x="630" y="516">plays <tspan style="text-decoration:line-through;fill:#B3392B">at the contact cue</tspan> <tspan style="fill:#3D5A73;font-weight:600">when the cascade unpauses</tspan></text>
   </g>
   <g fill="var(--surface)" stroke="currentColor" stroke-width="1.2">
     <rect x="520" y="406" width="200" height="72" rx="4"/>
@@ -251,108 +266,108 @@ event structure, and conditions are Core System.</p>
 delivery. Asks flow down the spine; events travel back by return (accent) into the
 delivery's holster, fired depth-first at the act boundary; procedures issue cues at
 commit (dashed) to the world's presentation outlet, held by the presenter's pause
-until the contact cue.</figcaption>
+until <s>the contact cue</s><ins>the act returns</ins>.</figcaption>
 </figure>
 
 <h2><span class="secno">§2</span> Effects are rules</h2>
-<p><b>An effect is a rule of the game.</b> The machinery's effects are the base
-rules; cards, relics, and statuses add rules on top. Every effect enters the flow
-by one road: its trigger.</p>
+<p><mark class="redundant" title="EB §1, §9."><b>An effect is a rule of the game.</b></mark> <mark class="conflict" title="EB §10, §12: the base rules are appointed behaviors, authored data; no machinery effects.">The machinery's effects are the base
+rules; cards, relics, and statuses add rules on top.</mark> <mark class="redundant" title="EB §9: an effect acts only when an event fires and its trigger holds.">Every effect enters the flow
+by one road: its trigger.</mark></p>
 <ul>
-  <li><b>The Game entity holds the base rules.</b> It holds the machinery's
+  <li><mark class="redundant" title="EB §12: the game entry — its stats and its six appointed base rules."><b>The Game entity holds the base rules.</b> It holds the machinery's
       effects and bears the game's stats — the numbers the base rules consume
-      (mana refill, draws per turn, the strike numbers of §7). A rule that tunes
-      the game writes those stats through the road as any stat mutation.</li>
-  <li><b>Every write originates in an effect's payload delivery.</b> Machinery
-      dispatches no payloads. It fires <b>first-mover events</b> — the turn
-      clock, the player's asks (Core §7) — and its effects react.</li>
-  <li><b>The audience is everything that exists.</b> The cascade polls every
-      effect holder in the world — deck, hand, and graveyard units included.
-      Every effect of a unit carries the implied default condition <i>the holder
+      (mana refill, draws per turn, the strike numbers of §7).</mark> <mark class="redundant" title="EB §5: a stat changes through the write road.">A rule that tunes
+      the game writes those stats through the road as any stat mutation.<span class="iter">v1</span></mark></li>
+  <li><mark class="redundant" title="EB §1: every change of fact in a fight is an effect acting."><b>Every write originates in an effect's payload delivery.</b> Machinery
+      dispatches no payloads.</mark> <mark class="conflict" title="EB §9 ActivationTrigger: the trigger itself mints and fires the ask event; EB §10, §12: no machinery effects.">It fires <b>first-mover events</b> — the turn
+      clock, the player's asks (Core §7) — and its effects react.<span class="iter">v1</span></mark></li>
+  <li><mark class="redundant" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed."><b>The audience is everything that exists.</b> The cascade polls every
+      effect holder in the world — deck, hand, and graveyard units included.</mark>
+      <mark class="conflict" title="EB §9: an effect carries exactly its authored conditions; an author who wants an effect silent off the board writes that gate.">Every effect of a unit carries the implied default condition <i>the holder
       is fielded</i> (housed in a slot's <code>slotted_unit</code>, Core §2),
       which an authored form may explicitly remove; a non-fielded unit's effects
       fire only when it does. The condition binds units; holders that are not
       units are untouched by it. (The removal's authored syntax is out of frame —
-      §14.)</li>
+      §14.)</mark></li>
 </ul>
 
 <h2><span class="secno">§3</span> The payload</h2>
-<p>The payload is a bare typed list on the effect — a bundle of mutators delivered
-together:</p>
-<pre>var payload: Array[Mutator]</pre>
-<p>Parse validation belongs to the effect's parser, delivery belongs to the
-conductor. One delivery of a payload is the
-unit of issuance and the scope of the holster (§9).</p>
-<p><b>The authored form</b> is a <code>"payload"</code> array on the effect. Each
+<p><mark class="redundant" title="EB §9: the payload is the effect's list of mutators.">The payload is a bare typed list on the effect — a bundle of mutators delivered
+together:</mark></p>
+<pre><mark class="redundant" title="EB §9 payload: the effect's list of mutators.">var payload: Array[Mutator]<span class="iter">v4</span></mark></pre>
+<p><mark class="conflict" title="EB §9: parse is the one generic driver; no effect-specific parser.">Parse validation belongs to the effect's parser</mark>, delivery belongs to <s>the
+conductor</s><ins>the effect's act</ins>. <mark class="redundant" title="EB §9 payload.">One delivery of a payload is the
+unit of issuance and the scope of the holster (§9).</mark></p>
+<p><mark class="redundant" title="EB §9 the authored form: a payload entry."><b>The authored form</b> is a <code>"payload"</code> array on the effect. Each
 entry names one mutator: a string where the mutator takes no authored parameters
 (for example <code>"strike"</code>), an object naming the mutator with its typed parameters where
-it does (for example <code>{"stat_mutation": {"stat": "speed", "delta": 3}}</code>). The parser
-refuses strangers.</p>
+it does (for example <code>{"stat_mutation": {"stat": "speed", <mark class="conflict" title="EB §5: a stat is a float.">"delta": 3<span class="iter">v21</span></mark>}}</code>). The parser
+refuses strangers.</mark></p>
 
 <h2><span class="secno">§4</span> The mutator</h2>
-<p>A mutator turns an intent — authored by content or constructed by machinery — into
-concrete requests, using the facts of the firing. <b>A mutator is the only thing that
+<p><mark class="conflict" title="EB §10, §12: every effect, base rules included, is authored data; nothing is constructed by machinery.">A mutator turns an intent — authored by content or constructed by machinery — into
+concrete requests, using the facts of the firing.<span class="iter">v2</span></mark> <b>A mutator is the only thing that
 issues requests.</b> One ask is one request, one mutation, one provenance — the
 mutator's kind.</p>
 <ul>
-  <li><b>The kind.</b> Every mutator carries a <b>kind</b>: a
+  <li><b>The kind.</b> <mark class="redundant" title="EB §1: code supplies the mutator kinds; EB §9: a payload entry is the mutator's name.">Every mutator carries a <b>kind</b>: a
       <code>StringName</code>, its name in the
       Kind Rosters document. An authored
-      mutator's kind is its authored name (§3); machinery-only mutators are
-      named the same way, their names just never appear in markup. The kind is
+      mutator's kind is its authored name (§3);<span class="iter">v21</span></mark> <mark class="conflict" title="EB §9, §12: every mutator of an effect appears in markup; the base rules' bodies are authored forms.">machinery-only mutators are
+      named the same way, their names just never appear in markup.<span class="iter">v1</span></mark> The kind is
       the provenance: everything that carries provenance carries this string,
       and the mutator object itself never travels.</li>
   <li><b>Internals are unbounded code.</b> A mutator may read anything and reason
       however it likes before speaking. The strike mutator asks that the recipient be
-      struck; the draw mutator reads the deck's top from the world and asks that the
-      card move to hand. Markup stays flat, and a new capability is a new mutator in
-      code, never new authoring vocabulary.</li>
-  <li><b>Contract:</b> <code>issue(plate, recipient) → events</code>. Invoked by the
-      conductor; submits zero, one, or several requests and returns the events those
+      struck; <mark class="conflict" title="EB §9 targeting: the target resolver elects the recipients; EB §6: a move is one procedure.">the draw mutator reads the deck's top from the world and asks that the
+      card move to hand.<span class="iter">v17</span></mark> <mark class="conflict" title="EB §10: behaviors are content-authored named effects with input tags; content mints vocabulary, and markup nests until the expansion flattens it at the bake.">Markup stays flat, and a new capability is a new mutator in
+      code, never new authoring vocabulary.<span class="iter">v4</span></mark></li>
+  <li><b>Contract:</b> <code>issue(plate, recipient) → events</code>. Invoked by <s>the
+      conductor</s><ins>the effect's act</ins>; submits zero, one, or several requests and returns the events those
       mutations produced.</li>
   <li><b>Mutator-to-procedure is many-to-few.</b> Differently-reasoning mutators may
       all conclude in the same request type.</li>
   <li><b>The unique quality.</b> A kind may declare itself <b>unique</b> (Core §4):
-      the conductor runs it once per delivery, before the per-recipient walk, with a
-      null recipient; the mutator appoints its own target from the plate. The
-      conductor reads only the declaration.</li>
-  <li><b>Destination addressing.</b> A move op elects the destination
-      entity as its target; the mutator introduces the cargo into the
-      MoveRequest (Core §2). Where the entity being moved is the target, the
+      <s>the conductor</s><ins>the act</ins> runs it once per delivery, before the per-recipient walk, with a
+      null recipient; the mutator appoints its own target from the plate. <s>The
+      conductor</s><ins>The act</ins> reads only the declaration.</li>
+  <li><b>Destination addressing.</b> <mark class="conflict" title="EB §9 targeting: the target resolver elects the recipients.">A move op elects the destination
+      entity as its target;<span class="iter">v9</span></mark> <mark class="conflict" title="EB scope, §6: containers and housing are Entity Types and Behaviors'.">the mutator introduces the cargo into the
+      MoveRequest (Core §2)<span class="iter">v2</span></mark>. <mark class="conflict" title="EB §6: a move is one procedure: remove from housing, then insert at destination.">Where the entity being moved is the target, the
       request is routed to its specific-purpose procedure — DrawProcedure,
-      BuryProcedure (§7).</li>
-  <li><b>Lifecycle: stateless immutable instances.</b> A mutator is constructed once —
+      BuryProcedure (§7).<span class="iter">v2</span></mark></li>
+  <li><mark class="conflict" title="EB §9: an effect instance is built at the bake, owned by one entity, immutable; the expansion fills inputs per invocation; no machinery effects."><b>Lifecycle: stateless immutable instances.</b> A mutator is constructed once —
       at parse for an authored effect, in code for a machinery effect — and holds only
       its authored parameters; every situational fact arrives on the plate. One
-      instance is shared across card copies and simulated worlds. Anything that needs
-      memory is a world fact.</li>
+      instance is shared across card copies and simulated worlds.</mark> <mark class="redundant" title="EB §9: an effect instance is immutable, holding only its authored form; every situational fact reaches it at evaluation.">Anything that needs
+      memory is a world fact.<span class="iter">v18</span></mark></li>
 </ul>
 
 <h3>The roster</h3>
-<p>A mutator exists for each way the game asks for change. Content names an
+<p>A mutator exists for each way the game asks for change. <mark class="conflict" title="EB §10, §12: no machinery effects; every effect, base rules included, is authored data.">Content names an
 effect's payload mutators; machinery's effects carry mutators constructed in
-code. The complete roster is the Kind
+code.<span class="iter">v1</span></mark> The complete roster is the Kind
 Rosters document's.</p>
-<p>Every roster parameter is required and typed: an authored entry states every
-parameter of its mutator, and an entry omitting one fails parse — for
+<p><mark class="redundant" title="EB §9 the authored form: every parameter required.">Every roster parameter is required and typed: an authored entry states every
+parameter of its mutator, and an entry omitting one fails parse</mark> <mark class="redundant" title="EB §9 authored form: a payload entry names the mutator with its typed parameters, every parameter required.">— for
 example, a draw of
 one is authored <code>{"draw": {"count": 1}}</code>, a single grant
-<code>"stacks": 1</code>. Identifiers are <code>StringName</code>, quantities
-<code>int</code>.</p>
+<code>"stacks": 1</code>.<span class="iter">v10</span></mark> <mark class="conflict" title="EB §5: a stat is a float under a StringName id.">Identifiers are <code>StringName</code>, quantities
+<code>int</code>.<span class="iter">v2</span></mark></p>
 
 <h2><span class="secno">§5</span> The plate</h2>
-<p>Because mutator internals are unbounded, mutator inputs cannot be enumerated.
+<p><mark class="redundant" title="EB §9: every situational fact reaches the effect at evaluation, as the occasion and the holder.">Because mutator internals are unbounded, mutator inputs cannot be enumerated.
 Instead, every issuance receives the same closed set of facts. The plate carries
-two:</p>
+two:<span class="iter">v5</span></mark></p>
 <ul>
-  <li><b>The occasion</b> — the event that fired the effect.</li>
-  <li><b>The holder</b> — who holds the firing effect. The world is reached
-      through the holder's world back-reference (Core §1), and every question
+  <li><mark class="redundant" title="EB §9: the occasion."><b>The occasion</b> — the event that fired the effect.</mark></li>
+  <li><mark class="redundant" title="EB §9: the holder."><b>The holder</b> — who holds the firing effect.</mark> <mark class="redundant" title="EB §4: an entity holds the world reference.">The world is reached
+      through the holder's world back-reference (Core §1)</mark>, and every question
       about game state is answerable through it — which is what lets the plate
       stay closed.</li>
 </ul>
-<p><b>The recipient</b> — whom this issuance lands on — is a separate typed input
-beside the plate, supplied by the conductor's walk; a unique mutator's recipient
+<p><mark class="conflict" title="EB §9: every situational fact reaches the effect at evaluation, as the occasion and the holder."><b>The recipient</b> — whom this issuance lands on — is a separate typed input
+beside the plate,<span class="iter">v21</span></mark> supplied by <s>the conductor's</s><ins>the act's</ins> walk; a unique mutator's recipient
 is null (§4). </p>
 
 <h2><span class="secno">§6</span> The EngineRequest</h2>
@@ -365,18 +380,18 @@ The base and, as examples, three subclasses:</p>
 <pre>class_name EngineRequest          # the base: the context bundle
     var mutator_kind: StringName  # the manner of the asking — the kind IS the provenance
     var source: GameEntity        # the holder it came from
-    var target: GameEntity        # the target carried from context, until the mutator appoints a new one
+    <mark class="conflict" title="EB §9 targeting: the target resolver alone elects the recipients.">var target: GameEntity        # the target carried from context, until the mutator appoints a new one<span class="iter">v3</span></mark>
 
 class StatMutationRequest extends EngineRequest:
     var stat: StringName
-    var delta: int
+    <mark class="conflict" title="EB §5: a stat is a float.">var delta: int<span class="iter">v2</span></mark>
 
 class StrikeRequest extends EngineRequest:
     pass                          # the striker is the source; the strike procedure
                                   #   reads its attack (§7)
 
 class DamageRequest extends EngineRequest:
-    var amount: int</pre>
+    <mark class="conflict" title="EB §5: a stat is a float.">var amount: int<span class="iter">v3</span></mark></pre>
 <ul>
   <li><b>The subclass type is the verb.</b> Routing is the type; parameters are typed
       members.</li>
@@ -397,7 +412,7 @@ returning the mutation's events. Requests are self-sufficient, so one doorway se
 the live fight and every simulated world. The doorway refuses loudly: a request no
 procedure claims, or a null target where the verb requires one, is an error at
 submission — never a silent drop — with the type system closing what it can before
-runtime. Only mutators mint requests, and only the conductor engages mutators, so no
+runtime. Only mutators mint requests, and only <s>the conductor</s><ins>an effect's act</ins> engages mutators, so no
 submitter exists outside an open delivery.</p>
 <p><b>A procedure is the game's way of resolving one kind of happening into writes and
 events.</b> A procedure is a fixed part of the engine, stateless — all state lives in
@@ -427,7 +442,7 @@ by the happening it resolves, and its request pairs with it by that name.</p>
       Damage happens inside a connecting strike, so the strike procedure applies the
       damage procedure. Where only a raw write happens, a procedure uses a
       WriteAuthority primitive (§8).</li>
-  <li><b>Every decision lives in a procedure; a primitive never decides.</b> A
+  <li><mark class="redundant" title="EB §11: the baker builds, the primitive commits existence, the procedure decides."><b>Every decision lives in a procedure; a primitive never decides.</b><span class="iter">v19</span></mark> A
       procedure may hold much law, little, or none.</li>
 </ul>
 <p>The complete roster of procedures and their requests is the Kind
@@ -441,34 +456,34 @@ term is one-sided: only a positive difference contributes. Dodge rolls from the
 defender (difference = defender minus attacker); crit rolls from the attacker
 (difference = attacker minus defender). Rolls draw from the world's seeded rng.</p>
 <p><b>Dodge</b> rolls first. A dodge ends the strike — no damage, no crit — and
-produces the <code>dodged</code> event. Buildings never dodge.</p>
+produces the <code>dodged</code> event. <mark class="conflict" title="EB §7: no code seam reads a tag; EB §12: the building exception is an authored has_component rook gate.">Buildings never dodge.<span class="iter">v3</span></mark></p>
 <p><b>Crit</b> rolls only on a connecting strike whose damage, after mitigation, is
 above zero. On success the damage is multiplied by the crit multiplier (flat,
-capped) and the <code>crit</code> event is produced. Buildings crit and are crit
-normally.</p>
+capped) and the <code>crit</code> event is produced. <mark class="conflict" title="EB §7: no code seam reads a tag; EB §12: the building fact is the rook component, read by an authored condition.">Buildings crit and are crit
+normally.<span class="iter">v3</span></mark></p>
 <p><b>The pipeline, fixed:</b> dodge → (interception — out of frame, slot
 reserved) → crit → damage.</p>
-<p><b>The numbers are stats of the Game entity</b> — per mechanic: base, speed
+<p><mark class="redundant" title="EB §12 game entry lists the strike stat ids; EB §5, §11."><b>The numbers are stats of the Game entity</b> — per mechanic: base, speed
 rating, difference rating, cap; plus the crit multiplier and its cap. Seeded from
-data at construction, mutable through the road like any stat. The seeds: dodge —
+data at construction, mutable through the road like any stat.<span class="iter">v1</span></mark> <mark class="conflict" title="EB §12: the one game definition carries the stat values; EB §3: a definition is written in the Tool.">The seeds: dodge —
 0% base, 1% per Speed, 4% per difference point, 75% cap; crit — 5% base, 1% per
-Speed, 0% per difference point, 75% cap, multiplier ×2.0, multiplier cap ×5.0.</p>
+Speed, 0% per difference point, 75% cap, multiplier ×2.0, multiplier cap ×5.0.<span class="iter">v15</span></mark></p>
 
 <h2><span class="secno">§8</span> The WriteAuthority</h2>
 <p><b>Every change to a game fact goes through the WriteAuthority.</b> No bypass, from
-any origin. It performs writes and decides nothing. It is static, matching the
+any origin. <mark class="redundant" title="EB §11: the primitive commits, the procedure decides.">It performs writes and decides nothing.<span class="iter">v19</span></mark> It is static, matching the
 engine: requests are self-sufficient and all state lives in the world's facts, so one
 authority serves the live fight and every simulated world.</p>
 <ul>
-  <li><b>Its primitives are exactly four</b> — the stat write, container insert,
+  <li><mark class="conflict" title="EB §7: tags are entity state and change through the write road; a tag write is neither number, membership, nor existence."><b>Its primitives are exactly four</b> — the stat write, container insert,
       container remove, and mint — each existing exactly once. The four are an
       ontology of world structure: a <b>number</b> (the stat write), a
-      <b>membership</b> (insert, remove), an <b>existence</b> (mint). The roster
-      grows only when a procedure needs a decision-free write no primitive covers;
-      per-container law stays above the primitives, in procedures. Primitive
-      signatures are pinned when procedures are written against them. The
+      <b>membership</b> (insert, remove), an <b>existence</b> (mint).<span class="iter">v2</span></mark> <mark class="conflict" title="EB §7: the tag write enters when content asks, not when a procedure needs it.">The roster
+      grows only when a procedure needs a decision-free write no primitive covers;<span class="iter">v17</span></mark>
+      <mark class="redundant" title="EB §6: which entities lawfully enter a container is decided by the write-system procedures that write it.">per-container law stays above the primitives, in procedures.<span class="iter">v3</span></mark> Primitive
+      signatures are pinned when procedures are written against them. <mark class="redundant" title="EB §6.">The
       membership primitives are the only writers of container members, and they
-      maintain the housed entity's back-reference on every write (Core §2).</li>
+      maintain the housed entity's back-reference on every write (Core §2).</mark></li>
   <li><b>It owns each fact's arithmetic</b> — floors, caps, whatever governs a
       specific fact's committed value — in exactly one place. Arithmetic bounds the
       write's performance; it is not a decision.</li>
@@ -482,15 +497,15 @@ authority serves the live fight and every simulated world.</p>
 </ul>
 
 <h2><span class="secno">§9</span> The act and the holster</h2>
-<p><b>An act is one payload delivery.</b> Within one act, everything commits as it
-happens; between acts, the world responds.  The election settles at engagement (§11) and delivers
-whole. Every delivery lands whole on every resolved recipient,
+<p><s><b>An act is one payload delivery.</b></s><ins><b>An act is one effect’s run (§11); the delivery is the part of it in which facts commit.</b></ins><span class="tag">act</span> Within one act, everything commits as it
+happens; between acts, the world responds.  <mark class="redundant" title="EB §9 targeting: engage commits; EB §9 payload: delivered whole to each recipient.">The election settles at engagement (§11) and delivers
+whole. Every delivery lands whole on every resolved recipient<span class="iter">v1</span></mark>,
 whatever facts earlier deliveries committed. Mid-walk reads see earlier commits —
 that is what the delivery order (§11) fixes.</p>
 <p><b>No event is dispatched at its own commit.</b> Events wait in the <b>holster</b>
 — the payload's container of pending events — and fire together once the payload's
-last mutation has resolved. One holster per payload delivery, owned by the cascade:
-the cascade opens the delivery and creates the holster; after the conductor returns,
+last mutation has resolved. <mark class="redundant" title="EB §9 payload: one delivery is the unit of issuance and the scope of the holster.">One holster per payload delivery, owned by the cascade<span class="iter">v6</span></mark>:
+the cascade opens the delivery and creates the holster; after <s>the conductor</s><ins>the act</ins> returns,
 the cascade fires the holster's events; the holster dies when its last event has
 fired and its consequences have unfolded. Nothing persists between deliveries.</p>
 <p><b>The holster is a queue.</b> Events fire in the order they arrived, and every
@@ -501,8 +516,8 @@ and each procedure's body.</p>
 in full — its own payload, its own holster — before the next event of the outer
 holster fires.</p>
 <p><b>A death event is an ordinary holstered event,</b> fired and reacted to like any
-other. Burial is the holder's built-in effect reacting to its own
-<code>died</code> (Core §6), resolving depth-first at the boundary as any
+other. <mark class="conflict" title="EB §12: the burial is an appointed behavior, authored; not built in.">Burial is the holder's built-in effect reacting to its own
+<code>died</code> (Core §6)</mark>, resolving depth-first at the boundary as any
 reaction.</p>
 
 <h2><span class="secno">§10</span> Presentation: the pause</h2>
@@ -516,8 +531,8 @@ waits; the return chain carries events alone.</p>
       the outlet through the world it writes. Nested and cross-world deliveries
       cannot collide, and resolution is synchronous (§7), so a paused span is never
       interleaved within its world.</li>
-  <li><b>The conductor pauses the presenter before engaging the payload and unpauses
-      at the contact cue</b> (§11). Between the last mutation and the unpause, the
+  <li><b><s>The conductor pauses the presenter before engaging the payload and unpauses
+      at the contact cue</s><ins>The cascade pauses the presenter before calling an effect's act and unpauses it after the act returns</ins></b> (<s>§11</s><ins>§12</ins>). Between the <s>last mutation</s><ins>pause</ins> and the unpause, the
       presenter holds the full cue set and reshapes it at will — merging, sequencing,
       pacing: its standing authority.</li>
   <li><b>Reception is unconditional; playback is gated.</b> A cue arriving while the
@@ -525,90 +540,129 @@ waits; the return chain carries events alone.</p>
   <li><b>Any VFX determines the span of its block</b> before greenlighting the flow.</li>
 </ul>
 
-<h2><span class="secno">§11</span> The EffectConductor</h2>
-<p>The owner of what running one effect means. The triad's parts each answer one
-question — when, whom, what — and hold no flow; the conductor asks them in order and
-tells presentation between the steps. It is built by the cascade from the world
-alone; presentation is reached through the world's outlet (§10).</p>
+<h2><span class="secno">§11</span> <s>The EffectConductor</s><ins>The act</ins></h2>
+<p><s>The owner of what running one effect means.</s><ins>The effect performs its act as one method, <code>act(occasion) → events</code>, holding the run.</ins><span class="tag">act</span> <mark class="redundant" title="EB §9: the effect's three parts, each answering its question and holding no flow.">The triad's parts each answer one
+question — when, whom, what — and hold no flow</mark>; <s>the conductor</s><ins>the act</ins> asks them in order and
+tells presentation between the steps. <s>It is built by the cascade from the world
+alone; presentation</s><ins>The effect reaches the world through its holder; presentation</ins> is reached through the world's outlet (§10). <ins>No class outside the effect reads its targeting, its payload, or its presentation names; what crosses the seal is the trigger's answers and the act.</ins></p>
 <p><b>The run, exactly:</b></p>
 <ol>
-  <li>Engage the effect's target resolution (Core §4). Unknowns settle here, in
+  <li><mark class="redundant" title="EB §9 targeting: engage; an empty election ends the delivery.">Engage the effect's target resolution (Core §4). Unknowns settle here, in
       the live flow: rolls draw from the world's seeded rng; the picker picks. An
-      empty election ends the delivery (Core §4); for an activated ask, an empty
-      election refuses the ask before payment.</li>
-  <li>Cue the windup (the effect's windup presentation name, the recipients).</li>
-  <li>Pause the presenter (§10). Deliver: first the payload's unique mutators, once
+      empty election ends the delivery (Core §4)</mark>; <mark class="conflict" title="EB §9: an empty election ends the delivery; the fired ask travels the cascade like any event.">for an activated ask, an empty
+      election refuses the ask before payment.<span class="iter">v1</span></mark></li>
+  <li><mark class="redundant" title="EB §9 presentation names: the windup, cued before the delivery.">Cue the windup (the effect's windup presentation name, the recipients).<span class="iter">v1</span></mark></li>
+  <li><s>Pause the presenter (§10). </s>Deliver: first the payload's unique mutators, once
       each, recipient null (§4); then per-mutator-then-per-recipient — the payload
       list is the authored sequence, so its order dominates: each mutator speaks its
       full ask across all recipients before the next mutator begins. Requests flow to
       the engine as they are issued.</li>
-  <li>Cue the contact (the effect's contact presentation name, the recipients). The
-      presenter unpauses here; the held cues play (§10).</li>
-  <li>Cue the conclusion (the windup name closes).</li>
+  <li><mark class="redundant" title="EB §9 presentation names: the contact, cued when it lands.">Cue the contact (the effect's contact presentation name, the recipients).<span class="iter">v1</span></mark> <s>The
+      presenter unpauses here; the held cues play (§10).</s></li>
+  <li><mark class="conflict" title="EB §9 presentation names: two cue moments, the windup and the contact.">Cue the conclusion (the windup name closes).<span class="iter">v7</span></mark></li>
 </ol>
-<p>Each flow beat carries the acting holder beside the presentation name
+<p><mark class="conflict" title="EB §9: each part holds no flow; two presentation names, the windup and the contact.">Each flow beat carries the acting holder beside the presentation name
 and the recipients — the cause half of a happening (the source's glint, the
-lunge, the bolt flying from actor to victim) plays from it. The procedures'
+lunge, the bolt flying from actor to victim) plays from it.<span class="iter">v14</span></mark> The procedures'
 fire-and-forget cue keeps its shape (§10).</p>
 <p><b>Every cue is awaited.</b> The flow proceeds when presentation greenlights it,
-and any VFX determines the span of its block (§10). Blocking lives here, in the flow
-layer — never in the engine.</p>
-<p>The conductor ends at step 5. After it returns, the cascade fires the payload's
-holster (§9).</p>
+and any VFX determines the span of its block (§10). Blocking lives here, in <s>the flow
+layer</s><ins>the act</ins> — never in the engine.</p>
+<p><s>The conductor ends at step 5. After it returns, the cascade fires the payload's
+holster (§9).</s><ins>The act ends at step 5 and returns the events its mutations produced. The cascade holsters the returned events and fires the holster (§9).</ins></p>
 
 <h2><span class="secno">§12</span> The gather and the roster</h2>
-<p><b>The gather is a named step of the cascade:</b> an event fires, the cascade
+<p><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world; the roster order is in conflict."><b>The gather is a named step of the cascade:</b> an event fires, the cascade
 gathers every eligible effect into the <b>roster</b>, orders it, and runs it —
-reactions resolve in roster order. Eligibility is existence: a holder is polled while
+reactions resolve in roster order.<span class="iter">v9</span></mark> <ins>Around each act the cascade pauses and unpauses the presenter (§10).</ins> <mark class="redundant" title="EB §9: every fired event is offered to every effect in the world.">Eligibility is existence: a holder is polled while
 it exists in the world (§2); the gather inspects no other fact of it — any finer
-gating is a condition.</p>
-<p>Ordering is a two-tier lexicographic comparator, in one place, at the gather: a
+gating is a condition.</mark></p>
+<p><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world; the buckets are in conflict.">Ordering is a two-tier lexicographic comparator, in one place, at the gather: a
 holder's <b>bucket</b> decides first, the bucket's <b>key</b> decides within. The
-buckets and their keys:</p>
+buckets and their keys:<span class="iter">v9</span></mark></p>
 <ol>
-  <li>The Game — a single holder, no key.</li>
-  <li>The Sides — player before enemy.</li>
-  <li>Relics — acquisition order.</li>
-  <li>Cards in hand — hand position.</li>
-  <li>Fielded units and their statuses — turn order; a status resolves immediately
-      after its holding unit.</li>
-  <li>Board slots — slot order (per-side).</li>
-  <li>Graveyard units — order of death.</li>
+  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">The Game — a single holder, no key.<span class="iter">v2</span></mark></li>
+  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">The Sides — player before enemy.<span class="iter">v2</span></mark></li>
+  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Relics — acquisition order.<span class="iter">v2</span></mark></li>
+  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Cards in hand — hand position.<span class="iter">v2</span></mark></li>
+  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Fielded units and their statuses — turn order; a status resolves immediately
+      after its holding unit.<span class="iter">v2</span></mark></li>
+  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Board slots — slot order (per-side).<span class="iter">v2</span></mark></li>
+  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Graveyard units — order of death.<span class="iter">v2</span></mark></li>
 </ol>
-<p>One principle closes every side tie across the comparator: <b>the player's
+<p><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets it orders are themselves in conflict.">One principle closes every side tie across the comparator: <b>the player's
 holders order before the enemy's.</b> It applies in every bucket whose key orders
 each side internally — hand position, order of death, and slot order are such
 keys; turn order interleaves the sides and leaves no tie. Within such a bucket,
 all player holders precede all enemy holders, each side then ordered by its own
-key.</p>
-<p>The table grows by amendment — a new holder kind is a new bucket at a weight,
-finer granularity is a refined key — and the mechanism never restructures.</p>
+key.<span class="iter">v4</span></mark></p>
+<p><mark class="conflict" title="EB §2: the seven kinds are fixed in the template, which changes only with the entity document, by revision.">The table grows by amendment — a new holder kind is a new bucket at a weight,
+finer granularity is a refined key — and the mechanism never restructures.<span class="iter">v4</span></mark></p>
 
 <h2><span class="secno">§13</span> Genesis is construction, not mutation</h2>
-<p>The world is constructed whole: setup builds every entity in its starting
-container directly, before the first event fires. The write road governs play —
-every change from the first first-mover event onward. The mint primitive serves
+<p><mark class="conflict" title="EB §11: a fight starts as one invocation of the game definition handed to the bake; an entity comes into existence only by the bake.">The world is constructed whole: setup builds every entity in its starting
+container directly, before the first event fires.</mark> <mark class="conflict" title="EB §11: the bake builds every starting entity, then the first event fires; EB §12: no machinery effects.">The write road governs play —
+every change from the first first-mover event onward.<span class="iter">v4</span></mark> <mark class="redundant" title="EB §11: a write-system procedure resolving mid-play existence bakes and hands the entity to the mint primitive.">The mint primitive serves
 existence that begins mid-play; a status is minted and inserted by its procedure
-(§7).</p>
+(§7).</mark></p>
 
 <h2><span class="secno">§14</span> Out of frame</h2>
 <p>Named so absence is never read as oversight:</p>
 <ul>
   <li>Interception — the strike pipeline reserves its slot (§7).</li>
   <li>The context-bundle extension mechanism (§6).</li>
-  <li>The authored syntax that removes the implied fielded condition (§2) — the
-      payload markup (§3) does not carry it.</li>
+  <li><mark class="conflict" title="EB §9: no implied condition exists; the author writes the gate.">The authored syntax that removes the implied fielded condition (§2) — the
+      payload markup (§3) does not carry it.</mark></li>
   <li>The procedures' build order.</li>
   <li>Status removal — expiry and cleanse. Its committed write is a container remove
       (§8); its procedure enters with the first content that removes a status.</li>
-  <li>Upgrades — de-scoped entirely; they hold no bucket and no place in the
-      entity hierarchy.</li>
-  <li>Spawn — mid-play unit creation; its mutator, request, and procedure enter
-      with the first content that spawns.</li>
+  <li><mark class="redundant" title="EB §2: every entity is of one of the seven kinds.">Upgrades — de-scoped entirely; they hold no bucket and no place in the
+      entity hierarchy.<span class="iter">v6</span></mark></li>
+  <li><mark class="redundant" title="EB §11: a write-system procedure resolving mid-play existence bakes and hands the entity to the mint primitive; EB §8: its procedure enters when content demands it.">Spawn — mid-play unit creation; its mutator, request, and procedure enter
+      with the first content that spawns.<span class="iter">v4</span></mark></li>
 </ul>
 
+<h2><span class="secno">§15</span> <ins>Amendments</ins></h2>
+<div class="ins-block">
+<p><b>M1 — The effect acts.</b> Ruled by Enrra, 2026-09-06. Lands on §11;
+§1, §10, and §12 where they name the conductor.</p>
+<ul>
+  <li>An effect performs its own run. Given an occasion and its holder, the
+      effect resolves and engages its targeting, delivers its payload, and
+      cues its windup and its contact to the world's presentation outlet.</li>
+  <li>The run of §11 is the effect's act, one method on the one effect
+      class. Its steps stand as the body of that method.</li>
+  <li>No class outside the effect reads its targeting, its payload, or its
+      presentation names. What crosses the seal is the trigger's answers and
+      the act.</li>
+  <li>The act's contract: <code>act(occasion) → events</code>. The act
+      returns the events its mutations produced, as each mutator's issue
+      returns them (§4).</li>
+  <li>The cascade fires events, offers each to every effect, calls the act
+      of each effect whose trigger holds, holsters the events the act
+      returns, and fires the holster after (§9).</li>
+  <li>The EffectConductor is dissolved.</li>
+</ul>
+<p class="quiet">Reconciled into §1, §3, §4, §5, §7, §9, §10, §11 and the figure, 2026-09-06.</p>
+
+<p><b>M2 — The cascade brackets presentation.</b> Ruled by Enrra, 2026-09-06.
+Lands on §10 and §11; §1, §12, and the figure.</p>
+<ul>
+  <li>The cascade pauses the presenter before calling an effect's act and
+      unpauses it after the act returns.</li>
+  <li>Every cue of the delivery — the windup, the procedures' cues at commit,
+      the contact, the conclusion — is held by the pause and plays when the
+      cascade unpauses. The presenter orders and paces the held set under its
+      standing authority (§10).</li>
+  <li>The act holds no presentation flow. It cues its names at its steps; it
+      neither pauses nor unpauses.</li>
+</ul>
+<p class="quiet">Reconciled into §1, §10, §11, §12 and the figure, 2026-09-06.</p>
+</div>
+
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-08-27.
+  <b>Signature:</b> <s>signed off — Enrra, 2026-08-27.</s>
+  <ins>Pending revision.</ins>
 </div>
 
 </div>
