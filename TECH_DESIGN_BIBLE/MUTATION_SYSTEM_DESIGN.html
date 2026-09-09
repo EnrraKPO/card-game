@@ -268,17 +268,13 @@ until the act returns.</figcaption>
 </figure>
 
 <h2><span class="secno">§2</span> Effects are rules</h2>
-<p><mark class="redundant" title="EB §1, §9."><b>An effect is a rule of the game.</b></mark> <s>The machinery's effects are the base
-rules; cards, relics, and statuses add rules on top.</s><ins>The base rules are the Game's appointed effects, authored as behaviors (Entity Types and Behaviors §10, §12); cards, relics, and statuses bear rules of the same making.</ins> <mark class="redundant" title="EB §9: an effect acts only when an event fires and its trigger holds.">Every effect enters the flow
+<p><mark class="redundant" title="EB §1, §9."><b>An effect is a rule of the game.</b></mark> The base rules are the Game's appointed effects, authored as behaviors (Entity Types and Behaviors §10, §12); cards, relics, and statuses bear rules of the same making. <mark class="redundant" title="EB §9: an effect acts only when an event fires and its trigger holds.">Every effect enters the flow
 by one road: its trigger.</mark></p>
 <ul>
-  <li><mark class="redundant" title="EB §12: the game entry — its stats and its six appointed base rules."><b>The Game entity holds the base rules.</b> It holds <s>the machinery's
-      effects</s><ins>its appointed effects</ins> and bears the game's stats — the numbers the base rules consume
+  <li><mark class="redundant" title="EB §12: the game entry — its stats and its six appointed base rules."><b>The Game entity holds the base rules.</b> It holds its appointed effects and bears the game's stats — the numbers the base rules consume
       (mana refill, draws per turn, the strike numbers of §7).</mark> <mark class="redundant" title="EB §5: a stat changes through the write road.">A rule that tunes
       the game writes those stats through the road as any stat mutation.<span class="iter">v1</span></mark></li>
-  <li><mark class="redundant" title="EB §1: every change of fact in a fight is an effect acting."><b>Every write originates in an effect's payload delivery.</b> <s>Machinery
-      dispatches no payloads.</s></mark> <s>It fires <b>first-mover events</b> — the turn
-      clock, the player's asks (Core §7) — and its effects react.</s><ins>The <b>first-mover events</b> are fired by the clock (Combat Frame §3) and by an ActivationTrigger on command (Entity Types and Behaviors §9); effects react to them.</ins></li>
+  <li><mark class="redundant" title="EB §1: every change of fact in a fight is an effect acting."><b>Every write originates in an effect's payload delivery.</b> </mark> The <b>first-mover events</b> are fired by the clock (Combat Frame §3) and by an ActivationTrigger on command (Entity Types and Behaviors §9); effects react to them.</li>
   <li><mark class="redundant" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed."><b>The audience is everything that exists.</b> The cascade polls every
       effect holder in the world — deck, hand, and graveyard units included.</mark>
       <mark class="conflict" title="EB §9: an effect carries exactly its authored conditions; an author who wants an effect silent off the board writes that gate.">Every effect of a unit carries the implied default condition <i>the holder
@@ -302,16 +298,14 @@ it does (for example <code>{"stat_mutation": {"stat": "speed", <mark class="conf
 refuses strangers.</mark></p>
 
 <h2><span class="secno">§4</span> The mutator</h2>
-<p><s>A mutator turns an intent — authored by content or constructed by machinery — into
-concrete requests, using the facts of the firing.</s><ins>A mutator turns an authored intent into concrete requests, using the facts of the firing.</ins> <b>A mutator is the only thing that
+<p>A mutator turns an authored intent into concrete requests, using the facts of the firing. <b>A mutator is the only thing that
 issues requests.</b> One ask is one request, one mutation, one provenance — the
 mutator's kind.</p>
 <ul>
   <li><b>The kind.</b> <mark class="redundant" title="EB §1: code supplies the mutator kinds; EB §9: a payload entry is the mutator's name.">Every mutator carries a <b>kind</b>: a
       <code>StringName</code>, its name in the
       Kind Rosters document. An authored
-      mutator's kind is its authored name (§3);<span class="iter">v21</span></mark> <s>machinery-only mutators are
-      named the same way, their names just never appear in markup.</s><ins>the base rules' mutators are named the same way, in the markup of their behaviors (Entity Types and Behaviors §12).</ins> The kind is
+      mutator's kind is its authored name (§3);<span class="iter">v21</span></mark> the base rules' mutators are named the same way, in the markup of their behaviors (Entity Types and Behaviors §12). The kind is
       the provenance: everything that carries provenance carries this string,
       and the mutator object itself never travels.</li>
   <li><b>Internals are unbounded code.</b> A mutator may read anything and reason
@@ -331,17 +325,12 @@ mutator's kind.</p>
       MoveRequest (Core §2)<span class="iter">v2</span></mark>. <mark class="conflict" title="EB §6: a move is one procedure: remove from housing, then insert at destination.">Where the entity being moved is the target, the
       request is routed to its specific-purpose procedure — DrawProcedure,
       BuryProcedure (§7).<span class="iter">v2</span></mark></li>
-  <li><s><b>Lifecycle: stateless immutable instances.</b> A mutator is constructed once —
-      at parse for an authored effect, in code for a machinery effect — and holds only
-      its authored parameters; every situational fact arrives on the plate. One
-      instance is shared across card copies and simulated worlds.</s><ins><b>Lifecycle: stateless immutable instances.</b> A mutator is constructed once, at the bake, when its effect's expanded markup is parsed (Entity Types and Behaviors §11), and holds only its authored parameters; every situational fact arrives on the plate. World copies carry the instance untouched.</ins> <mark class="redundant" title="EB §9: an effect instance is immutable, holding only its authored form; every situational fact reaches it at evaluation.">Anything that needs
+  <li><b>Lifecycle: stateless immutable instances.</b> A mutator is constructed once, at the bake, when its effect's expanded markup is parsed (Entity Types and Behaviors §11), and holds only its authored parameters; every situational fact arrives on the plate. World copies carry the instance untouched. <mark class="redundant" title="EB §9: an effect instance is immutable, holding only its authored form; every situational fact reaches it at evaluation.">Anything that needs
       memory is a world fact.<span class="iter">v18</span></mark></li>
 </ul>
 
 <h3>The roster</h3>
-<p>A mutator exists for each way the game asks for change. <s>Content names an
-effect's payload mutators; machinery's effects carry mutators constructed in
-code.</s><ins>Every effect's payload names its mutators in markup; the kinds are the vocabulary code supplies (Entity Types and Behaviors §1).</ins> The complete roster is the Kind
+<p>A mutator exists for each way the game asks for change. Every effect's payload names its mutators in markup; the kinds are the vocabulary code supplies (Entity Types and Behaviors §1). The complete roster is the Kind
 Rosters document's.</p>
 <p><mark class="redundant" title="EB §9 the authored form: every parameter required.">Every roster parameter is required and typed: an authored entry states every
 parameter of its mutator, and an entry omitting one fails parse</mark> <mark class="redundant" title="EB §9 authored form: a payload entry names the mutator with its typed parameters, every parameter required.">— for
@@ -511,8 +500,7 @@ and each procedure's body.</p>
 in full — its own payload, its own holster — before the next event of the outer
 holster fires.</p>
 <p><b>A death event is an ordinary holstered event,</b> fired and reacted to like any
-other. <s>Burial is the holder's built-in effect reacting to its own
-<code>died</code> (Core §6)</s><ins>Burial is the holder's appointed burial behavior reacting to its own <code>died</code> (Entity Types and Behaviors §12)</ins>, resolving depth-first at the boundary as any
+other. Burial is the holder's appointed burial behavior reacting to its own <code>died</code> (Entity Types and Behaviors §12), resolving depth-first at the boundary as any
 reaction.</p>
 
 <h2><span class="secno">§10</span> Presentation: the pause</h2>
@@ -589,10 +577,8 @@ key.<span class="iter">v4</span></mark></p>
 <p><mark class="conflict" title="EB §2: the seven kinds are fixed in the template, which changes only with the entity document, by revision.">The table grows by amendment — a new holder kind is a new bucket at a weight,
 finer granularity is a refined key — and the mechanism never restructures.<span class="iter">v4</span></mark></p>
 
-<h2><span class="secno">§13</span> Genesis is <s>construction</s><ins>the bake</ins>, not mutation</h2>
-<p><s>The world is constructed whole: setup builds every entity in its starting
-container directly, before the first event fires.</s><ins>The world is baked whole: one invocation of the game definition, handed to the bake in a fresh world, builds every starting entity in its container before the first event fires (Entity Types and Behaviors §11).</ins> <s>The write road governs play —
-every change from the first first-mover event onward.</s><ins>The write road governs play — every change from the first event onward.</ins> <mark class="redundant" title="EB §11: a write-system procedure resolving mid-play existence bakes and hands the entity to the mint primitive.">The mint primitive serves
+<h2><span class="secno">§13</span> Genesis is the bake, not mutation</h2>
+<p>The world is baked whole: one invocation of the game definition, handed to the bake in a fresh world, builds every starting entity in its container before the first event fires (Entity Types and Behaviors §11). The write road governs play — every change from the first event onward. <mark class="redundant" title="EB §11: a write-system procedure resolving mid-play existence bakes and hands the entity to the mint primitive.">The mint primitive serves
 existence that begins mid-play; a status is minted and inserted by its procedure
 (§7).</mark></p>
 
@@ -613,8 +599,7 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> <s>signed off — Enrra, 2026-09-09.</s>
-  <ins>Pending revision.</ins>
+  <b>Signature:</b> signed off — Enrra, 2026-09-09.
 </div>
 
 </div>
