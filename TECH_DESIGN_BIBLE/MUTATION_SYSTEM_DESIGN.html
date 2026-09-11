@@ -124,7 +124,7 @@
 <div class="ribbon">
   <span class="status-chip">Signed</span>
   <span>Authored: <b>2026-08-23</b></span>
-  <span>Signed off: <b>2026-09-09</b></span>
+  <span>Signed off: <b>2026-09-11</b></span>
   <span>Replaces: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III, retired to record)</b></span>
   <span>Reference: <b>CORE_SYSTEM_DESIGN.html — <mark class="conflict" title="EB scope: a third document rules entity behavior.">one system, two documents</mark></b></span>
 </div>
@@ -559,31 +559,20 @@ gating is a condition.</mark></p>
 holder's <b>bucket</b> decides first, the bucket's <b>key</b> decides within. The
 buckets and their keys:</p>
 <ol>
-  <li><s>The Game — a single holder, no key.</s></li>
-  <li><s>The Sides — player before enemy.</s></li>
-  <li><s>Relics — acquisition order.</s></li>
-  <li><s>Cards in hand — hand position.</s></li>
-  <li><s>Fielded units and their statuses — turn order; a status resolves immediately
-      after its holding unit.</s></li>
-  <li><s>Board slots — slot order (per-side).</s></li>
-  <li><s>Graveyard units — order of death.</s></li>
+  <li>The Game — a single holder, no key.</li>
+  <li>The Sides — player before enemy.</li>
+  <li>Relics — acquisition order.</li>
+  <li>Cards in hand — hand position.</li>
+  <li>Cards in the deck — deck order.</li>
+  <li>Fielded units — turn order.</li>
+  <li>Board slots — slot order (per-side).</li>
+  <li>Graveyard units — order of death.</li>
 </ol>
-<ol>
-  <li><ins>The Game — a single holder, no key.</ins></li>
-  <li><ins>The Sides — player before enemy.</ins></li>
-  <li><ins>Relics — acquisition order.</ins></li>
-  <li><ins>Cards in hand — hand position.</ins></li>
-  <li><ins>Cards in the deck — deck order.</ins></li>
-  <li><ins>Fielded units — turn order.</ins></li>
-  <li><ins>Board slots — slot order (per-side).</ins></li>
-  <li><ins>Graveyard units — order of death.</ins></li>
-</ol>
-<p><ins>A status resolves immediately before its holder, wherever the holder is housed.</ins></p>
+<p>A status resolves immediately before its holder, wherever the holder is housed.</p>
 <p>One principle closes every side tie across the comparator: <b>the player's
 holders order before the enemy's.</b> It applies in every bucket whose key orders
-each side internally — <s>hand position, order of death, and slot order are such
-keys;</s><ins>hand position, deck order, order of death, and slot order are such
-keys;</ins> turn order interleaves the sides and leaves no tie. Within such a bucket,
+each side internally — hand position, deck order, order of death, and slot order are such
+keys; turn order interleaves the sides and leaves no tie. Within such a bucket,
 all player holders precede all enemy holders, each side then ordered by its own
 key.</p>
 <p><mark class="conflict" title="EB §2: the seven kinds are fixed in the template, which changes only with the entity document, by revision.">The table grows by amendment — a new holder kind is a new bucket at a weight,
@@ -611,8 +600,7 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> <s>signed off — Enrra, 2026-09-09.</s>
-  <ins>Pending revision.</ins>
+  <b>Signature:</b> signed off — Enrra, 2026-09-11.
 </div>
 
 </div>
