@@ -550,30 +550,42 @@ and any VFX determines the span of its block (§10). Blocking lives here, in the
 <p>The act ends at step 5 and returns the events its mutations produced. The cascade holsters the returned events and fires the holster (§9).</p>
 
 <h2><span class="secno">§12</span> The gather and the roster</h2>
-<p><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world; the roster order is in conflict."><b>The gather is a named step of the cascade:</b> an event fires, the cascade
+<p><b>The gather is a named step of the cascade:</b> an event fires, the cascade
 gathers every eligible effect into the <b>roster</b>, orders it, and runs it —
-reactions resolve in roster order.<span class="iter">v9</span></mark> Around each act the cascade pauses and unpauses the presenter (§10). <mark class="redundant" title="EB §9: every fired event is offered to every effect in the world.">Eligibility is existence: a holder is polled while
+reactions resolve in roster order. Around each act the cascade pauses and unpauses the presenter (§10). <mark class="redundant" title="EB §9: every fired event is offered to every effect in the world.">Eligibility is existence: a holder is polled while
 it exists in the world (§2); the gather inspects no other fact of it — any finer
 gating is a condition.</mark></p>
-<p><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world; the buckets are in conflict.">Ordering is a two-tier lexicographic comparator, in one place, at the gather: a
+<p>Ordering is a two-tier lexicographic comparator, in one place, at the gather: a
 holder's <b>bucket</b> decides first, the bucket's <b>key</b> decides within. The
-buckets and their keys:<span class="iter">v9</span></mark></p>
+buckets and their keys:</p>
 <ol>
-  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">The Game — a single holder, no key.<span class="iter">v2</span></mark></li>
-  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">The Sides — player before enemy.<span class="iter">v2</span></mark></li>
-  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Relics — acquisition order.<span class="iter">v2</span></mark></li>
-  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Cards in hand — hand position.<span class="iter">v2</span></mark></li>
-  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Fielded units and their statuses — turn order; a status resolves immediately
-      after its holding unit.<span class="iter">v2</span></mark></li>
-  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Board slots — slot order (per-side).<span class="iter">v2</span></mark></li>
-  <li><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets have no seat for deck-housed cards or statuses on non-fielded holders.">Graveyard units — order of death.<span class="iter">v2</span></mark></li>
+  <li><s>The Game — a single holder, no key.</s></li>
+  <li><s>The Sides — player before enemy.</s></li>
+  <li><s>Relics — acquisition order.</s></li>
+  <li><s>Cards in hand — hand position.</s></li>
+  <li><s>Fielded units and their statuses — turn order; a status resolves immediately
+      after its holding unit.</s></li>
+  <li><s>Board slots — slot order (per-side).</s></li>
+  <li><s>Graveyard units — order of death.</s></li>
 </ol>
-<p><mark class="conflict" title="EB §9: every fired event is offered to every effect in the world, wherever its holder is housed; the buckets it orders are themselves in conflict.">One principle closes every side tie across the comparator: <b>the player's
+<ol>
+  <li><ins>The Game — a single holder, no key.</ins></li>
+  <li><ins>The Sides — player before enemy.</ins></li>
+  <li><ins>Relics — acquisition order.</ins></li>
+  <li><ins>Cards in hand — hand position.</ins></li>
+  <li><ins>Cards in the deck — deck order.</ins></li>
+  <li><ins>Fielded units — turn order.</ins></li>
+  <li><ins>Board slots — slot order (per-side).</ins></li>
+  <li><ins>Graveyard units — order of death.</ins></li>
+</ol>
+<p><ins>A status resolves immediately before its holder, wherever the holder is housed.</ins></p>
+<p>One principle closes every side tie across the comparator: <b>the player's
 holders order before the enemy's.</b> It applies in every bucket whose key orders
-each side internally — hand position, order of death, and slot order are such
-keys; turn order interleaves the sides and leaves no tie. Within such a bucket,
+each side internally — <s>hand position, order of death, and slot order are such
+keys;</s><ins>hand position, deck order, order of death, and slot order are such
+keys;</ins> turn order interleaves the sides and leaves no tie. Within such a bucket,
 all player holders precede all enemy holders, each side then ordered by its own
-key.<span class="iter">v4</span></mark></p>
+key.</p>
 <p><mark class="conflict" title="EB §2: the seven kinds are fixed in the template, which changes only with the entity document, by revision.">The table grows by amendment — a new holder kind is a new bucket at a weight,
 finer granularity is a refined key — and the mechanism never restructures.<span class="iter">v4</span></mark></p>
 
@@ -599,7 +611,8 @@ existence that begins mid-play; a status is minted and inserted by its procedure
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> signed off — Enrra, 2026-09-09.
+  <b>Signature:</b> <s>signed off — Enrra, 2026-09-09.</s>
+  <ins>Pending revision.</ins>
 </div>
 
 </div>
